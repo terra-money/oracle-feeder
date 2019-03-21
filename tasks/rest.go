@@ -12,58 +12,75 @@ import (
 
 const (
 	flagListenAddr = "laddr"
-	flagDataSource = "data-source"
+
+	FlagProxyMode = "proxy"
 
 	//
 	defaultListenAddr = "127.0.0.1:7468"
-	defaultDataSource = "https://feeder.terra.money:7468"
 )
 
 // Rest Task definition
 type RESTTask struct {
-	done chan struct{}
+	server *http.Server
+	mux    *http.ServeMux
+	keeper *types.HistoryKeeper
 }
 
 var _ types.Task = (*RESTTask)(nil)
 
-
 // Implementation
 
 // Create new REST Task
-func NewRestTask(done chan struct{}) types.Task {
-	return &RESTTask{done}
+func NewRestTask(done chan struct{}, keeper *types.HistoryKeeper) *types.TaskRunner {
+
+	if viper.GetBool(FlagProxyMode) {
+		return nil
+	}
+
+	return &types.TaskRunner{"REST API Server", done, &RESTTask{keeper: keeper}}
 }
 
 // Regist REST Commands
-func (task *RESTTask)RegistCommand(cmd *cobra.Command) {
+func (task *RESTTask) RegistCommand(cmd *cobra.Command) {
 
-	cmd.Flags().String(flagDataSource, "", "Data source url")
 	cmd.Flags().String(flagListenAddr, defaultListenAddr, "REST Listening Port")
 
-	_ = viper.BindPFlag(flagDataSource, cmd.Flags().Lookup(flagDataSource))
 	_ = viper.BindPFlag(flagListenAddr, cmd.Flags().Lookup(flagListenAddr))
 
-	viper.SetDefault(flagDataSource, defaultDataSource)
 	viper.SetDefault(flagListenAddr, defaultListenAddr)
 
 }
 
+// init server
+func (task *RESTTask) InitHandler() {
+	task.mux = http.NewServeMux()
+	task.server = &http.Server{Addr: viper.GetString(flagListenAddr), Handler: task.mux}
+
+	fmt.Println("REST binded at ", viper.GetString(flagListenAddr))
+	registHttpHandler(task.keeper, task.mux)
+
+}
+
 // Run task
-func (task *RESTTask)Run() {
+func (task *RESTTask) RunHandler() {
+	_ = task.server.ListenAndServe()
+}
 
-	server := &http.Server{Addr: viper.GetString(flagListenAddr), Handler: nil}
+// shutdown serrver
+func (task *RESTTask) ShutdownHandler() {
 
-	fmt.Println("REST Server is Ready")
-	select {
-	case <- task.done:
-		fmt.Println("REST Server is shutting down")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		_ = server.Shutdown(ctx)
-		cancel()
-		return
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	_ = task.server.Shutdown(ctx)
+	cancel()
+}
 
-	default:
-		_ = server.ListenAndServe()
+func registHttpHandler(keeper *types.HistoryKeeper, mux *http.ServeMux) {
+	mux.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
+		_, _ = res.Write([]byte("Hello, oracle!"))
+	})
 
-	}
+	mux.HandleFunc("/last", func(res http.ResponseWriter, req *http.Request) {
+		pricesByte := keeper.GetLatestBytes()
+		_, _ = res.Write(pricesByte)
+	})
 }

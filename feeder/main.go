@@ -15,20 +15,11 @@
 package main
 
 import (
-	"feeder/tasks"
+	"feeder/cmds"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/syndtr/goleveldb/leveldb"
 	"os"
-	"os/signal"
-	"syscall"
-)
-
-const (
-	flagFrom = "from"
-	flagPass = "pass"
-
-	flagProxyMode = "proxy"
 )
 
 func main() {
@@ -40,62 +31,20 @@ func main() {
 		Long:  `Terra oracle feeder client daemon. Long description`,
 	}
 
-	InitConfig(rootCmd)
-	rootCmd.AddCommand(startCommand(), ConfigCommand(), )
+	cmds.InitConfig(rootCmd)
+	db, err := leveldb.OpenFile(cmds.GetHistoryPath(), nil)
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		_ = db.Close()
+	}()
+
+	rootCmd.AddCommand(cmds.StartCommands(db), cmds.ConfigCommands())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func startCommand() *cobra.Command {
-
-	done := make(chan struct {})
-
-	restTask := tasks.NewRestTask(done)
-	updaterTask := tasks.NewUpdaterTask(done)
-	voterTask := tasks.NewVoterTask(done)
-
-	cmd := &cobra.Command{
-		Use:   "start",
-		Short: "Start feeder client daemon",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("Terra Oracle Feeder - Daemon Mode\n\n")
-
-			sigs := make(chan os.Signal, 1)
-			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-
-			go restTask.Run()
-			go updaterTask.Run()
-			if !viper.GetBool(flagProxyMode) {
-				go voterTask.Run()
-			}
-
-			<-sigs
-
-			fmt.Println("Shutting down...")
-			close(done)
-
-			return nil
-		},
-	}
-
-	cmd.Flags().Bool(flagProxyMode, false, "starting feeder as a proxy")
-	_ = viper.BindPFlag(flagProxyMode, cmd.Flags().Lookup(flagProxyMode))
-
-	restTask.RegistCommand(cmd)
-	updaterTask.RegistCommand(cmd)
-	if !viper.GetBool(flagProxyMode) {
-		voterTask.RegistCommand(cmd)
-	}
-
-	cmd.Flags().String(flagFrom, "my_name", "key name")
-	cmd.Flags().String(flagPass, "12345678", "password")
-
-	_ = cmd.MarkFlagRequired(flagFrom)
-	_ = cmd.MarkFlagRequired(flagPass)
-
-	return cmd
 }

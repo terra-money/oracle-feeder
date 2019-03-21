@@ -1,4 +1,4 @@
-package main
+package cmds
 
 import (
 	"fmt"
@@ -8,13 +8,21 @@ import (
 	"os"
 )
 
+const (
+	flagHome = "home"
+)
+
+var (
+	defaultHome = os.ExpandEnv("$HOME/.terrafeeder")
+)
+
 // read saved configure for cobra
 func InitConfig(rootCmd *cobra.Command) {
-	var cfgFile string
-
 	cobra.OnInitialize(func() {
-		if cfgFile != "" {
-			viper.SetConfigFile(cfgFile)
+		home := viper.GetString(flagHome)
+
+		if home != "" {
+			viper.AddConfigPath(home)
 		} else {
 			home, err := homedir.Dir()
 			if err != nil {
@@ -23,9 +31,8 @@ func InitConfig(rootCmd *cobra.Command) {
 			}
 
 			viper.AddConfigPath(home)
-			viper.SetConfigName(".feeder")
 		}
-
+		viper.SetConfigName(".feeder")
 		viper.AutomaticEnv()
 
 		if err := viper.ReadInConfig(); err == nil {
@@ -33,12 +40,18 @@ func InitConfig(rootCmd *cobra.Command) {
 		}
 	})
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.feeder.yaml)")
+	rootCmd.PersistentFlags().String(flagHome, defaultHome, "directory for config and data")
+	_ = viper.BindPFlag(flagHome, rootCmd.PersistentFlags().Lookup(flagHome))
+	viper.SetDefault(flagHome, defaultHome)
 
 }
 
+func GetHistoryPath() string {
+	return viper.GetString(flagHome) + "/history.db"
+}
+
 // adding common configure commands to app
-func ConfigCommand() *cobra.Command {
+func ConfigCommands() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Query remote node for status",
