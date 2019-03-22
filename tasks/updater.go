@@ -52,6 +52,8 @@ func (task *UpdaterTask) RegistCommand(cmd *cobra.Command) {
 func (task *UpdaterTask) RunHandler() {
 
 	fmt.Println("Updating....")
+	defer time.Sleep(viper.GetDuration(flagUpdatingInterval))
+
 	url := viper.GetString(flagUpdatingSource)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -73,7 +75,6 @@ func (task *UpdaterTask) RunHandler() {
 	}
 	fmt.Println("Updated!")
 
-	time.Sleep(viper.GetDuration(flagUpdatingInterval))
 }
 
 func (task *UpdaterTask) InitHandler()     {}

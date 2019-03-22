@@ -13,8 +13,6 @@ import (
 const (
 	flagListenAddr = "laddr"
 
-	FlagProxyMode = "proxy"
-
 	//
 	defaultListenAddr = "127.0.0.1:7468"
 )
@@ -32,11 +30,6 @@ var _ types.Task = (*RESTTask)(nil)
 
 // Create new REST Task
 func NewRestTask(done chan struct{}, keeper *types.HistoryKeeper) *types.TaskRunner {
-
-	if viper.GetBool(FlagProxyMode) {
-		return nil
-	}
-
 	return &types.TaskRunner{"REST API Server", done, &RESTTask{keeper: keeper}}
 }
 

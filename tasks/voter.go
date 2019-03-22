@@ -83,9 +83,8 @@ func (task *VoterTask) RegistCommand(cmd *cobra.Command) {
 
 // Run task
 func (task *VoterTask) RunHandler() {
+	time.Sleep(viper.GetDuration(flagVotingInterval)) // to prevent uninitialized voting, sleep first
 	fmt.Println("Voting....")
-
-	defer time.Sleep(viper.GetDuration(flagVotingInterval))
 
 	prices := task.keeper.GetLatest()
 
