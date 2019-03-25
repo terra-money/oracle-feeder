@@ -23,14 +23,13 @@ type TaskRunner struct {
 }
 
 func NewTaskRunner(name string, task Task, interval time.Duration) *TaskRunner {
-	var done chan struct{}
 	var ticker *time.Ticker
 
 	if interval != 0 {
 		ticker = time.NewTicker(interval)
 	}
 
-	return &TaskRunner{name, done, ticker, task}
+	return &TaskRunner{name, make(chan struct{}), ticker, task}
 }
 
 // starting point of task

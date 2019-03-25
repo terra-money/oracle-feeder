@@ -83,6 +83,7 @@ func (client *LCDClient) VoteByREST(price types.Price, account *types.Account, v
 
 		payloadBytes, _ := json.Marshal(voteMsg)
 		payloadBuffer := bytes.NewBuffer(payloadBytes)
+		fmt.Println(string(payloadBytes))
 		resp, err := http.Post(client.lcdAddress+"/oracle/vote", "application/json", payloadBuffer)
 
 		if err != nil {

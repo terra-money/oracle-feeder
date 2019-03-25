@@ -57,7 +57,10 @@ func StartCommands(db *leveldb.DB) *cobra.Command {
 
 	if !viper.GetBool(flagNoUpdater) {
 		tasks.RegistUpdaterCommand(cmd)
-		taskRunners = append(taskRunners, tasks.NewUpdaterTask(keeper))
+		updater := tasks.NewUpdaterTask(keeper)
+		taskRunners = append(taskRunners, updater)
+
+		updater.RunHandler() // for initial update
 	}
 
 	if !viper.GetBool(flagNoVoter) && !viper.GetBool(flagProxyMode) {
@@ -80,7 +83,10 @@ func startServer() error {
 
 	<-sigs
 
+	fmt.Print("\n\n")
+	fmt.Println("-------------------------------")
 	fmt.Println("Shutting down...")
+	fmt.Println("-------------------------------")
 
 	for _, task := range taskRunners {
 		go task.Stop()
