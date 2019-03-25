@@ -46,6 +46,7 @@ func InitConfig(rootCmd *cobra.Command) {
 
 }
 
+// return the path to the history db
 func GetHistoryPath() string {
 	return viper.GetString(flagHome) + "/history.db"
 }

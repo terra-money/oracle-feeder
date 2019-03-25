@@ -41,9 +41,9 @@ func (keeper *HistoryKeeper) GetLatestBytes() []byte {
 }
 
 // Get latest history from db
-func (keeper *HistoryKeeper) GetLatest() Prices {
+func (keeper *HistoryKeeper) GetLatest() []Price {
 
-	var prices Prices
+	var prices []Price
 	value := keeper.GetLatestBytes()
 
 	if value != nil {
@@ -73,7 +73,7 @@ func timeStringToBytes(strTime string) ([]byte, error) {
 }
 
 // Get all histories from db
-func (keeper *HistoryKeeper) GetHistories(from string, to string) map[string]Prices {
+func (keeper *HistoryKeeper) GetHistories(from string, to string) map[string][]Price {
 	fromBytes, err := timeStringToBytes(from)
 	if err != nil {
 		return nil

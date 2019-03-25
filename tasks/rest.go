@@ -13,7 +13,6 @@ import (
 const (
 	flagListenAddr = "laddr"
 
-	//
 	defaultListenAddr = "127.0.0.1:7468"
 )
 
@@ -29,12 +28,12 @@ var _ types.Task = (*RESTTask)(nil)
 // Implementation
 
 // Create new REST Task
-func NewRestTask(done chan struct{}, keeper *types.HistoryKeeper) *types.TaskRunner {
-	return &types.TaskRunner{"REST API Server", done, &RESTTask{keeper: keeper}}
+func NewRESTTask(keeper *types.HistoryKeeper) *types.TaskRunner {
+	return types.NewTaskRunner("REST API Server", &RESTTask{keeper: keeper}, 0)
 }
 
 // Regist REST Commands
-func (task *RESTTask) RegistCommand(cmd *cobra.Command) {
+func RegistRESTCommand(cmd *cobra.Command) {
 
 	cmd.Flags().String(flagListenAddr, defaultListenAddr, "REST Listening Port")
 
@@ -50,7 +49,12 @@ func (task *RESTTask) InitHandler() {
 	task.server = &http.Server{Addr: viper.GetString(flagListenAddr), Handler: task.mux}
 
 	fmt.Println("REST binded at ", viper.GetString(flagListenAddr))
-	registHttpHandler(task.keeper, task.mux)
+
+	isLocal := false
+	if task.server.Addr == "localhost" || task.server.Addr == "127.0.0.1" {
+		isLocal = true
+	}
+	registHTTPHandler(task.keeper, task.mux, isLocal)
 
 }
 
@@ -67,7 +71,7 @@ func (task *RESTTask) ShutdownHandler() {
 	cancel()
 }
 
-func registHttpHandler(keeper *types.HistoryKeeper, mux *http.ServeMux) {
+func registHTTPHandler(keeper *types.HistoryKeeper, mux *http.ServeMux, isLocal bool) {
 	mux.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		_, _ = res.Write([]byte("Hello, oracle!"))
 	})
@@ -76,4 +80,21 @@ func registHttpHandler(keeper *types.HistoryKeeper, mux *http.ServeMux) {
 		pricesByte := keeper.GetLatestBytes()
 		_, _ = res.Write(pricesByte)
 	})
+
+	if isLocal {
+		mux.HandleFunc("/interval", func(res http.ResponseWriter, req *http.Request) {
+			if req.Method != "POST" {
+				res.WriteHeader(http.StatusNotFound)
+				return
+			}
+		})
+
+		mux.HandleFunc("/vote", func(res http.ResponseWriter, req *http.Request) {
+			if req.Method != "POST" {
+				res.WriteHeader(http.StatusNotFound)
+				return
+			}
+		})
+	}
+
 }

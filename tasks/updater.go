@@ -31,12 +31,12 @@ var _ types.Task = (*UpdaterTask)(nil)
 // Implementation
 
 // Create new Update Task
-func NewUpdaterTask(done chan struct{}, keeper *types.HistoryKeeper) *types.TaskRunner {
-	return &types.TaskRunner{"Price Updater", done, &UpdaterTask{keeper}}
+func NewUpdaterTask(keeper *types.HistoryKeeper) *types.TaskRunner {
+	return types.NewTaskRunner("Price Updater", &UpdaterTask{keeper}, viper.GetDuration(flagUpdatingInterval))
 }
 
 // Regist REST Commands
-func (task *UpdaterTask) RegistCommand(cmd *cobra.Command) {
+func RegistUpdaterCommand(cmd *cobra.Command) {
 
 	cmd.Flags().Duration(flagUpdatingInterval, defaultUpdatingInterval, "Updating interval (Duration format)")
 	cmd.Flags().String(flagUpdatingSource, defaultUpdatingSource, "Updating interval (Duration format)")
@@ -52,7 +52,6 @@ func (task *UpdaterTask) RegistCommand(cmd *cobra.Command) {
 func (task *UpdaterTask) RunHandler() {
 
 	fmt.Println("Updating....")
-	defer time.Sleep(viper.GetDuration(flagUpdatingInterval))
 
 	url := viper.GetString(flagUpdatingSource)
 	resp, err := http.Get(url)
@@ -62,9 +61,14 @@ func (task *UpdaterTask) RunHandler() {
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	_ = resp.Body.Close()
 
-	var prices types.Prices
+	var prices []types.Price
 	err = json.Unmarshal(body, &prices)
 
 	if err == nil {
@@ -77,5 +81,8 @@ func (task *UpdaterTask) RunHandler() {
 
 }
 
-func (task *UpdaterTask) InitHandler()     {}
+// dummy
+func (task *UpdaterTask) InitHandler() {}
+
+// dummy
 func (task *UpdaterTask) ShutdownHandler() {}

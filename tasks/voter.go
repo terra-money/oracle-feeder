@@ -1,15 +1,11 @@
 package tasks
 
 import (
-	"bytes"
-	"encoding/json"
 	"feeder/types"
+	"feeder/utils"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"io/ioutil"
-	"net/http"
 	"time"
 )
 
@@ -21,14 +17,14 @@ const (
 	//
 	defaultVotingInterval = time.Minute * 1
 	defaultLCDAddress     = "https://soju.terra.money:1317"
-	defaultChainId        = "soju-0005"
+	defaultChainID        = "soju-0005"
 
 	//
-	FlagFrom    = "from"
-	FlagPass    = "pass"
-	FlagChainId = "chain-id"
+	flagFrom    = "from"
+	flagPass    = "pass"
+	flagChainID = "chain-id"
 
-	FlagAddress = "address"
+	flagAddress = "address"
 )
 
 // Voter Task definition
@@ -41,63 +37,64 @@ var _ types.Task = (*VoterTask)(nil)
 // Implementation
 
 // Create new Voter Task
-func NewVoterTask(done chan struct{}, keeper *types.HistoryKeeper) *types.TaskRunner {
-	return &types.TaskRunner{"Price Voter", done, &VoterTask{keeper}}
+func NewVoterTask(keeper *types.HistoryKeeper) *types.TaskRunner {
+	return types.NewTaskRunner("Price Voter", &VoterTask{keeper}, viper.GetDuration(flagVotingInterval))
 }
 
 // Regist REST Commands
-func (task *VoterTask) RegistCommand(cmd *cobra.Command) {
+func RegistVoterCommand(cmd *cobra.Command) {
 	cmd.Flags().Duration(flagVotingInterval, defaultVotingInterval, "Voting interval (Duration format)")
 	cmd.Flags().Bool(flagVotingCli, false, "Voting by cli")
-	cmd.Flags().String(FlagChainId, defaultChainId, "Chain ID to vote")
+	cmd.Flags().String(flagChainID, defaultChainID, "Chain ID to vote")
 
-	cmd.Flags().String(FlagFrom, "my_name", "key name")
-	cmd.Flags().String(FlagPass, "12345678", "password")
-	cmd.Flags().String(FlagAddress, "terra1xffsq0sf43gjp66qaza590xp6suzsdmuxsyult", "Voter account address")
+	cmd.Flags().String(flagFrom, "my_name", "key name")
+	cmd.Flags().String(flagPass, "12345678", "password")
+	cmd.Flags().String(flagAddress, "terra1xffsq0sf43gjp66qaza590xp6suzsdmuxsyult", "Voter account address")
 
 	_ = viper.BindPFlag(flagVotingInterval, cmd.Flags().Lookup(flagVotingInterval))
 	_ = viper.BindPFlag(flagVotingCli, cmd.Flags().Lookup(flagVotingCli))
-	_ = viper.BindPFlag(FlagChainId, cmd.Flags().Lookup(FlagChainId))
+	_ = viper.BindPFlag(flagChainID, cmd.Flags().Lookup(flagChainID))
 
-	_ = viper.BindPFlag(FlagFrom, cmd.Flags().Lookup(FlagFrom))
-	_ = viper.BindPFlag(FlagPass, cmd.Flags().Lookup(FlagPass))
-	_ = viper.BindPFlag(FlagAddress, cmd.Flags().Lookup(FlagAddress))
+	_ = viper.BindPFlag(flagFrom, cmd.Flags().Lookup(flagFrom))
+	_ = viper.BindPFlag(flagPass, cmd.Flags().Lookup(flagPass))
+	_ = viper.BindPFlag(flagAddress, cmd.Flags().Lookup(flagAddress))
 
 	viper.SetDefault(flagVotingInterval, defaultVotingInterval)
 	viper.SetDefault(flagVotingCli, false)
-	viper.SetDefault(FlagChainId, defaultChainId)
+	viper.SetDefault(flagChainID, defaultChainID)
 
 	if !viper.GetBool(flagVotingCli) {
 		cmd.Flags().String(flagLCDAddress, defaultLCDAddress, "the url of lcd daemon to request vote")
 		_ = viper.BindPFlag(flagLCDAddress, cmd.Flags().Lookup(flagLCDAddress))
 		viper.SetDefault(flagLCDAddress, defaultLCDAddress)
 
-		_ = cmd.MarkFlagRequired(FlagAddress)
+		_ = cmd.MarkFlagRequired(flagAddress)
 	}
 
-	_ = cmd.MarkFlagRequired(FlagFrom)
-	_ = cmd.MarkFlagRequired(FlagPass)
-	_ = cmd.MarkFlagRequired(FlagChainId)
+	_ = cmd.MarkFlagRequired(flagFrom)
+	_ = cmd.MarkFlagRequired(flagPass)
+	_ = cmd.MarkFlagRequired(flagChainID)
 
 }
 
 // Run task
 func (task *VoterTask) RunHandler() {
-	time.Sleep(viper.GetDuration(flagVotingInterval)) // to prevent uninitialized voting, sleep first
 	fmt.Println("Voting....")
 
 	prices := task.keeper.GetLatest()
 
 	//config
-	voterKey := viper.GetString(FlagFrom)
-	voterPass := viper.GetString(FlagPass)
-	voterAddress := viper.GetString(FlagAddress)
-	chainId := viper.GetString(FlagChainId)
+	voterKey := viper.GetString(flagFrom)
+	voterPass := viper.GetString(flagPass)
+	voterAddress := viper.GetString(flagAddress)
+	chainID := viper.GetString(flagChainID)
 
 	byCli := viper.GetBool(flagVotingCli)
 
+	lcdClient := utils.NewLCDClient(viper.GetString(flagLCDAddress))
+
 	//
-	account, err := queryAccount(voterAddress)
+	account, err := lcdClient.QueryAccount(voterAddress)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -106,9 +103,9 @@ func (task *VoterTask) RunHandler() {
 	for _, price := range prices {
 		var err error
 		if !byCli {
-			err = voteByREST(price, account, voterKey, voterPass, chainId)
+			err = lcdClient.VoteByREST(price, account, voterKey, voterPass, chainID)
 		} else {
-			err = voteByCli(price)
+			err = utils.VoteByCli(price)
 		}
 
 		if err != nil {
@@ -117,89 +114,10 @@ func (task *VoterTask) RunHandler() {
 	}
 
 	fmt.Println("Voted!")
-
 }
 
-func queryAccount(voterAddress string) (*types.Account, error) {
-	lcdAddr := viper.GetString(flagLCDAddress)
+// dummy
+func (task *VoterTask) InitHandler() {}
 
-	// get account id & seq. no.
-	resp, err := http.Get(lcdAddr + "/auth/accounts/" + voterAddress)
-	if err != nil {
-		fmt.Println("REST Error: ", err)
-		return nil, err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-
-	var account types.Account
-	err = json.Unmarshal(body, &account)
-
-	return &account, err
-}
-
-type VoteReq struct {
-	BaseReq      rest.BaseReq `json:"base_req"`
-	Price        float64      `json:"price"`
-	Denom        string       `json:"denom"`
-	VoterAddress string       `json:"voter_address"`
-}
-
-func voteByREST(price types.Price, account *types.Account, voterKey string, voterPass string, chainId string) error {
-	fmt.Println("Voting ", price.Denom, " as ", price.Current)
-
-	lcdAddr := viper.GetString(flagLCDAddress)
-	// tx vote
-	voteMsg := VoteReq{
-		rest.BaseReq{
-			voterKey,
-			voterPass,
-			"Voting from oracle feeder",
-			chainId,
-
-			uint64(account.Value.AccountNumber),
-			uint64(account.Value.Sequence),
-
-			nil,
-			nil,
-
-			"20000",
-			"1.2",
-
-			false,
-			false,
-		},
-		price.Current,
-		price.Denom,
-		account.Value.Address,
-	}
-
-	pbytes, _ := json.Marshal(voteMsg)
-	buff := bytes.NewBuffer(pbytes)
-	resp, err := http.Post(lcdAddr+"/oracle/vote", "application/json", buff)
-
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	msg := string(body)
-	account.Value.Sequence += 1
-	fmt.Println("%v", msg)
-
-	return nil
-}
-
-func voteByCli(price types.Price) error {
-	fmt.Println("Voting ", price.Denom, " as ", price.Current)
-	return nil
-}
-
-func (task *VoterTask) InitHandler()     {}
+// dummy
 func (task *VoterTask) ShutdownHandler() {}

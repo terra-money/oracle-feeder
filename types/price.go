@@ -1,8 +1,7 @@
 package types
 
+// price struct for feeder REST API
 type Price struct {
-	Denom   string  `json:"denom"`
-	Current float64 `json:"current"`
+	Currency string  `json:"currency"`
+	Price    float64 `json:"price"`
 }
-
-type Prices []Price

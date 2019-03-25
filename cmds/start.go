@@ -13,73 +13,78 @@ import (
 )
 
 const (
-	flagNoRest    = "no-rest"
+	flagNoREST    = "no-rest"
 	flagNoUpdater = "no-updater"
 	flagNoVoter   = "no-voter"
 
 	flagProxyMode = "proxy"
 )
 
-var done = make(chan struct{})
+var taskRunners []*types.TaskRunner
 
+// "start" command handler
 func StartCommands(db *leveldb.DB) *cobra.Command {
-
-	keeper := &types.HistoryKeeper{db}
-
-	var taskRunners []*types.TaskRunner
-
-	if !viper.GetBool(flagNoRest) {
-		taskRunners = append(taskRunners, tasks.NewRestTask(done, keeper))
-	}
-
-	if !viper.GetBool(flagNoUpdater) {
-		taskRunners = append(taskRunners, tasks.NewUpdaterTask(done, keeper))
-	}
-
-	if !viper.GetBool(flagNoVoter) && viper.GetBool(flagProxyMode) {
-		taskRunners = append(taskRunners, tasks.NewVoterTask(done, keeper))
-	}
 
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start feeder client daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return startServer(taskRunners)
+			return startServer()
 		},
 	}
 
 	cmd.Flags().Bool(flagProxyMode, false, "starting feeder as a proxy")
-	cmd.Flags().Bool(flagNoRest, false, "run without REST Api serving")
+	cmd.Flags().Bool(flagNoREST, false, "run without REST Api serving")
 	cmd.Flags().Bool(flagNoUpdater, false, "run without data updating")
 	cmd.Flags().Bool(flagNoVoter, false, "run without voting (alias of --proxy)")
 
 	_ = viper.BindPFlag(flagProxyMode, cmd.Flags().Lookup(flagProxyMode))
-	_ = viper.BindPFlag(flagNoRest, cmd.Flags().Lookup(flagNoRest))
+	_ = viper.BindPFlag(flagNoREST, cmd.Flags().Lookup(flagNoREST))
 	_ = viper.BindPFlag(flagNoUpdater, cmd.Flags().Lookup(flagNoUpdater))
 	_ = viper.BindPFlag(flagNoVoter, cmd.Flags().Lookup(flagNoVoter))
 
-	// regist task commands
-	for _, task := range taskRunners {
-		task.RegistCommand(cmd)
+	viper.SetDefault(flagProxyMode, false)
+	viper.SetDefault(flagNoREST, false)
+	viper.SetDefault(flagNoUpdater, false)
+	viper.SetDefault(flagNoVoter, false)
+
+	keeper := &types.HistoryKeeper{Db: db}
+
+	if !viper.GetBool(flagNoREST) {
+		tasks.RegistRESTCommand(cmd)
+		taskRunners = append(taskRunners, tasks.NewRESTTask(keeper))
+	}
+
+	if !viper.GetBool(flagNoUpdater) {
+		tasks.RegistUpdaterCommand(cmd)
+		taskRunners = append(taskRunners, tasks.NewUpdaterTask(keeper))
+	}
+
+	if !viper.GetBool(flagNoVoter) && !viper.GetBool(flagProxyMode) {
+		tasks.RegistVoterCommand(cmd)
+		taskRunners = append(taskRunners, tasks.NewVoterTask(keeper))
 	}
 
 	return cmd
 }
 
-func startServer(tasks []*types.TaskRunner) error {
+func startServer() error {
 	fmt.Printf("Terra Oracle Feeder - Daemon Mode\n\n")
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	for _, task := range tasks {
+	for _, task := range taskRunners {
 		go task.Run()
 	}
 
 	<-sigs
 
 	fmt.Println("Shutting down...")
-	close(done)
+
+	for _, task := range taskRunners {
+		go task.Stop()
+	}
 
 	return nil
 }

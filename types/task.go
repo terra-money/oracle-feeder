@@ -2,13 +2,11 @@ package types
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
+	"time"
 )
 
-// Premitive interface of feeder Tasks
+// Primitive interface of feeder Tasks
 type Task interface {
-	RegistCommand(cmd *cobra.Command)
-
 	InitHandler()
 	ShutdownHandler()
 	RunHandler()
@@ -17,13 +15,22 @@ type Task interface {
 // Task Runner
 type TaskRunner struct {
 	Name string
-	Done chan struct{}
+
+	done   chan struct{}
+	ticker *time.Ticker
 
 	Task
 }
 
-func (runner *TaskRunner) RegistCommand(cmd *cobra.Command) {
-	runner.Task.RegistCommand(cmd)
+func NewTaskRunner(name string, task Task, interval time.Duration) *TaskRunner {
+	var done chan struct{}
+	var ticker *time.Ticker
+
+	if interval != 0 {
+		ticker = time.NewTicker(interval)
+	}
+
+	return &TaskRunner{name, done, ticker, task}
 }
 
 // starting point of task
@@ -32,9 +39,23 @@ func (runner *TaskRunner) Run() {
 	runner.Task.InitHandler()
 	fmt.Printf("%s is Ready\r\n", runner.Name)
 
-	for {
+	if runner.ticker != nil {
+		fmt.Printf("%s Run as periodic mode", runner.Name)
+		for {
+			select {
+			case <-runner.done:
+				fmt.Printf("%s is shutting down\r\n", runner.Name)
+				runner.Task.ShutdownHandler()
+				return
+
+			case <-runner.ticker.C:
+				runner.Task.RunHandler()
+			}
+		}
+	} else {
+		fmt.Printf("%s Run as one-time mode", runner.Name)
 		select {
-		case <-runner.Done:
+		case <-runner.done:
 			fmt.Printf("%s is shutting down\r\n", runner.Name)
 			runner.Task.ShutdownHandler()
 			return
@@ -43,4 +64,9 @@ func (runner *TaskRunner) Run() {
 			runner.Task.RunHandler()
 		}
 	}
+}
+
+// Stop task
+func (runner *TaskRunner) Stop() {
+	close(runner.done)
 }
