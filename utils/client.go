@@ -64,7 +64,7 @@ func (client *LCDClient) VoteByREST(price types.Price, account *types.Account, v
 			BaseReq: types.BaseReq{
 				From:     voterKey,
 				Password: voterPass,
-				Memo:     "Voting from oracle feeder",
+				Memo:     "Voting from oracle terrafeeder",
 				ChainID:  chainID,
 
 				AccountNumber: uint64(account.Value.AccountNumber),

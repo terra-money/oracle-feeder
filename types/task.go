@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Primitive interface of feeder Tasks
+// Primitive interface of terrafeeder Tasks
 type Task interface {
 	InitHandler()
 	ShutdownHandler()

@@ -32,7 +32,7 @@ func InitConfig(rootCmd *cobra.Command) {
 
 			viper.AddConfigPath(home)
 		}
-		viper.SetConfigName(".feeder")
+		viper.SetConfigName(".terrafeeder")
 		viper.AutomaticEnv()
 
 		if err := viper.ReadInConfig(); err == nil {

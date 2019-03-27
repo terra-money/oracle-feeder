@@ -8,7 +8,7 @@ install: tools lint
 	go install $(BUILD_FLAGS) ./feeder
 
 build: tools lint
-	go build $(BUILD_FLAGS) -o build/feeder ./feeder
+	go build $(BUILD_FLAGS) -o build/terrafeeder ./terrafeeder
 
 tools:
 	go get dep
@@ -16,4 +16,4 @@ tools:
 
 lint:
 	gometalinter --config=tools/gometalinter.json ./...
-	!(gometalinter --exclude /usr/lib/go/src/ --exclude client/lcd/statik/statik.go --exclude 'vendor/*' --disable-all --enable='errcheck' --vendor ./... | grep -v "client/")
+	!(gometalinter --exclude /usr/lib/go/src/ --exclude 'vendor/*' --disable-all --enable='errcheck' --vendor ./... | grep -v "client/")

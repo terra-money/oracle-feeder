@@ -26,9 +26,9 @@ func main() {
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:   "feedercli",
-		Short: "Terra oracle feeder client daemon",
-		Long:  `Terra oracle feeder client daemon. Long description`,
+		Use:   "terrafeeder",
+		Short: "Terra oracle terrafeeder client daemon",
+		Long:  `Terra oracle terrafeeder client daemon. Long description`,
 	}
 
 	cmds.InitConfig(rootCmd)

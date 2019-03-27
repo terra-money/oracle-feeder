@@ -26,13 +26,13 @@ func StartCommands(db *leveldb.DB) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "start",
-		Short: "Start feeder client daemon",
+		Short: "Start terrafeeder client daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return startServer(db)
 		},
 	}
 
-	cmd.Flags().Bool(flagProxyMode, false, "starting feeder as a proxy")
+	cmd.Flags().Bool(flagProxyMode, false, "starting terrafeeder as a proxy")
 	cmd.Flags().Bool(flagNoREST, false, "run without REST Api serving")
 	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
 
