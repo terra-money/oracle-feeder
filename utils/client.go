@@ -94,10 +94,10 @@ func (client *LCDClient) VoteByREST(price types.Price, account *types.Account, v
 		if resp.StatusCode != 200 {
 			body, _ := ioutil.ReadAll(resp.Body)
 			var msg map[string]string
-			err = json.Unmarshal(body, &msg)
 
-			if err == nil {
+			if err := json.Unmarshal(body, &msg); err == nil {
 				var data types.Response
+
 				err = json.Unmarshal([]byte(msg["message"]), &data)
 				if err == nil {
 					if data.Code == 4 {
@@ -106,6 +106,7 @@ func (client *LCDClient) VoteByREST(price types.Price, account *types.Account, v
 					}
 				}
 				fmt.Println(data)
+
 			} else {
 				fmt.Println(err)
 			}

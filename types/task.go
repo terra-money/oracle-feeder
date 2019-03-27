@@ -69,3 +69,16 @@ func (runner *TaskRunner) Run() {
 func (runner *TaskRunner) Stop() {
 	close(runner.done)
 }
+
+// Change running interval of task
+func (runner *TaskRunner) SetInterval(interval time.Duration) {
+
+	close(runner.done)
+
+	if interval != 0 {
+		runner.ticker = time.NewTicker(interval)
+	} else {
+		runner.ticker = nil
+	}
+	go runner.Run()
+}

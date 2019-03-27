@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -18,9 +19,10 @@ const (
 
 // Rest Task definition
 type RESTTask struct {
-	server *http.Server
-	mux    *http.ServeMux
-	keeper *types.HistoryKeeper
+	server        *http.Server
+	mux           *http.ServeMux
+	keeper        *types.HistoryKeeper
+	updaterRunner *types.TaskRunner
 }
 
 var _ types.Task = (*RESTTask)(nil)
@@ -28,8 +30,8 @@ var _ types.Task = (*RESTTask)(nil)
 // Implementation
 
 // Create new REST Task
-func NewRESTTask(keeper *types.HistoryKeeper) *types.TaskRunner {
-	return types.NewTaskRunner("REST API Server", &RESTTask{keeper: keeper}, 0)
+func NewRESTTaskRunner(keeper *types.HistoryKeeper, updaterRunner *types.TaskRunner) *types.TaskRunner {
+	return types.NewTaskRunner("REST API Server", &RESTTask{keeper: keeper, updaterRunner: updaterRunner}, 0)
 }
 
 // Regist REST Commands
@@ -54,7 +56,7 @@ func (task *RESTTask) InitHandler() {
 	if task.server.Addr == "localhost" || task.server.Addr == "127.0.0.1" {
 		isLocal = true
 	}
-	registHTTPHandler(task.keeper, task.mux, isLocal)
+	task.registHTTPHandler(task.keeper, task.mux, isLocal)
 
 }
 
@@ -71,7 +73,7 @@ func (task *RESTTask) ShutdownHandler() {
 	cancel()
 }
 
-func registHTTPHandler(keeper *types.HistoryKeeper, mux *http.ServeMux, isLocal bool) {
+func (task *RESTTask) registHTTPHandler(keeper *types.HistoryKeeper, mux *http.ServeMux, isLocal bool) {
 	mux.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		_, _ = res.Write([]byte("Hello, oracle!"))
 	})
@@ -84,16 +86,41 @@ func registHTTPHandler(keeper *types.HistoryKeeper, mux *http.ServeMux, isLocal 
 	if isLocal {
 		mux.HandleFunc("/interval", func(res http.ResponseWriter, req *http.Request) {
 			if req.Method != "POST" {
-				res.WriteHeader(http.StatusNotFound)
+				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
+			if err := req.ParseForm(); err != nil {
+				_, _ = fmt.Fprintf(res, "Data parsing err: %v", err)
+				return
+			}
+
+			interval, err := time.ParseDuration(req.FormValue("interval"))
+			if err != nil {
+				_, _ = fmt.Fprintf(res, "Data parsing err: %v", err)
+				return
+			}
+
+			task.updaterRunner.SetInterval(interval)
 		})
 
-		mux.HandleFunc("/vote", func(res http.ResponseWriter, req *http.Request) {
+		mux.HandleFunc("/source", func(res http.ResponseWriter, req *http.Request) {
 			if req.Method != "POST" {
-				res.WriteHeader(http.StatusNotFound)
+				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
+			if err := req.ParseForm(); err != nil {
+				_, _ = fmt.Fprintf(res, "Data parsing err: %v", err)
+				return
+			}
+
+			sourceURL, err := url.Parse(req.FormValue("url"))
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			updateTask := task.updaterRunner.Task.(*UpdaterTask)
+			updateTask.SourceURL = sourceURL.String()
 		})
 	}
 

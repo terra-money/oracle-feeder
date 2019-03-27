@@ -1,7 +1,8 @@
 import json
 import threading
 from flask import Flask
-from cutlet import get_data
+
+from .modules.cutlet import get_data
 
 app = Flask(__name__)
 data = []
@@ -21,6 +22,6 @@ periodic_update()
 
 
 @app.route("/last")
-def hello():
+def last_price():
     global data
     return json.dumps(data)

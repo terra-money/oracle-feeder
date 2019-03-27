@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	flagNoREST    = "no-rest"
-	flagNoUpdater = "no-updater"
-	flagNoVoter   = "no-voter"
+	flagNoREST   = "no-rest"
+	flagNoVoting = "no-voting"
 
 	flagProxyMode = "proxy"
 )
@@ -29,51 +28,48 @@ func StartCommands(db *leveldb.DB) *cobra.Command {
 		Use:   "start",
 		Short: "Start feeder client daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return startServer()
+			return startServer(db)
 		},
 	}
 
 	cmd.Flags().Bool(flagProxyMode, false, "starting feeder as a proxy")
 	cmd.Flags().Bool(flagNoREST, false, "run without REST Api serving")
-	cmd.Flags().Bool(flagNoUpdater, false, "run without data updating")
-	cmd.Flags().Bool(flagNoVoter, false, "run without voting (alias of --proxy)")
+	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
 
 	_ = viper.BindPFlag(flagProxyMode, cmd.Flags().Lookup(flagProxyMode))
 	_ = viper.BindPFlag(flagNoREST, cmd.Flags().Lookup(flagNoREST))
-	_ = viper.BindPFlag(flagNoUpdater, cmd.Flags().Lookup(flagNoUpdater))
-	_ = viper.BindPFlag(flagNoVoter, cmd.Flags().Lookup(flagNoVoter))
+	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
 
 	viper.SetDefault(flagProxyMode, false)
 	viper.SetDefault(flagNoREST, false)
-	viper.SetDefault(flagNoUpdater, false)
-	viper.SetDefault(flagNoVoter, false)
+	viper.SetDefault(flagNoVoting, false)
 
-	keeper := &types.HistoryKeeper{Db: db}
+	// adding task flags
+	tasks.RegistUpdaterCommand(cmd, viper.GetBool(flagNoVoting))
 
 	if !viper.GetBool(flagNoREST) {
 		tasks.RegistRESTCommand(cmd)
-		taskRunners = append(taskRunners, tasks.NewRESTTask(keeper))
-	}
-
-	if !viper.GetBool(flagNoUpdater) {
-		tasks.RegistUpdaterCommand(cmd)
-		updater := tasks.NewUpdaterTask(keeper)
-		taskRunners = append(taskRunners, updater)
-
-		updater.RunHandler() // for initial update
-	}
-
-	if !viper.GetBool(flagNoVoter) && !viper.GetBool(flagProxyMode) {
-		tasks.RegistVoterCommand(cmd)
-		taskRunners = append(taskRunners, tasks.NewVoterTask(keeper))
 	}
 
 	return cmd
 }
 
-func startServer() error {
+func startServer(db *leveldb.DB) error {
 	fmt.Printf("Terra Oracle Feeder - Daemon Mode\n\n")
 
+	// init keeper
+	keeper := &types.HistoryKeeper{Db: db}
+
+	// init updater
+	updater := tasks.NewUpdaterTaskRunner(keeper)
+	taskRunners = append(taskRunners, updater)
+
+	// init rest
+	if !viper.GetBool(flagNoREST) {
+		taskRunners = append(taskRunners, tasks.NewRESTTaskRunner(keeper, updater))
+	}
+
+	// run
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 

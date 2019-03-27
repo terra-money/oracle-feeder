@@ -7,7 +7,7 @@ from ccxt import ExchangeError
 
 import ccxt
 
-import sdr
+from .sdr import get_sdr_rates
 
 CHECKING_EXCHANGES = ['coinone', 'bithumb', 'upbit', 'coinex', 'binance', 'bitfinex', 'bittrex', 'kraken', 'kucoin',
                       'theocean']
@@ -32,7 +32,7 @@ def get_exchanges():
 
 
 def get_data():
-    sdr_rates = sdr.get_sdr_rates()
+    sdr_rates = get_sdr_rates()
     exchanges = get_exchanges()
 
     result = []
