@@ -1,3 +1,5 @@
+from typing import Dict
+
 import requests
 import csv
 
@@ -14,7 +16,7 @@ SDR_CURRENCY_CODE_MAP = {
 }
 
 
-def get_sdr_rates():
+def get_sdr_rates() -> Dict[str, float]:
     rates = {}
     tsv = requests.get(SDR_RATE_URL).text
     reader = csv.reader(tsv.splitlines(), delimiter='\t')

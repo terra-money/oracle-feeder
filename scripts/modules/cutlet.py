@@ -1,74 +1,115 @@
 import json
-import sys
 from statistics import median
-from typing import Dict
+from typing import Dict, List
 
-from ccxt import ExchangeError
+import tqdm
+from ccxt import ExchangeError, ExchangeNotAvailable, DDoSProtection, BaseError, RequestTimeout
 
 import ccxt
 
 from .sdr import get_sdr_rates
 
-CHECKING_EXCHANGES = ['coinone', 'bithumb', 'upbit', 'coinex', 'binance', 'bitfinex', 'bittrex', 'kraken', 'kucoin',
-                      'theocean']
-CHECKING_CURRENCIES = ['KRW', 'USD', 'CHY', 'JPY', 'EUR']
+EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg']
+UPDATING_CURRENCIES = ['KRW', 'USD', 'CHY', 'JPY', 'EUR']
 
 LUNA_DENOM = "ETH"
 
 
 # ------------------------------------------------------------------------------
 
-def get_exchanges():
-    exchanges: Dict[str, ccxt.Exchange] = {}
+def filter_exchanges() -> Dict[str, List[ccxt.Exchange]]:
+    """
+    filtering exchanges, has fetch_ticker for luna/currency
+    :return:
+    filtered exchanges
+    """
 
-    for id in CHECKING_EXCHANGES:
-        exchange = getattr(ccxt, id)
-        exchange_config = {}
-        if sys.version_info[0] < 3:
-            exchange_config.update({'enableRateLimit': True})
-        exchanges[id] = exchange(exchange_config)
+    exchanges: Dict[str, List[ccxt.Exchange]] = {}
+
+    for currency in UPDATING_CURRENCIES:
+        symbol = f"{LUNA_DENOM}/{currency}"
+        exchanges[symbol] = []
+
+    print("Checking available exchanges --")
+
+    exchange_tqdm = tqdm.tqdm(ccxt.exchanges, "Checking available exchanges")
+    for exchange_id in exchange_tqdm:
+        exchange_tqdm.set_description_str(f"Checking '{exchange_id}' ")
+
+        if exchange_id in EXCHANGE_BLACKLIST:
+            continue
+
+        exchange = getattr(ccxt, exchange_id)()
+        try:
+            markets = exchange.fetch_markets()
+            if type(markets) == dict:
+                markets = list(markets.values())
+
+            if len(markets) == 0 or type(markets) != list or type(markets[0]) != dict:
+                print(markets)
+                print("Internal Error: Markets type mismatched on ", exchange_id)
+                raise TypeError
+
+            for market in markets:
+                if 'symbol' not in market:
+                    print(market)
+                    print("Internal Error: Market type mismatched on ", exchange_id)
+                    raise TypeError
+
+                symbol = market['symbol']
+                if symbol in exchanges and hasattr(exchange, 'fetch_ticker'):
+                    exchanges[symbol].append(exchange)
+        except BaseError:
+            pass
 
     return exchanges
 
 
-def get_data():
+def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
     sdr_rates = get_sdr_rates()
-    exchanges = get_exchanges()
 
     result = []
     sdr_result = []
 
-    for currency in CHECKING_CURRENCIES:
+    currency_tqdm = tqdm.tqdm(UPDATING_CURRENCIES, "Updating")
+    for currency in currency_tqdm:
+        currency_tqdm.set_description_str(f"Currency '{currency}'")
+
         symbol = f"{LUNA_DENOM}/{currency}"
         values = []
 
         sdr_rate = sdr_rates.get(currency, 0)
 
-        for ex_code, exchange in exchanges.items():
+        exchange_tqdm = tqdm.tqdm(exchanges[symbol])
+        for exchange in exchange_tqdm:
+            exchange_tqdm.set_description_str(f"Updating from '{exchange.id}'")
+
             try:
                 last = exchange.fetch_ticker(symbol).get('last', 0)
-                values.append(1/last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
+                values.append(1 / last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
 
                 if sdr_rate:
-                    sdr_result.append(1/(last * sdr_rate))
+                    sdr_result.append(1 / (last * sdr_rate))
 
-            except ExchangeError:
+            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout):
                 pass
             except Exception as e:
-                print(f"{symbol}/{ex_code}")
+                print(f"{symbol}/{exchange.id}")
                 raise e
 
         if values:
             result.append({
                 "currency": currency,
-                "price": median(values)
+                "price": str(median(values))
             })
 
     if sdr_result:
         result.append({
             "currency": "SDR",
-            "price": median(sdr_result)
+            "price": str(median(sdr_result))
         })
+
+    print("")
 
     return result
 
@@ -77,7 +118,12 @@ def get_data():
 
 
 def main():
-    result = get_data()
+    exchanges = filter_exchanges()
+    for symbol, exchange in exchanges.items():
+        print(f"{symbol} : {len(exchange)} exchanges")
+
+    result = get_data(exchanges)
+
     print(json.dumps(result))
 
 
