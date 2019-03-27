@@ -3,7 +3,7 @@ from statistics import median
 from typing import Dict, List
 
 import tqdm
-from ccxt import ExchangeError, ExchangeNotAvailable, DDoSProtection, BaseError, RequestTimeout
+from ccxt import ExchangeError, ExchangeNotAvailable, DDoSProtection, BaseError, RequestTimeout, NetworkError
 
 import ccxt
 
@@ -71,7 +71,10 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
     result = []
     sdr_result = []
 
-    currency_tqdm = tqdm.tqdm(UPDATING_CURRENCIES, "Updating")
+    success_count = 0
+    fail_count = 0
+
+    currency_tqdm = tqdm.tqdm(UPDATING_CURRENCIES, "Fetching")
     for currency in currency_tqdm:
         currency_tqdm.set_description_str(f"Currency '{currency}'")
 
@@ -91,8 +94,11 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
                 if sdr_rate:
                     sdr_result.append(1 / (last * sdr_rate))
 
-            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout):
-                pass
+                success_count += 1
+
+            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout, NetworkError):
+                fail_count += 1
+
             except Exception as e:
                 print(f"{symbol}/{exchange.id}")
                 raise e
@@ -110,6 +116,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
         })
 
     print("")
+    print(f"Success: {success_count}, Fail: {fail_count}")
 
     return result
 

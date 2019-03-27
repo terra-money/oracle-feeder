@@ -1,3 +1,4 @@
 ccxt
 flask
 requests
+tqdm
