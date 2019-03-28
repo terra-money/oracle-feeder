@@ -10,7 +10,7 @@ import ccxt
 from .sdr import get_sdr_rates
 
 EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg']
-UPDATING_CURRENCIES = ['KRW', 'USD', 'CHY', 'JPY', 'EUR']
+UPDATING_CURRENCIES = ['USD', 'KRW', 'CHY', 'JPY', 'EUR', 'GBP']
 
 LUNA_DENOM = "ETH"
 

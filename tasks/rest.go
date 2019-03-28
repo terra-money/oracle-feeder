@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"encoding/json"
 	"feeder/types"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -81,6 +82,27 @@ func (task *RESTTask) registHTTPHandler(keeper *types.HistoryKeeper, mux *http.S
 	mux.HandleFunc("/last", func(res http.ResponseWriter, req *http.Request) {
 		pricesByte := keeper.GetLatestBytes()
 		_, _ = res.Write(pricesByte)
+	})
+
+	mux.HandleFunc("/range", func(res http.ResponseWriter, req *http.Request) {
+		query := req.URL.Query()
+		fromTime := query.Get("from")
+		toTime := query.Get("to")
+
+		if fromTime == "" || toTime == "" {
+			_, _ = fmt.Fprintf(res, "query parsing err")
+			return
+		}
+
+		histories := task.keeper.GetHistories(fromTime, toTime)
+		b, err := json.Marshal(histories)
+
+		if err != nil {
+			_, _ = fmt.Fprintf(res, "encoding error")
+			return
+		}
+
+		_, _ = res.Write(b)
 	})
 
 	if isLocal {

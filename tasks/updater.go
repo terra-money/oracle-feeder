@@ -43,6 +43,7 @@ type UpdaterTask struct {
 	keeper *types.HistoryKeeper
 
 	SourceURL string
+	noVoting  bool
 }
 
 var _ types.Task = (*UpdaterTask)(nil)
@@ -50,9 +51,9 @@ var _ types.Task = (*UpdaterTask)(nil)
 // Implementation
 
 // Create new Update Task
-func NewUpdaterTaskRunner(keeper *types.HistoryKeeper) *types.TaskRunner {
+func NewUpdaterTaskRunner(keeper *types.HistoryKeeper, noVoting bool) *types.TaskRunner {
 	sourceURL := viper.GetString(flagUpdatingSource)
-	return types.NewTaskRunner("Price Updater", &UpdaterTask{keeper, sourceURL}, viper.GetDuration(flagUpdatingInterval))
+	return types.NewTaskRunner("Price Updater", &UpdaterTask{keeper, sourceURL, noVoting}, viper.GetDuration(flagUpdatingInterval))
 }
 
 // Regist REST Commands
@@ -113,7 +114,7 @@ func (task *UpdaterTask) RunHandler() {
 
 	fmt.Println("Updating....")
 
-	prices, err := utils.UpdatePrices(task.SourceURL)
+	history, err := utils.UpdatePrices(task.SourceURL)
 
 	if err != nil {
 		fmt.Println(err)
@@ -121,10 +122,15 @@ func (task *UpdaterTask) RunHandler() {
 	}
 
 	fmt.Println("Updated!")
+
+	if task.noVoting {
+		return
+	}
+
 	fmt.Println("Voting....")
 
 	if !viper.GetBool(flagNoDBMode) {
-		_ = task.keeper.AddHistory(prices)
+		_ = task.keeper.AddHistory(history)
 	}
 
 	voterKey := viper.GetString(flagFrom)
@@ -136,7 +142,7 @@ func (task *UpdaterTask) RunHandler() {
 
 	lcdAddress := viper.GetString(flagLCDAddress)
 
-	err = utils.VoteAll(voterKey, voterPass, voterAddress, chainID, byCli, lcdAddress, prices)
+	err = utils.VoteAll(voterKey, voterPass, voterAddress, chainID, byCli, lcdAddress, history.Prices)
 	if err != nil {
 		fmt.Println(err)
 		return

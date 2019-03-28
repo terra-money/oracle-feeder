@@ -9,7 +9,7 @@ import (
 )
 
 // get update price data
-func UpdatePrices(url string) ([]types.Price, error) {
+func UpdatePrices(url string) (*types.History, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
@@ -24,8 +24,8 @@ func UpdatePrices(url string) ([]types.Price, error) {
 
 	_ = resp.Body.Close()
 
-	var prices []types.Price
-	err = json.Unmarshal(body, &prices)
+	var history types.History
+	err = json.Unmarshal(body, &history)
 
-	return prices, err
+	return &history, err
 }

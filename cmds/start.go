@@ -61,7 +61,8 @@ func startServer(db *leveldb.DB) error {
 	keeper := &types.HistoryKeeper{Db: db}
 
 	// init updater
-	updater := tasks.NewUpdaterTaskRunner(keeper)
+	noVoting := viper.GetBool(flagNoVoting)
+	updater := tasks.NewUpdaterTaskRunner(keeper, noVoting)
 	taskRunners = append(taskRunners, updater)
 
 	// init rest

@@ -1,11 +1,17 @@
+import datetime
 import json
 import threading
+
+import pytz as pytz
 from flask import Flask
 
 from modules.cutlet import get_data, filter_exchanges
 
 app = Flask(__name__)
-data = []
+data = {
+    "created_at": "",
+    "prices": ""
+}
 
 exchanges = filter_exchanges()
 
@@ -16,7 +22,10 @@ for symbol, exchange in exchanges.items():
 def periodic_update():
     global data
     print("Updating...")
-    data = get_data(exchanges)
+
+    data['prices'] = get_data(exchanges)
+    data['created_at'] = datetime.datetime.utcnow().replace(tzinfo=pytz.utc).isoformat()
+
     print("Updated!")
     print(json.dumps(data))
 

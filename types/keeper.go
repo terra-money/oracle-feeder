@@ -13,8 +13,13 @@ type HistoryKeeper struct {
 	Db *leveldb.DB
 }
 
-func getCurrentTimeKey() []byte {
-	b, err := time.Now().GobEncode()
+type History struct {
+	CreatedAt time.Time
+	Prices    []Price
+}
+
+func getCurrentTimeKey(keyTime time.Time) []byte {
+	b, err := keyTime.GobEncode()
 	if err != nil {
 		panic(err)
 	}
@@ -22,14 +27,13 @@ func getCurrentTimeKey() []byte {
 }
 
 // Add history from db
-func (keeper *HistoryKeeper) AddHistory(prices []Price) error {
-	b, err := json.Marshal(prices)
-
+func (keeper *HistoryKeeper) AddHistory(history *History) error {
+	b, err := json.Marshal(history)
 	if err != nil {
 		panic(err)
 	}
 
-	return keeper.Db.Put(getCurrentTimeKey(), b, nil)
+	return keeper.Db.Put(getCurrentTimeKey(history.CreatedAt), b, nil)
 }
 
 // Get latest history from db
@@ -41,13 +45,13 @@ func (keeper *HistoryKeeper) GetLatestBytes() []byte {
 }
 
 // Get latest history from db
-func (keeper *HistoryKeeper) GetLatest() []Price {
+func (keeper *HistoryKeeper) GetLatest() History {
 
-	var prices []Price
+	var history History
 	value := keeper.GetLatestBytes()
 
 	if value != nil {
-		err := json.Unmarshal(value, &prices)
+		err := json.Unmarshal(value, &history)
 		if err != nil {
 			panic(err)
 		}
@@ -55,7 +59,7 @@ func (keeper *HistoryKeeper) GetLatest() []Price {
 		fmt.Println("No history data, skipping")
 	}
 
-	return prices
+	return history
 }
 
 func timeStringToBytes(strTime string) ([]byte, error) {
@@ -73,7 +77,7 @@ func timeStringToBytes(strTime string) ([]byte, error) {
 }
 
 // Get all histories from db
-func (keeper *HistoryKeeper) GetHistories(from string, to string) map[string][]Price {
+func (keeper *HistoryKeeper) GetHistories(from string, to string) []History {
 	fromBytes, err := timeStringToBytes(from)
 	if err != nil {
 		return nil
@@ -84,7 +88,15 @@ func (keeper *HistoryKeeper) GetHistories(from string, to string) map[string][]P
 	}
 
 	timeRange := util.Range{Start: fromBytes, Limit: toBytes}
-	keeper.Db.NewIterator(&timeRange, nil)
+	iter := keeper.Db.NewIterator(&timeRange, nil)
 
-	return nil
+	histories := make([]History, 0)
+	for iter.Next() {
+		var history History
+		if err := json.Unmarshal(iter.Value(), &history); err != nil {
+			histories = append(histories, history)
+		}
+	}
+
+	return histories
 }
