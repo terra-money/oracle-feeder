@@ -69,6 +69,8 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
     sdr_rates = get_sdr_rates()
 
     result = []
+    nodata = []
+
     sdr_result = []
 
     success_count = 0
@@ -108,13 +110,29 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
                 "currency": currency,
                 "price": str(median(values))
             })
+        else:
+            nodata.append(currency)
 
+    # Post processing
     if sdr_result:
+        sdr_price = median(sdr_result)
+
         result.append({
             "currency": "SDR",
-            "price": str(median(sdr_result))
+            "price": str(sdr_price)
         })
 
+        # fill-in
+        for currency in nodata:
+            sdr_rate = 1/sdr_rates.get(currency, 0)
+
+            result.append({
+                "currency": currency,
+                "price": str(sdr_price * sdr_rate)
+            })
+
+
+    # Information printing
     print("")
     print(f"Success: {success_count}, Fail: {fail_count}")
 
