@@ -59,7 +59,8 @@ def filter_exchanges() -> Dict[str, List[ccxt.Exchange]]:
                 symbol = market['symbol']
                 if symbol in exchanges and hasattr(exchange, 'fetch_ticker'):
                     exchanges[symbol].append(exchange)
-        except BaseError:
+
+        except (BaseError, AttributeError):
             pass
 
     return exchanges

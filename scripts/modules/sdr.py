@@ -6,9 +6,9 @@ import csv
 
 SDR_RATE_URL = "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y"
 
-
 SDR_CURRENCY_CODE_MAP = {
     "U.S. dollar": "USD",
+    "U.K. pound": "GBP",
     "Euro": "EUR",
     "Japanese yen": "JPY",
     "Korean won": "KRW",
