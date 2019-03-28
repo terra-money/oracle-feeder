@@ -88,6 +88,7 @@ func (client *LCDClient) VoteByREST(price types.Price, account *types.Account, v
 
 		if err != nil {
 			fmt.Println(err)
+			fmt.Println(resp.Body)
 			return err
 		}
 
@@ -108,6 +109,7 @@ func (client *LCDClient) VoteByREST(price types.Price, account *types.Account, v
 				fmt.Println(data)
 
 			} else {
+				fmt.Println(body)
 				fmt.Println(err)
 			}
 

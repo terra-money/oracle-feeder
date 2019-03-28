@@ -2,6 +2,7 @@ package utils
 
 import (
 	"feeder/types"
+	"fmt"
 )
 
 // Voting all price data
@@ -24,7 +25,8 @@ func VoteAll(voterKey string, voterPass string, voterAddress string, chainID str
 		}
 
 		if err != nil {
-			return err
+			fmt.Println(err)
+			continue
 		}
 	}
 
