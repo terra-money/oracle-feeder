@@ -124,7 +124,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
 
         # fill-in
         for currency in nodata:
-            sdr_rate = 1/sdr_rates.get(currency, 0)
+            sdr_rate = sdr_rates.get(currency, 0)
 
             result.append({
                 "currency": currency,
