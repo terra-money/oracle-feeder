@@ -15,36 +15,98 @@
 package main
 
 import (
-	"feeder/cmds"
+	"feeder/tasks"
+	"feeder/types"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"os"
+	"os/signal"
+	"syscall"
+)
+
+const (
+	flagHome = "home"
+
+	flagNoREST   = "no-rest"
+	flagNoVoting = "no-voting"
+
+	flagProxyMode = "proxy"
+)
+
+var (
+	defaultHome = os.ExpandEnv("$HOME/.terrafeeder")
 )
 
 func main() {
+	var keeper *types.HistoryKeeper
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "terrafeeder",
 		Short: "Terra oracle terrafeeder client daemon",
 		Long:  `Terra oracle terrafeeder client daemon. Long description`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return startServer(keeper)
+		},
 	}
 
-	cmds.InitConfig(rootCmd)
-	db, err := leveldb.OpenFile(cmds.GetHistoryPath(), nil)
+	initConfig(rootCmd)
+	db, err := leveldb.OpenFile(getHistoryPath(), nil)
+
 	if err != nil {
 		panic(err)
 	}
+
+	// init keeper
+	keeper = &types.HistoryKeeper{Db: db}
 
 	defer func() {
 		_ = db.Close()
 	}()
 
-	rootCmd.AddCommand(cmds.StartCommands(db), cmds.ConfigCommands())
+	registCommands(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func startServer(keeper *types.HistoryKeeper) error {
+	var taskRunners []*types.TaskRunner
+
+	fmt.Printf("Terra Oracle Feeder - Daemon Mode\n\n")
+
+	// init updater
+	noVoting := viper.GetBool(flagNoVoting)
+	updater := tasks.NewUpdaterTaskRunner(keeper, noVoting)
+	taskRunners = append(taskRunners, updater)
+
+	// init rest
+	if !viper.GetBool(flagNoREST) {
+		taskRunners = append(taskRunners, tasks.NewRESTTaskRunner(keeper, updater))
+	}
+
+	// run
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	for _, task := range taskRunners {
+		go task.Run()
+	}
+
+	<-sigs
+
+	fmt.Print("\n\n")
+	fmt.Println("-------------------------------")
+	fmt.Println("Shutting down...")
+	fmt.Println("-------------------------------")
+
+	for _, task := range taskRunners {
+		go task.Stop()
+	}
+
+	return nil
 }
