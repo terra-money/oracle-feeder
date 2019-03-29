@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -54,7 +55,7 @@ func (task *RESTTask) InitHandler() {
 	fmt.Println("REST binded at ", viper.GetString(flagListenAddr))
 
 	isLocal := false
-	if task.server.Addr == "localhost" || task.server.Addr == "127.0.0.1" {
+	if strings.HasPrefix(task.server.Addr, "localhost") || strings.HasPrefix(task.server.Addr, "127.0.0.1") {
 		isLocal = true
 	}
 	task.registHTTPHandler(task.keeper, task.mux, isLocal)
@@ -123,6 +124,7 @@ func (task *RESTTask) registHTTPHandler(keeper *types.HistoryKeeper, mux *http.S
 			}
 
 			task.updaterRunner.SetInterval(interval)
+			_, _ = res.Write([]byte("ok"))
 		})
 
 		mux.HandleFunc("/source", func(res http.ResponseWriter, req *http.Request) {
@@ -143,6 +145,8 @@ func (task *RESTTask) registHTTPHandler(keeper *types.HistoryKeeper, mux *http.S
 
 			updateTask := task.updaterRunner.Task.(*UpdaterTask)
 			updateTask.SourceURL = sourceURL.String()
+
+			_, _ = res.Write([]byte("ok"))
 		})
 	}
 

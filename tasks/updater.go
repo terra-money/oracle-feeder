@@ -17,9 +17,8 @@ const (
 	//
 
 	// voting flags
-	flagVotingInterval = "voting-interval"
-	flagVotingCli      = "voting-cli"
-	flagLCDAddress     = "lcd"
+	flagVotingCli  = "voting-cli"
+	flagLCDAddress = "lcd"
 
 	flagFrom    = "from"
 	flagPass    = "pass"
@@ -33,9 +32,8 @@ const (
 	defaultUpdatingSource = "http://localhost:5000/last"
 
 	// voting default
-	defaultVotingInterval = time.Minute * 1
-	defaultLCDAddress     = "https://soju.terra.money:1317"
-	defaultChainID        = "soju-0005"
+	defaultLCDAddress = "https://soju.terra.money:1317"
+	defaultChainID    = "soju-0005"
 )
 
 // Updater Task definition
@@ -74,7 +72,6 @@ func RegistUpdaterCommand(cmd *cobra.Command, noVoting bool) {
 	if !noVoting {
 
 		// flags about voting
-		cmd.Flags().Duration(flagVotingInterval, defaultVotingInterval, "Voting interval (Duration format)")
 		cmd.Flags().Bool(flagVotingCli, false, "Voting by cli")
 		cmd.Flags().String(flagChainID, defaultChainID, "Chain ID to vote")
 
@@ -82,7 +79,6 @@ func RegistUpdaterCommand(cmd *cobra.Command, noVoting bool) {
 		cmd.Flags().String(flagPass, "12345678", "password")
 		cmd.Flags().String(flagAddress, "terra1xffsq0sf43gjp66qaza590xp6suzsdmuxsyult", "Voter account address")
 
-		_ = viper.BindPFlag(flagVotingInterval, cmd.Flags().Lookup(flagVotingInterval))
 		_ = viper.BindPFlag(flagVotingCli, cmd.Flags().Lookup(flagVotingCli))
 		_ = viper.BindPFlag(flagChainID, cmd.Flags().Lookup(flagChainID))
 
@@ -90,7 +86,6 @@ func RegistUpdaterCommand(cmd *cobra.Command, noVoting bool) {
 		_ = viper.BindPFlag(flagPass, cmd.Flags().Lookup(flagPass))
 		_ = viper.BindPFlag(flagAddress, cmd.Flags().Lookup(flagAddress))
 
-		viper.SetDefault(flagVotingInterval, defaultVotingInterval)
 		viper.SetDefault(flagVotingCli, false)
 		viper.SetDefault(flagChainID, defaultChainID)
 

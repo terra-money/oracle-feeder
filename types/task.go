@@ -16,7 +16,7 @@ type Task interface {
 type TaskRunner struct {
 	Name string
 
-	done   chan struct{}
+	done   *chan struct{}
 	ticker *time.Ticker
 
 	Task
@@ -29,7 +29,8 @@ func NewTaskRunner(name string, task Task, interval time.Duration) *TaskRunner {
 		ticker = time.NewTicker(interval)
 	}
 
-	return &TaskRunner{name, make(chan struct{}), ticker, task}
+	done := make(chan struct{})
+	return &TaskRunner{name, &done, ticker, task}
 }
 
 // starting point of task
@@ -38,11 +39,13 @@ func (runner *TaskRunner) Run() {
 	runner.Task.InitHandler()
 	fmt.Printf("%s is Ready\r\n", runner.Name)
 
+	done := runner.done
+
 	if runner.ticker != nil {
-		fmt.Printf("%s Run as periodic mode", runner.Name)
+		fmt.Printf("%s Run as periodic mode\r\n", runner.Name)
 		for {
 			select {
-			case <-runner.done:
+			case <-*done:
 				fmt.Printf("%s is shutting down\r\n", runner.Name)
 				runner.Task.ShutdownHandler()
 				return
@@ -52,9 +55,9 @@ func (runner *TaskRunner) Run() {
 			}
 		}
 	} else {
-		fmt.Printf("%s Run as one-time mode", runner.Name)
+		fmt.Printf("%s Run as one-time mode\r\n", runner.Name)
 		select {
-		case <-runner.done:
+		case <-*done:
 			fmt.Printf("%s is shutting down\r\n", runner.Name)
 			runner.Task.ShutdownHandler()
 			return
@@ -67,18 +70,21 @@ func (runner *TaskRunner) Run() {
 
 // Stop task
 func (runner *TaskRunner) Stop() {
-	close(runner.done)
+	close(*runner.done)
 }
 
 // Change running interval of task
 func (runner *TaskRunner) SetInterval(interval time.Duration) {
 
-	close(runner.done)
+	close(*runner.done)
 
 	if interval != 0 {
 		runner.ticker = time.NewTicker(interval)
 	} else {
 		runner.ticker = nil
 	}
+
+	done := make(chan struct{})
+	runner.done = &done
 	go runner.Run()
 }

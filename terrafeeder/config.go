@@ -45,15 +45,12 @@ func initConfig(rootCmd *cobra.Command) {
 
 func registCommands(cmd *cobra.Command) {
 
-	cmd.Flags().Bool(flagProxyMode, false, "starting terrafeeder as a proxy")
 	cmd.Flags().Bool(flagNoREST, false, "run without REST Api serving")
 	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
 
-	_ = viper.BindPFlag(flagProxyMode, cmd.Flags().Lookup(flagProxyMode))
 	_ = viper.BindPFlag(flagNoREST, cmd.Flags().Lookup(flagNoREST))
 	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
 
-	viper.SetDefault(flagProxyMode, false)
 	viper.SetDefault(flagNoREST, false)
 	viper.SetDefault(flagNoVoting, false)
 

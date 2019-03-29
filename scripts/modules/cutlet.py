@@ -132,7 +132,6 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
                 "price": str(sdr_price * sdr_rate)
             })
 
-
     # Information printing
     print("")
     print(f"Success: {success_count}, Fail: {fail_count}")

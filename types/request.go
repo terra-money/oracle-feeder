@@ -5,7 +5,6 @@ import (
 )
 
 // redefine VoteReq in cosmos-sdk
-
 type VoteReq struct {
 	BaseReq      BaseReq `json:"base_req"`
 	Price        sdk.Dec `json:"price"`

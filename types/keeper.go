@@ -13,6 +13,7 @@ type HistoryKeeper struct {
 	Db *leveldb.DB
 }
 
+// Price history
 type History struct {
 	CreatedAt time.Time
 	Prices    []Price

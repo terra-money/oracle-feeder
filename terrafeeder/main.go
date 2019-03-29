@@ -31,8 +31,6 @@ const (
 
 	flagNoREST   = "no-rest"
 	flagNoVoting = "no-voting"
-
-	flagProxyMode = "proxy"
 )
 
 var (
