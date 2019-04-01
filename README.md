@@ -2,7 +2,7 @@
 Oracle Feeder Daemon
 
 ## Usage
-terrafeeder --from {account} --pass {password} 
+terrafeeder --from {account}
 
 ### Global Flags
 

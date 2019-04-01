@@ -4,6 +4,7 @@ import (
 	"feeder/types"
 	"feeder/utils"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"time"
@@ -20,9 +21,8 @@ const (
 	flagVotingCli  = "voting-cli"
 	flagLCDAddress = "lcd"
 
-	flagFrom    = "from"
-	flagPass    = "pass"
-	flagChainID = "chain-id"
+	FlagVoterKey = "from"
+	flagChainID  = "chain-id"
 
 	flagAddress = "address"
 
@@ -34,6 +34,7 @@ const (
 	// voting default
 	defaultLCDAddress = "https://soju.terra.money:1317"
 	defaultChainID    = "soju-0005"
+	defaultKeyPass    = "12345678"
 )
 
 // Updater Task definition
@@ -42,6 +43,9 @@ type UpdaterTask struct {
 
 	SourceURL string
 	noVoting  bool
+
+	voterKey     string
+	voterKeyPass string
 }
 
 var _ types.Task = (*UpdaterTask)(nil)
@@ -49,9 +53,24 @@ var _ types.Task = (*UpdaterTask)(nil)
 // Implementation
 
 // Create new Update Task
-func NewUpdaterTaskRunner(keeper *types.HistoryKeeper, noVoting bool) *types.TaskRunner {
+func NewUpdaterTaskRunner(keeper *types.HistoryKeeper, noVoting bool, voterKey string) *types.TaskRunner {
 	sourceURL := viper.GetString(flagUpdatingSource)
-	return types.NewTaskRunner("Price Updater", &UpdaterTask{keeper, sourceURL, noVoting}, viper.GetDuration(flagUpdatingInterval))
+
+	voterKeyPass := ""
+	if !noVoting {
+		buf := client.BufferStdin()
+		prompt := fmt.Sprintf(
+			"Password for account '%s' (default %s):", voterKey, defaultKeyPass,
+		)
+
+		voterKeyPass, err := client.GetPassword(prompt, buf)
+		if err != nil && voterKeyPass != "" {
+			fmt.Println(err)
+			return nil
+		}
+	}
+
+	return types.NewTaskRunner("Price Updater", &UpdaterTask{keeper, sourceURL, noVoting, voterKey, voterKeyPass}, viper.GetDuration(flagUpdatingInterval))
 }
 
 // Regist REST Commands
@@ -75,15 +94,13 @@ func RegistUpdaterCommand(cmd *cobra.Command, noVoting bool) {
 		cmd.Flags().Bool(flagVotingCli, false, "Voting by cli")
 		cmd.Flags().String(flagChainID, defaultChainID, "Chain ID to vote")
 
-		cmd.Flags().String(flagFrom, "my_name", "key name")
-		cmd.Flags().String(flagPass, "12345678", "password")
+		cmd.Flags().String(FlagVoterKey, "my_name", "key name")
 		cmd.Flags().String(flagAddress, "terra1xffsq0sf43gjp66qaza590xp6suzsdmuxsyult", "Voter account address")
 
 		_ = viper.BindPFlag(flagVotingCli, cmd.Flags().Lookup(flagVotingCli))
 		_ = viper.BindPFlag(flagChainID, cmd.Flags().Lookup(flagChainID))
 
-		_ = viper.BindPFlag(flagFrom, cmd.Flags().Lookup(flagFrom))
-		_ = viper.BindPFlag(flagPass, cmd.Flags().Lookup(flagPass))
+		_ = viper.BindPFlag(FlagVoterKey, cmd.Flags().Lookup(FlagVoterKey))
 		_ = viper.BindPFlag(flagAddress, cmd.Flags().Lookup(flagAddress))
 
 		viper.SetDefault(flagVotingCli, false)
@@ -97,8 +114,7 @@ func RegistUpdaterCommand(cmd *cobra.Command, noVoting bool) {
 			_ = cmd.MarkFlagRequired(flagAddress)
 		}
 
-		_ = cmd.MarkFlagRequired(flagFrom)
-		_ = cmd.MarkFlagRequired(flagPass)
+		_ = cmd.MarkFlagRequired(FlagVoterKey)
 		_ = cmd.MarkFlagRequired(flagChainID)
 
 	}
@@ -128,8 +144,6 @@ func (task *UpdaterTask) RunHandler() {
 		_ = task.keeper.AddHistory(history)
 	}
 
-	voterKey := viper.GetString(flagFrom)
-	voterPass := viper.GetString(flagPass)
 	voterAddress := viper.GetString(flagAddress)
 	chainID := viper.GetString(flagChainID)
 
@@ -137,7 +151,7 @@ func (task *UpdaterTask) RunHandler() {
 
 	lcdAddress := viper.GetString(flagLCDAddress)
 
-	err = utils.VoteAll(voterKey, voterPass, voterAddress, chainID, byCli, lcdAddress, history.Prices)
+	err = utils.VoteAll(task.voterKey, task.voterKeyPass, voterAddress, chainID, byCli, lcdAddress, history.Prices)
 	if err != nil {
 		fmt.Println(err)
 		return

@@ -79,7 +79,8 @@ func startServer(keeper *types.HistoryKeeper) error {
 
 	// init updater
 	noVoting := viper.GetBool(flagNoVoting)
-	updater := tasks.NewUpdaterTaskRunner(keeper, noVoting)
+	voterKey := viper.GetString(tasks.FlagVoterKey)
+	updater := tasks.NewUpdaterTaskRunner(keeper, noVoting, voterKey)
 	taskRunners = append(taskRunners, updater)
 
 	// init rest
