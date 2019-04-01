@@ -99,7 +99,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
 
                 success_count += 1
 
-            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout, NetworkError):
+            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout, NetworkError, KeyError):
                 fail_count += 1
 
             except Exception as e:

@@ -26,8 +26,9 @@ def periodic_update():
     data['prices'] = get_data(exchanges)
     data['created_at'] = datetime.datetime.utcnow().replace(tzinfo=pytz.utc).isoformat()
 
-    print("Updated!")
-    print(json.dumps(data))
+    print("Updated! at ", data['created_at'])
+    for price in data['prices']:
+        print(price['currency'], " : ", price['price'])
 
     threading.Timer(60, periodic_update).start()
 
