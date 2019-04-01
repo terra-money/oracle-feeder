@@ -6,8 +6,12 @@ import (
 	"feeder/types"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
+	"strings"
+	"time"
 )
 
 const (
@@ -132,7 +136,48 @@ func (client *LCDClient) VoteByREST(price types.Price, account *types.Account, v
 }
 
 // Send vote message via terracli
-func VoteByCli(_ types.Price) error {
-	panic("Not Implemented Yet")
-	// return nil
+func VoteByCli(price types.Price, voterKey string, voterPass string, chainID string) error {
+
+	votePrice := fmt.Sprintf(
+		"terracli tx oracle vote %v %v --from %v --chain-id %v --fees 2luna",
+		price.Currency, price.Price, voterKey, chainID)
+	fmt.Println(time.Now().UTC().Format(time.RFC3339), price.Currency, price.Price)
+	executeCmd(votePrice, voterPass)
+
+	return nil
+}
+
+// codes from cosmos faucet
+func executeCmd(command string, writes ...string) {
+	cmd, wc, _ := goExecute(command)
+
+	for _, write := range writes {
+		_, _ = wc.Write([]byte(write + "\n"))
+	}
+	_ = cmd.Wait()
+}
+
+func goExecute(command string) (cmd *exec.Cmd, pipeIn io.WriteCloser, pipeOut io.ReadCloser) {
+	cmd = getCmd(command)
+	pipeIn, _ = cmd.StdinPipe()
+	pipeOut, _ = cmd.StdoutPipe()
+	go func() {
+		_ = cmd.Start()
+	}()
+	time.Sleep(time.Second)
+	return cmd, pipeIn, pipeOut
+}
+
+func getCmd(command string) *exec.Cmd {
+	// split command into command and args
+	split := strings.Split(command, " ")
+
+	var cmd *exec.Cmd
+	if len(split) == 1 {
+		cmd = exec.Command(split[0])
+	} else {
+		cmd = exec.Command(split[0], split[1:]...)
+	}
+
+	return cmd
 }

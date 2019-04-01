@@ -10,17 +10,17 @@ func VoteAll(voterKey string, voterPass string, voterAddress string, chainID str
 
 	lcdClient := NewLCDClient(lcdAddress)
 
-	//
-	account, err := lcdClient.QueryAccount(voterAddress)
-	if err != nil {
-		return err
-	}
-
 	for _, price := range prices {
 		var err error
 		if cliMode {
-			err = VoteByCli(price)
+			err = VoteByCli(price, voterKey, voterPass, chainID)
+
 		} else {
+			account, err := lcdClient.QueryAccount(voterAddress)
+			if err != nil {
+				return err
+			}
+
 			err = lcdClient.VoteByREST(price, account, voterKey, voterPass, chainID)
 		}
 
