@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"feeder/types"
+	"feeder/terrafeeder/types"
 	"fmt"
 )
 
@@ -21,7 +21,9 @@ func VoteAll(voterKey string, voterPass string, voterAddress string, chainID str
 				return err
 			}
 
-			err = lcdClient.VoteByREST(price, account, voterKey, voterPass, chainID)
+			if err := lcdClient.VoteByREST(price, account, voterKey, voterPass, chainID); err != nil {
+				return err
+			}
 		}
 
 		if err != nil {

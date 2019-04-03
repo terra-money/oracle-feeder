@@ -1,7 +1,8 @@
 package main
 
 import (
-	"feeder/tasks"
+	"feeder/terrafeeder/rest"
+	"feeder/terrafeeder/updater"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -46,18 +47,13 @@ func initConfig(rootCmd *cobra.Command) {
 func registCommands(cmd *cobra.Command) {
 
 	cmd.Flags().Bool(flagNoREST, false, "run without REST Api serving")
-	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
-
 	_ = viper.BindPFlag(flagNoREST, cmd.Flags().Lookup(flagNoREST))
-	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
 
-	viper.SetDefault(flagNoREST, false)
-	viper.SetDefault(flagNoVoting, false)
+	// viper.SetDefault(flagNoREST, false)
 
 	// adding task flags
-	tasks.RegistUpdaterCommand(cmd, viper.GetBool(flagNoVoting))
-
+	updater.RegistCommand(cmd)
 	if !viper.GetBool(flagNoREST) {
-		tasks.RegistRESTCommand(cmd)
+		rest.RegistCommand(cmd)
 	}
 }

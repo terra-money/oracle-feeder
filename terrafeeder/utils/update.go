@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"feeder/types"
+	"feeder/terrafeeder/types"
 	"fmt"
 	"io/ioutil"
 	"net/http"

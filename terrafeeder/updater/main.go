@@ -1,8 +1,8 @@
-package tasks
+package updater
 
 import (
-	"feeder/types"
-	"feeder/utils"
+	"feeder/terrafeeder/types"
+	"feeder/terrafeeder/utils"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
@@ -13,23 +13,21 @@ import (
 const (
 	flagUpdatingInterval = "updating-interval"
 	flagUpdatingSource   = "updating-source"
-
-	flagNoDBMode = "no-db"
-	//
+	flagNoDBMode         = "no-db"
 
 	// voting flags
+	flagNoVoting   = "no-voting"
+	flagVoterKey   = "from"
+	flagAddress    = "address"
+	flagChainID    = "chain-id"
 	flagVotingCli  = "voting-cli"
 	flagLCDAddress = "lcd"
+)
 
-	FlagVoterKey = "from"
-	flagChainID  = "chain-id"
-
-	flagAddress = "address"
-
-	//
+const (
 	defaultUpdatingInterval = time.Minute * 1
+	defaultUpdatingSource   = "http://localhost:5000/last" // temporary setting for dev.
 	// defaultUpdatingSource   = "https://feeder.terra.money:7468/last"
-	defaultUpdatingSource = "http://localhost:5000/last"
 
 	// voting default
 	defaultLCDAddress = "https://soju.terra.money:1317"
@@ -37,24 +35,27 @@ const (
 	defaultKeyPass    = "12345678"
 )
 
-// Updater Task definition
-type UpdaterTask struct {
+// Updater BaseTask definition
+type Task struct {
+	types.BaseTask
+
 	keeper *types.HistoryKeeper
 
-	SourceURL string
+	sourceURL string
 	noVoting  bool
 
 	voterKey     string
 	voterKeyPass string
 }
 
-var _ types.Task = (*UpdaterTask)(nil)
-
 // Implementation
 
-// Create new Update Task
-func NewUpdaterTaskRunner(keeper *types.HistoryKeeper, noVoting bool, voterKey string) *types.TaskRunner {
+// Create new Update BaseTask
+func NewTask(keeper *types.HistoryKeeper) *Task {
+
 	sourceURL := viper.GetString(flagUpdatingSource)
+	noVoting := viper.GetBool(flagNoVoting)
+	voterKey := viper.GetString(flagVoterKey)
 
 	voterKeyPass := ""
 	if !noVoting {
@@ -70,11 +71,24 @@ func NewUpdaterTaskRunner(keeper *types.HistoryKeeper, noVoting bool, voterKey s
 		}
 	}
 
-	return types.NewTaskRunner("Price Updater", &UpdaterTask{keeper, sourceURL, noVoting, voterKey, voterKeyPass}, viper.GetDuration(flagUpdatingInterval))
+	return &Task{
+		types.BaseTask{
+			Name: "REST Service",
+		},
+		keeper,
+		sourceURL,
+		noVoting,
+		voterKey,
+		voterKeyPass,
+	}
 }
 
 // Regist REST Commands
-func RegistUpdaterCommand(cmd *cobra.Command, noVoting bool) {
+func RegistCommand(cmd *cobra.Command) {
+
+	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
+	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
+	// viper.SetDefault(flagNoVoting, false)
 
 	cmd.Flags().Duration(flagUpdatingInterval, defaultUpdatingInterval, "Updating interval (Duration format)")
 	cmd.Flags().String(flagUpdatingSource, defaultUpdatingSource, "Updating interval (Duration format)")
@@ -84,59 +98,85 @@ func RegistUpdaterCommand(cmd *cobra.Command, noVoting bool) {
 	_ = viper.BindPFlag(flagUpdatingSource, cmd.Flags().Lookup(flagUpdatingSource))
 	_ = viper.BindPFlag(flagNoDBMode, cmd.Flags().Lookup(flagNoDBMode))
 
-	viper.SetDefault(flagUpdatingInterval, defaultUpdatingInterval)
-	viper.SetDefault(flagUpdatingSource, defaultUpdatingSource)
-	viper.SetDefault(flagNoDBMode, false)
+	//viper.SetDefault(flagUpdatingInterval, defaultUpdatingInterval)
+	//viper.SetDefault(flagUpdatingSource, defaultUpdatingSource)
+	//viper.SetDefault(flagNoDBMode, false)
 
-	if !noVoting {
+	if !viper.GetBool(flagNoVoting) {
 
 		// flags about voting
 		cmd.Flags().Bool(flagVotingCli, false, "Voting by cli")
 		cmd.Flags().String(flagChainID, defaultChainID, "Chain ID to vote")
 
-		cmd.Flags().String(FlagVoterKey, "my_name", "key name")
+		cmd.Flags().String(flagVoterKey, "my_name", "key name")
 		cmd.Flags().String(flagAddress, "terra1xffsq0sf43gjp66qaza590xp6suzsdmuxsyult", "Voter account address")
 
 		_ = viper.BindPFlag(flagVotingCli, cmd.Flags().Lookup(flagVotingCli))
 		_ = viper.BindPFlag(flagChainID, cmd.Flags().Lookup(flagChainID))
 
-		_ = viper.BindPFlag(FlagVoterKey, cmd.Flags().Lookup(FlagVoterKey))
+		_ = viper.BindPFlag(flagVoterKey, cmd.Flags().Lookup(flagVoterKey))
 		_ = viper.BindPFlag(flagAddress, cmd.Flags().Lookup(flagAddress))
 
-		viper.SetDefault(flagVotingCli, false)
-		viper.SetDefault(flagChainID, defaultChainID)
+		//viper.SetDefault(flagVotingCli, false)
+		//viper.SetDefault(flagChainID, defaultChainID)
 
 		if !viper.GetBool(flagVotingCli) {
 			cmd.Flags().String(flagLCDAddress, defaultLCDAddress, "the url of lcd daemon to request vote")
 			_ = viper.BindPFlag(flagLCDAddress, cmd.Flags().Lookup(flagLCDAddress))
-			viper.SetDefault(flagLCDAddress, defaultLCDAddress)
+			//viper.SetDefault(flagLCDAddress, defaultLCDAddress)
 
 			_ = cmd.MarkFlagRequired(flagAddress)
 		}
 
-		_ = cmd.MarkFlagRequired(FlagVoterKey)
+		_ = cmd.MarkFlagRequired(flagVoterKey)
 		_ = cmd.MarkFlagRequired(flagChainID)
 
 	}
 }
 
+// override Start function to set initial interval
+func (task *Task) Start() {
+	task.StartWithInterval(viper.GetDuration(flagUpdatingInterval))
+}
+
+// Change price updating source url
+func (task *Task) SetSourceURL(url string) {
+	task.sourceURL = url
+}
+
 // Run task
-func (task *UpdaterTask) RunHandler() {
+func (task *Task) loop() {
 
-	fmt.Println("Updating....")
-
-	history, err := utils.UpdatePrices(task.SourceURL)
-
+	history, err := task.updatePrice()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
+	if !task.noVoting {
+		if err := task.votePrice(history); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+}
+
+func (task *Task) updatePrice() (*types.History, error) {
+	fmt.Println("Updating....")
+
+	history, err := utils.UpdatePrices(task.sourceURL)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
 	fmt.Println("Updated!")
 
-	if task.noVoting {
-		return
-	}
+	return history, nil
+}
+
+func (task *Task) votePrice(history *types.History) error {
 
 	fmt.Println("Voting....")
 
@@ -148,24 +188,28 @@ func (task *UpdaterTask) RunHandler() {
 	chainID := viper.GetString(flagChainID)
 
 	byCli := viper.GetBool(flagVotingCli)
-
 	lcdAddress := viper.GetString(flagLCDAddress)
 
-	err = utils.VoteAll(task.voterKey, task.voterKeyPass, voterAddress, chainID, byCli, lcdAddress, history.Prices)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if err := utils.VoteAll(task.voterKey, task.voterKeyPass, voterAddress, chainID, byCli, lcdAddress, history.Prices); err != nil {
+		return err
 	}
 
 	fmt.Println("Voted!")
+
+	return nil
 }
 
-// Initialize handler
-func (task *UpdaterTask) InitHandler() {
-	// Do nothing
-}
+func (task *Task) runner() {
+	fmt.Printf("%s is Ready\r\n", task.Name)
 
-// Shutdown handler
-func (task *UpdaterTask) ShutdownHandler() {
-	// Do nothing
+	for {
+		select {
+		case <-task.Done:
+			fmt.Printf("%s is shutting down\r\n", task.Name)
+			return
+
+		case <-task.Ticker.C:
+			task.loop()
+		}
+	}
 }

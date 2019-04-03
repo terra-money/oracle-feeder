@@ -13,6 +13,12 @@ type HistoryKeeper struct {
 	Db *leveldb.DB
 }
 
+// price struct for terrafeeder REST API
+type Price struct {
+	Currency string  `json:"currency"`
+	Price    float64 `json:"price,string"`
+}
+
 // Price history
 type History struct {
 	CreatedAt time.Time

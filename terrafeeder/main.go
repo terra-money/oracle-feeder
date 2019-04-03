@@ -15,8 +15,9 @@
 package main
 
 import (
-	"feeder/tasks"
-	"feeder/types"
+	"feeder/terrafeeder/rest"
+	"feeder/terrafeeder/types"
+	"feeder/terrafeeder/updater"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,10 +28,8 @@ import (
 )
 
 const (
-	flagHome = "home"
-
-	flagNoREST   = "no-rest"
-	flagNoVoting = "no-voting"
+	flagHome   = "home"
+	flagNoREST = "no-rest"
 )
 
 var (
@@ -46,7 +45,7 @@ func main() {
 		Short: "Terra oracle terrafeeder client daemon",
 		Long:  `Terra oracle terrafeeder client daemon. Long description`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return startServer(keeper)
+			return startFeeder(keeper)
 		},
 	}
 
@@ -72,28 +71,30 @@ func main() {
 	}
 }
 
-func startServer(keeper *types.HistoryKeeper) error {
-	var taskRunners []*types.TaskRunner
-
-	fmt.Printf("Terra Oracle Feeder - Daemon Mode\n\n")
+func startFeeder(keeper *types.HistoryKeeper) error {
 
 	// init updater
-	noVoting := viper.GetBool(flagNoVoting)
-	voterKey := viper.GetString(tasks.FlagVoterKey)
-	updater := tasks.NewUpdaterTaskRunner(keeper, noVoting, voterKey)
-	taskRunners = append(taskRunners, updater)
+	updaterTask := updater.NewTask(keeper)
 
 	// init rest
+	var restTask *rest.Task
 	if !viper.GetBool(flagNoREST) {
-		taskRunners = append(taskRunners, tasks.NewRESTTaskRunner(keeper, updater))
+		restTask = rest.NewTask(keeper, updaterTask)
 	}
 
-	// run
+	fmt.Printf("Terra Oracle Feeder\n")
+	run(updaterTask, restTask)
+
+	return nil
+}
+
+func run(updater *updater.Task, rest *rest.Task) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	for _, task := range taskRunners {
-		go task.Run()
+	updater.Start()
+	if rest != nil {
+		rest.Start()
 	}
 
 	<-sigs
@@ -103,9 +104,8 @@ func startServer(keeper *types.HistoryKeeper) error {
 	fmt.Println("Shutting down...")
 	fmt.Println("-------------------------------")
 
-	for _, task := range taskRunners {
-		go task.Stop()
+	updater.Stop()
+	if rest != nil {
+		rest.Stop()
 	}
-
-	return nil
 }
