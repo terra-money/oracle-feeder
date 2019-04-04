@@ -2,3 +2,4 @@ ccxt
 flask
 requests
 tqdm
+pytz

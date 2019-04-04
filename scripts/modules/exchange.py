@@ -1,4 +1,5 @@
 import json
+import os
 from statistics import median
 from typing import Dict, List
 
@@ -7,9 +8,9 @@ from ccxt import ExchangeError, ExchangeNotAvailable, DDoSProtection, BaseError,
 
 import ccxt
 
-from .sdr import get_sdr_rates
+from modules.sdr.imf import get_sdr_rates
 
-EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg']
+EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg', 'theocean']
 UPDATING_CURRENCIES = ['USD', 'KRW', 'CHY', 'JPY', 'EUR', 'GBP']
 
 LUNA_DENOM = "ETH"
@@ -32,7 +33,11 @@ def filter_exchanges() -> Dict[str, List[ccxt.Exchange]]:
 
     print("Checking available exchanges --")
 
-    exchange_tqdm = tqdm.tqdm(ccxt.exchanges, "Checking available exchanges")
+    exchange_list = ccxt.exchanges
+    if os.getenv("FLASK_DEBUG", False):
+        exchange_list = exchange_list[:5]
+
+    exchange_tqdm = tqdm.tqdm(exchange_list, "Checking available exchanges")
     for exchange_id in exchange_tqdm:
         exchange_tqdm.set_description_str(f"Checking '{exchange_id}' ")
 

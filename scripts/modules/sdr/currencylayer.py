@@ -1,9 +1,10 @@
 from typing import Dict
 
 import requests
+from modules import setting
 
 
-CL_ACCESS_KEY = ""
+CL_ACCESS_KEY = setting.SDR_CURRENCY_LAYER_KEY
 CL_ENDPOINT = "https://apilayer.net/api/live"
 
 latest = None
