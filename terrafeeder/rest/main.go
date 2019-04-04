@@ -31,12 +31,14 @@ type Task struct {
 	updaterTask *updater.Task
 }
 
+var _ types.Task = (*Task)(nil)
+
 // Implementation
 
 // Create new REST BaseTask
 func NewTask(keeper *types.HistoryKeeper, updaterTask *updater.Task) *Task {
 	done := make(chan struct{})
-	return &Task{
+	task := &Task{
 		BaseTask: types.BaseTask{
 			Name: "REST Service",
 			Done: done,
@@ -44,6 +46,8 @@ func NewTask(keeper *types.HistoryKeeper, updaterTask *updater.Task) *Task {
 		keeper:      keeper,
 		updaterTask: updaterTask,
 	}
+	task.Task = task
+	return task
 }
 
 // Regist REST Commands
@@ -55,7 +59,7 @@ func RegistCommand(cmd *cobra.Command) {
 }
 
 // start rest server
-func (task *Task) Run() {
+func (task *Task) Runner() {
 	task.serverInit()
 	fmt.Printf("%s is Ready\r\n", task.Name)
 

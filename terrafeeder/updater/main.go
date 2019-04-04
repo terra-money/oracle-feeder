@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os"
 	"time"
 )
 
@@ -26,7 +27,7 @@ const (
 
 const (
 	defaultUpdatingInterval = time.Minute * 1
-	defaultUpdatingSource   = "http://localhost:5000/last" // temporary setting for dev.
+	defaultUpdatingSource   = "http://localhost:7658/last" // temporary setting for dev.
 	// defaultUpdatingSource   = "https://feeder.terra.money:7468/last"
 
 	// voting default
@@ -48,6 +49,8 @@ type Task struct {
 	voterKeyPass string
 }
 
+var _ types.Task = (*Task)(nil)
+
 // Implementation
 
 // Create new Update BaseTask
@@ -57,8 +60,8 @@ func NewTask(keeper *types.HistoryKeeper) *Task {
 	noVoting := viper.GetBool(flagNoVoting)
 	voterKey := viper.GetString(flagVoterKey)
 
-	voterKeyPass := ""
-	if !noVoting {
+	voterKeyPass := os.Getenv("FEEDER_PASSPHRASE")
+	if !noVoting && voterKeyPass == "" {
 		buf := client.BufferStdin()
 		prompt := fmt.Sprintf(
 			"Password for account '%s' (default %s):", voterKey, defaultKeyPass,
@@ -71,9 +74,9 @@ func NewTask(keeper *types.HistoryKeeper) *Task {
 		}
 	}
 
-	return &Task{
+	task := &Task{
 		types.BaseTask{
-			Name: "REST Service",
+			Name: "Updater",
 		},
 		keeper,
 		sourceURL,
@@ -81,6 +84,9 @@ func NewTask(keeper *types.HistoryKeeper) *Task {
 		voterKey,
 		voterKeyPass,
 	}
+
+	task.Task = task
+	return task
 }
 
 // Regist REST Commands
@@ -199,7 +205,7 @@ func (task *Task) votePrice(history *types.History) error {
 	return nil
 }
 
-func (task *Task) runner() {
+func (task *Task) Runner() {
 	fmt.Printf("%s is Ready\r\n", task.Name)
 
 	for {

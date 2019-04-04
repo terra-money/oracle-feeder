@@ -4,15 +4,19 @@ import (
 	"time"
 )
 
+type Task interface {
+	Runner()
+}
+
 // BaseTask Runner
 type BaseTask struct {
+	Task
+
 	Name string
 
 	Done   chan struct{}
 	Ticker *time.Ticker
 }
-
-func (task *BaseTask) runner() {}
 
 // Start task goroutine
 func (task *BaseTask) Start() {
@@ -20,7 +24,7 @@ func (task *BaseTask) Start() {
 	task.Done = make(chan struct{})
 	task.Ticker = nil
 
-	go task.runner()
+	go task.Runner()
 }
 
 // Start periodic task with interval
@@ -29,7 +33,7 @@ func (task *BaseTask) StartWithInterval(interval time.Duration) {
 	task.Done = make(chan struct{})
 	task.Ticker = time.NewTicker(interval)
 
-	go task.runner()
+	go task.Runner()
 }
 
 // change task interval

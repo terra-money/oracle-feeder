@@ -35,7 +35,7 @@
 
 [[override]]
   branch = "develop"
-  name = "github.com/terra-project/core"
+  name = "github.com/terra-project/terra"
 
 ## transitive deps, with releases:
 

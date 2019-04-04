@@ -50,18 +50,14 @@ func main() {
 	}
 
 	initConfig(rootCmd)
-	db, err := leveldb.OpenFile(getHistoryPath(), nil)
 
+	db, err := leveldb.OpenFile(getHistoryPath(), nil)
 	if err != nil {
 		panic(err)
 	}
 
-	// init keeper
 	keeper = &types.HistoryKeeper{Db: db}
-
-	defer func() {
-		_ = db.Close()
-	}()
+	defer db.Close()
 
 	registCommands(rootCmd)
 

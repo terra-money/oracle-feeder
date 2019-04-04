@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	oracleRest "github.com/terra-project/core/x/oracle/client/rest"
+	oracleRest "github.com/terra-project/terra/x/oracle/client/rest"
 )
 
 const (

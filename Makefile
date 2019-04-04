@@ -5,7 +5,7 @@ BUILD_FLAGS = -tags "${BUILD_TAGS}"
 all: install
 
 install: tools lint
-	go install $(BUILD_FLAGS) ./feeder
+	go install $(BUILD_FLAGS) ./terrafeeder
 
 build: tools lint
 	go build $(BUILD_FLAGS) -o build/terrafeeder ./terrafeeder
@@ -15,5 +15,4 @@ tools:
 	go get gometalinter
 
 lint:
-	gometalinter --config=tools/gometalinter.json ./...
-	!(gometalinter --exclude /usr/lib/go/src/ --exclude 'vendor/*' --disable-all --enable='errcheck' --vendor ./... | grep -v "client/")
+	!(gometalinter --exclude /usr/local/go/src/ --exclude 'vendor/*' --disable-all --enable='errcheck' --vendor ./... | grep -v "client/")
