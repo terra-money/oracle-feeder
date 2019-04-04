@@ -54,8 +54,6 @@ func NewTask(keeper *types.HistoryKeeper, updaterTask *updater.Task) *Task {
 func RegistCommand(cmd *cobra.Command) {
 	cmd.Flags().String(flagListenAddr, defaultListenAddr, "REST Listening Port")
 	_ = viper.BindPFlag(flagListenAddr, cmd.Flags().Lookup(flagListenAddr))
-
-	// viper.SetDefault(flagListenAddr, defaultListenAddr)
 }
 
 // start rest server

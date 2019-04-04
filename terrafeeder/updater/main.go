@@ -28,7 +28,7 @@ const (
 const (
 	defaultUpdatingInterval = time.Minute * 1
 	defaultUpdatingSource   = "http://localhost:7658/last" // temporary setting for dev.
-	// defaultUpdatingSource   = "https://feeder.terra.money:7468/last"
+	// defaultUpdatingSource   = "https://feeder.terra.money:7658/last"
 
 	// voting default
 	defaultLCDAddress = "https://soju.terra.money:1317"
@@ -94,7 +94,6 @@ func RegistCommand(cmd *cobra.Command) {
 
 	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
 	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
-	// viper.SetDefault(flagNoVoting, false)
 
 	cmd.Flags().Duration(flagUpdatingInterval, defaultUpdatingInterval, "Updating interval (Duration format)")
 	cmd.Flags().String(flagUpdatingSource, defaultUpdatingSource, "Updating interval (Duration format)")
@@ -103,10 +102,6 @@ func RegistCommand(cmd *cobra.Command) {
 	_ = viper.BindPFlag(flagUpdatingInterval, cmd.Flags().Lookup(flagUpdatingInterval))
 	_ = viper.BindPFlag(flagUpdatingSource, cmd.Flags().Lookup(flagUpdatingSource))
 	_ = viper.BindPFlag(flagNoDBMode, cmd.Flags().Lookup(flagNoDBMode))
-
-	//viper.SetDefault(flagUpdatingInterval, defaultUpdatingInterval)
-	//viper.SetDefault(flagUpdatingSource, defaultUpdatingSource)
-	//viper.SetDefault(flagNoDBMode, false)
 
 	if !viper.GetBool(flagNoVoting) {
 

@@ -49,8 +49,6 @@ func registCommands(cmd *cobra.Command) {
 	cmd.Flags().Bool(flagNoREST, false, "run without REST Api serving")
 	_ = viper.BindPFlag(flagNoREST, cmd.Flags().Lookup(flagNoREST))
 
-	// viper.SetDefault(flagNoREST, false)
-
 	// adding task flags
 	updater.RegistCommand(cmd)
 	if !viper.GetBool(flagNoREST) {
