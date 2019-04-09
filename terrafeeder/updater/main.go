@@ -1,12 +1,15 @@
 package updater
 
 import (
+	"encoding/json"
 	"feeder/terrafeeder/types"
 	"feeder/terrafeeder/utils"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosCli "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	tendermintCli "github.com/tendermint/tendermint/libs/cli"
 	"os"
 	"time"
 )
@@ -14,33 +17,32 @@ import (
 const (
 	flagUpdatingInterval = "updating-interval"
 	flagUpdatingSource   = "updating-source"
-	flagNoDBMode         = "no-db"
 
 	// voting flags
 	flagNoVoting   = "no-voting"
-	flagVoterKey   = "from"
-	flagAddress    = "address"
-	flagChainID    = "chain-id"
-	flagVotingCli  = "voting-cli"
+	flagVoteBy     = "vote-by"
 	flagLCDAddress = "lcd"
 )
 
 const (
 	defaultUpdatingInterval = time.Minute * 1
-	defaultUpdatingSource   = "http://localhost:7658/last" // temporary setting for dev.
+	defaultUpdatingSource   = "http://localhost:5000/last" // temporary setting for dev.
 	// defaultUpdatingSource   = "https://feeder.terra.money:7658/last"
 
 	// voting default
 	defaultLCDAddress = "https://soju.terra.money:1317"
-	defaultChainID    = "soju-0005"
 	defaultKeyPass    = "12345678"
+)
+
+var (
+	defaultCLIHome = os.ExpandEnv("$HOME/.terracli")
 )
 
 // Updater BaseTask definition
 type Task struct {
 	types.BaseTask
 
-	keeper *types.HistoryKeeper
+	history *types.History
 
 	sourceURL string
 	noVoting  bool
@@ -54,20 +56,20 @@ var _ types.Task = (*Task)(nil)
 // Implementation
 
 // Create new Update BaseTask
-func NewTask(keeper *types.HistoryKeeper) *Task {
+func NewTask() *Task {
 
 	sourceURL := viper.GetString(flagUpdatingSource)
 	noVoting := viper.GetBool(flagNoVoting)
-	voterKey := viper.GetString(flagVoterKey)
+	voter := viper.GetString(cosmosCli.FlagFrom)
 
 	voterKeyPass := os.Getenv("FEEDER_PASSPHRASE")
 	if !noVoting && voterKeyPass == "" {
-		buf := client.BufferStdin()
+		buf := cosmosCli.BufferStdin()
 		prompt := fmt.Sprintf(
-			"Password for account '%s' (default %s):", voterKey, defaultKeyPass,
+			"Password for account '%s' (default %s):", voter, defaultKeyPass,
 		)
 
-		voterKeyPass, err := client.GetPassword(prompt, buf)
+		voterKeyPass, err := cosmosCli.GetPassword(prompt, buf)
 		if err != nil && voterKeyPass != "" {
 			fmt.Println(err)
 			return nil
@@ -78,10 +80,10 @@ func NewTask(keeper *types.HistoryKeeper) *Task {
 		types.BaseTask{
 			Name: "Updater",
 		},
-		keeper,
+		nil,
 		sourceURL,
 		noVoting,
-		voterKey,
+		voter,
 		voterKeyPass,
 	}
 
@@ -91,46 +93,45 @@ func NewTask(keeper *types.HistoryKeeper) *Task {
 
 // Regist REST Commands
 func RegistCommand(cmd *cobra.Command) {
+	cmd.PersistentFlags().String(cosmosCli.FlagChainID, "", "Chain ID of tendermint node")
+	_ = viper.BindPFlag(cosmosCli.FlagChainID, cmd.PersistentFlags().Lookup(cosmosCli.FlagChainID))
 
 	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
 	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
 
 	cmd.Flags().Duration(flagUpdatingInterval, defaultUpdatingInterval, "Updating interval (Duration format)")
 	cmd.Flags().String(flagUpdatingSource, defaultUpdatingSource, "Updating interval (Duration format)")
-	cmd.Flags().Bool(flagNoDBMode, false, "Running as no DB mode, doesn't save price history")
 
 	_ = viper.BindPFlag(flagUpdatingInterval, cmd.Flags().Lookup(flagUpdatingInterval))
 	_ = viper.BindPFlag(flagUpdatingSource, cmd.Flags().Lookup(flagUpdatingSource))
-	_ = viper.BindPFlag(flagNoDBMode, cmd.Flags().Lookup(flagNoDBMode))
 
 	if !viper.GetBool(flagNoVoting) {
 
+		cosmosCli.PostCommands(cmd)
+
 		// flags about voting
-		cmd.Flags().Bool(flagVotingCli, false, "Voting by cli")
-		cmd.Flags().String(flagChainID, defaultChainID, "Chain ID to vote")
+		cmd.Flags().String(flagVoteBy, "lcd", "change voting method (lcd, rpc, cli)")
+		_ = viper.BindPFlag(flagVoteBy, cmd.Flags().Lookup(flagVoteBy))
 
-		cmd.Flags().String(flagVoterKey, "my_name", "key name")
-		cmd.Flags().String(flagAddress, "terra1xffsq0sf43gjp66qaza590xp6suzsdmuxsyult", "Voter account address")
-
-		_ = viper.BindPFlag(flagVotingCli, cmd.Flags().Lookup(flagVotingCli))
-		_ = viper.BindPFlag(flagChainID, cmd.Flags().Lookup(flagChainID))
-
-		_ = viper.BindPFlag(flagVoterKey, cmd.Flags().Lookup(flagVoterKey))
-		_ = viper.BindPFlag(flagAddress, cmd.Flags().Lookup(flagAddress))
-
-		//viper.SetDefault(flagVotingCli, false)
-		//viper.SetDefault(flagChainID, defaultChainID)
-
-		if !viper.GetBool(flagVotingCli) {
+		voteBy := viper.GetString(flagVoteBy)
+		if voteBy == "lcd" {
 			cmd.Flags().String(flagLCDAddress, defaultLCDAddress, "the url of lcd daemon to request vote")
 			_ = viper.BindPFlag(flagLCDAddress, cmd.Flags().Lookup(flagLCDAddress))
-			//viper.SetDefault(flagLCDAddress, defaultLCDAddress)
-
-			_ = cmd.MarkFlagRequired(flagAddress)
+		}
+		if voteBy == "rpc" {
+			// nothing
+		}
+		if voteBy == "cli" {
+			// nothing
 		}
 
-		_ = cmd.MarkFlagRequired(flagVoterKey)
-		_ = cmd.MarkFlagRequired(flagChainID)
+		cmd.Flags().String(tendermintCli.HomeFlag, defaultCLIHome, "node's home directory")
+
+		_ = viper.BindPFlag(tendermintCli.HomeFlag, cmd.Flags().Lookup(tendermintCli.HomeFlag))
+		_ = viper.BindPFlag(cosmosCli.FlagFrom, cmd.Flags().Lookup(cosmosCli.FlagFrom))
+
+		_ = cmd.MarkFlagRequired(cosmosCli.FlagFrom)
+		_ = cmd.MarkFlagRequired(cosmosCli.FlagChainID)
 
 	}
 }
@@ -140,7 +141,7 @@ func (task *Task) Start() {
 	task.StartWithInterval(viper.GetDuration(flagUpdatingInterval))
 }
 
-// Change price updating source url
+// Change price.go updating source url
 func (task *Task) SetSourceURL(url string) {
 	task.sourceURL = url
 }
@@ -148,18 +149,32 @@ func (task *Task) SetSourceURL(url string) {
 // Run task
 func (task *Task) loop() {
 
-	history, err := task.updatePrice()
+	var err error
+	task.history, err = task.updatePrice()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	if !task.noVoting {
-		if err := task.votePrice(history); err != nil {
+		if err := task.votePrice(task.history); err != nil {
 			fmt.Println(err)
 			return
 		}
 	}
+}
+
+func (task *Task) GetHistory() *types.History {
+	return task.history
+}
+
+func (task *Task) GetHistoryBytes() []byte {
+	b, err := json.Marshal(task.history)
+	if err != nil {
+		return make([]byte, 0)
+	}
+
+	return b
 }
 
 func (task *Task) updatePrice() (*types.History, error) {
@@ -181,17 +196,11 @@ func (task *Task) votePrice(history *types.History) error {
 
 	fmt.Println("Voting....")
 
-	if !viper.GetBool(flagNoDBMode) {
-		_ = task.keeper.AddHistory(history)
-	}
-
-	voterAddress := viper.GetString(flagAddress)
-	chainID := viper.GetString(flagChainID)
-
-	byCli := viper.GetBool(flagVotingCli)
+	cliCtx := context.NewCLIContext()
+	chainID := viper.GetString(cosmosCli.FlagChainID)
 	lcdAddress := viper.GetString(flagLCDAddress)
 
-	if err := utils.VoteAll(task.voterKey, task.voterKeyPass, voterAddress, chainID, byCli, lcdAddress, history.Prices); err != nil {
+	if err := utils.VoteAll(cliCtx, task.voterKeyPass, chainID, lcdAddress, history.Prices); err != nil {
 		return err
 	}
 

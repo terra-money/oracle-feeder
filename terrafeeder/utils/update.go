@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// get update price data
+// get update price.go data
 func UpdatePrices(url string) (*types.History, error) {
 	resp, err := http.Get(url)
 	if err != nil {

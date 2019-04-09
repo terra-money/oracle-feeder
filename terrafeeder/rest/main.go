@@ -27,7 +27,6 @@ type Task struct {
 
 	server      *http.Server
 	router      *mux.Router
-	keeper      *types.HistoryKeeper
 	updaterTask *updater.Task
 }
 
@@ -36,14 +35,13 @@ var _ types.Task = (*Task)(nil)
 // Implementation
 
 // Create new REST BaseTask
-func NewTask(keeper *types.HistoryKeeper, updaterTask *updater.Task) *Task {
+func NewTask(updaterTask *updater.Task) *Task {
 	done := make(chan struct{})
 	task := &Task{
 		BaseTask: types.BaseTask{
 			Name: "REST Service",
 			Done: done,
 		},
-		keeper:      keeper,
 		updaterTask: updaterTask,
 	}
 	task.Task = task
@@ -79,7 +77,7 @@ func (task *Task) serverInit() {
 	fmt.Println("REST listening address : ", viper.GetString(flagListenAddr))
 
 	isLocalBound := strings.HasPrefix(task.server.Addr, "localhost") || strings.HasPrefix(task.server.Addr, "127.0.0.1")
-	task.registRoute(task.keeper, task.router, isLocalBound)
+	task.registRoute(task.router, isLocalBound)
 }
 
 func (task *Task) serverShutdown() {

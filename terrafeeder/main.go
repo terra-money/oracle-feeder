@@ -16,28 +16,33 @@ package main
 
 import (
 	"feeder/terrafeeder/rest"
-	"feeder/terrafeeder/types"
 	"feeder/terrafeeder/updater"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/client/utils"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/syndtr/goleveldb/leveldb"
+	terra "github.com/terra-project/core/app"
+	"github.com/terra-project/core/types/util"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 const (
-	flagHome   = "home"
 	flagNoREST = "no-rest"
 )
 
-var (
-	defaultHome = os.ExpandEnv("$HOME/.terrafeeder")
-)
-
 func main() {
-	var keeper *types.HistoryKeeper
+
+	cdc := terra.MakeCodec()
+
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(util.Bech32PrefixAccAddr, util.Bech32PrefixAccPub)
+	config.SetBech32PrefixForValidator(util.Bech32PrefixValAddr, util.Bech32PrefixValPub)
+	config.SetBech32PrefixForConsensusNode(util.Bech32PrefixConsAddr, util.Bech32PrefixConsPub)
+	config.SetTxEncoder(utils.GetTxEncoder(cdc))
+	config.Seal()
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -45,19 +50,9 @@ func main() {
 		Short: "Terra oracle terrafeeder client daemon",
 		Long:  `Terra oracle terrafeeder client daemon. Long description`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return startFeeder(keeper)
+			return startFeeder()
 		},
 	}
-
-	initConfig(rootCmd)
-
-	db, err := leveldb.OpenFile(getHistoryPath(), nil)
-	if err != nil {
-		panic(err)
-	}
-
-	keeper = &types.HistoryKeeper{Db: db}
-	defer db.Close()
 
 	registCommands(rootCmd)
 
@@ -67,15 +62,15 @@ func main() {
 	}
 }
 
-func startFeeder(keeper *types.HistoryKeeper) error {
+func startFeeder() error {
 
 	// init updater
-	updaterTask := updater.NewTask(keeper)
+	updaterTask := updater.NewTask()
 
 	// init rest
 	var restTask *rest.Task
 	if !viper.GetBool(flagNoREST) {
-		restTask = rest.NewTask(keeper, updaterTask)
+		restTask = rest.NewTask(updaterTask)
 	}
 
 	fmt.Printf("Terra Oracle Feeder\n")

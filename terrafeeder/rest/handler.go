@@ -1,8 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
-	"feeder/terrafeeder/types"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -10,10 +8,9 @@ import (
 	"time"
 )
 
-func (task *Task) registRoute(keeper *types.HistoryKeeper, r *mux.Router, isLocalBound bool) {
+func (task *Task) registRoute(r *mux.Router, isLocalBound bool) {
 	r.HandleFunc("/", health()).Methods("GET")
-	r.HandleFunc("/last", queryLatestPrice(keeper)).Methods("GET")
-	r.HandleFunc("/range", queryPriceByRange(task)).Methods("GET").Queries("from")
+	r.HandleFunc("/last", queryLatestPrice(task)).Methods("GET")
 
 	if isLocalBound {
 		r.HandleFunc("/interval", setUpdateInterval(task)).Methods("POST")
@@ -58,32 +55,9 @@ func setUpdateInterval(task *Task) http.HandlerFunc {
 	}
 }
 
-func queryPriceByRange(task *Task) http.HandlerFunc {
+func queryLatestPrice(task *Task) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-
-		fromTime := req.FormValue("from")
-		toTime := req.FormValue("to")
-
-		if fromTime == "" || toTime == "" {
-			_, _ = fmt.Fprintf(res, "query parsing err")
-			return
-		}
-
-		histories := task.keeper.GetHistories(fromTime, toTime)
-		b, err := json.Marshal(histories)
-
-		if err != nil {
-			_, _ = fmt.Fprintf(res, "encoding error")
-			return
-		}
-
-		_, _ = res.Write(b)
-	}
-}
-
-func queryLatestPrice(keeper *types.HistoryKeeper) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		pricesByte := keeper.GetLatestBytes()
+		pricesByte := task.updaterTask.GetHistoryBytes()
 		_, _ = res.Write(pricesByte)
 	}
 }
