@@ -1,0 +1,13 @@
+{
+  "SDR_BUDGET ": {
+    "USD": 0.58252,
+    "EUR": 0.38671,
+    "CNY": 1.0174,
+    "JPY": 11.900,
+    "GBP": 0.085946
+  },
+  "CURRENCYLAYER_API_KEY": "",
+  "ONEFORGE_API_KEY": "",
+  "FIXER_API_KEY": "",
+  "OANDA_API_KEY": ""
+}

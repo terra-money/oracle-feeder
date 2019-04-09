@@ -11,7 +11,7 @@ import ccxt
 from modules.sdr.imf import get_sdr_rates
 
 EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg', 'theocean']
-UPDATING_CURRENCIES = ['USD', 'KRW', 'CHY', 'JPY', 'EUR', 'GBP']
+UPDATING_CURRENCIES = ['USD', 'KRW', 'CNY', 'JPY', 'EUR', 'GBP']
 
 LUNA_DENOM = "ETH"
 
@@ -35,7 +35,7 @@ def filter_exchanges() -> Dict[str, List[ccxt.Exchange]]:
 
     exchange_list = ccxt.exchanges
     if os.getenv("FLASK_DEBUG", False):
-        exchange_list = exchange_list[:5]
+        exchange_list = exchange_list[:10]
 
     exchange_tqdm = tqdm.tqdm(exchange_list, "Checking available exchanges")
     for exchange_id in exchange_tqdm:
@@ -96,7 +96,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
             exchange_tqdm.set_description_str(f"Updating from '{exchange.id}'")
 
             try:
-                last = exchange.fetch_ticker(symbol).get('last', 0)
+                last = exchange.fetch_ticker(symbol)['last']
                 values.append(1 / last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
 
                 if sdr_rate:
@@ -104,7 +104,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
 
                 success_count += 1
 
-            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout, NetworkError, KeyError):
+            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout, NetworkError, KeyError, ZeroDivisionError):
                 fail_count += 1
 
             except Exception as e:
@@ -114,7 +114,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
         if values:
             result.append({
                 "currency": currency,
-                "price": str(median(values))
+                "price": median(values)
             })
         else:
             nodata.append(currency)
@@ -125,7 +125,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
 
         result.append({
             "currency": "SDR",
-            "price": str(sdr_price)
+            "price": sdr_price
         })
 
         # fill-in
@@ -134,7 +134,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
 
             result.append({
                 "currency": currency,
-                "price": str(sdr_price * sdr_rate)
+                "price": sdr_price * sdr_rate
             })
 
     # Information printing

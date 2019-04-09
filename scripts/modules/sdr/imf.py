@@ -12,7 +12,7 @@ SDR_CURRENCY_CODE_MAP = {
     "Euro": "EUR",
     "Japanese yen": "JPY",
     "Korean won": "KRW",
-    "Chinese yuan": "CHY"
+    "Chinese yuan": "CNY"
 }
 
 

@@ -24,7 +24,7 @@
 
 [[override]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "=v0.32.0"
+  version = "=v0.33.0"
 
 ## deps without releases:
 
@@ -44,10 +44,6 @@
   version = "=v1.1.0"
 
 ## transitive deps, without releases:
-
-[[override]]
-  name = "github.com/syndtr/goleveldb"
-  revision = "c4c61651e9e37fa117f53c5a906d3b63090d8445"
 
 [[override]]
   name = "golang.org/x/sys"

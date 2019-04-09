@@ -1,2 +1,0 @@
-
-SDR_CURRENCY_LAYER_KEY = ""
