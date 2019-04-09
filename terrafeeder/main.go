@@ -15,8 +15,6 @@
 package main
 
 import (
-	"feeder/terrafeeder/rest"
-	"feeder/terrafeeder/updater"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,6 +22,8 @@ import (
 	"github.com/spf13/viper"
 	terra "github.com/terra-project/core/app"
 	"github.com/terra-project/core/types/util"
+	"oracle-feeder/terrafeeder/rest"
+	"oracle-feeder/terrafeeder/updater"
 	"os"
 	"os/signal"
 	"syscall"

@@ -1,11 +1,11 @@
-package utils
+package updater
 
 import (
-	"feeder/terrafeeder/types"
-	"feeder/terrafeeder/utils/client"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/viper"
+	"oracle-feeder/terrafeeder/types"
+	"oracle-feeder/terrafeeder/updater/client"
 	"strings"
 	"time"
 )

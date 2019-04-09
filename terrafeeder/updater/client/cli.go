@@ -1,10 +1,10 @@
 package client
 
 import (
-	"feeder/terrafeeder/types"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"io"
+	"oracle-feeder/terrafeeder/types"
 	"os/exec"
 	"strings"
 	"time"

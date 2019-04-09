@@ -2,13 +2,13 @@ package rest
 
 import (
 	"context"
-	"feeder/terrafeeder/types"
-	"feeder/terrafeeder/updater"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"net/http"
+	"oracle-feeder/terrafeeder/types"
+	"oracle-feeder/terrafeeder/updater"
 	"strings"
 	"time"
 )

@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"feeder/terrafeeder/types"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,6 +12,7 @@ import (
 	oracleRest "github.com/terra-project/core/x/oracle/client/rest"
 	"io/ioutil"
 	"net/http"
+	"oracle-feeder/terrafeeder/types"
 )
 
 const (

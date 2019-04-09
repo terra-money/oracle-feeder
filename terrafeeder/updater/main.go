@@ -2,14 +2,14 @@ package updater
 
 import (
 	"encoding/json"
-	"feeder/terrafeeder/types"
-	"feeder/terrafeeder/utils"
 	"fmt"
 	cosmosCli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tendermintCli "github.com/tendermint/tendermint/libs/cli"
+	"oracle-feeder/terrafeeder/types"
+	"oracle-feeder/terrafeeder/utils"
 	"os"
 	"time"
 )
@@ -200,7 +200,7 @@ func (task *Task) votePrice(history *types.History) error {
 	chainID := viper.GetString(cosmosCli.FlagChainID)
 	lcdAddress := viper.GetString(flagLCDAddress)
 
-	if err := utils.VoteAll(cliCtx, task.voterKeyPass, chainID, lcdAddress, history.Prices); err != nil {
+	if err := VoteAll(cliCtx, task.voterKeyPass, chainID, lcdAddress, history.Prices); err != nil {
 		return err
 	}
 

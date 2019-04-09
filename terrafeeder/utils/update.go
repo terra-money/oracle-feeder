@@ -2,10 +2,10 @@ package utils
 
 import (
 	"encoding/json"
-	"feeder/terrafeeder/types"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"oracle-feeder/terrafeeder/types"
 )
 
 // get update price.go data

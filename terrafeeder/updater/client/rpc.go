@@ -1,13 +1,13 @@
 package client
 
 import (
-	"feeder/terrafeeder/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	terra "github.com/terra-project/core/app"
 	"github.com/terra-project/core/x/oracle"
+	"oracle-feeder/terrafeeder/types"
 )
 
 // Send vote message to RPC(EXPERIMENTAL)

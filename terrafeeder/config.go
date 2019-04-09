@@ -1,10 +1,10 @@
 package main
 
 import (
-	"feeder/terrafeeder/rest"
-	"feeder/terrafeeder/updater"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"oracle-feeder/terrafeeder/rest"
+	"oracle-feeder/terrafeeder/updater"
 )
 
 func registCommands(cmd *cobra.Command) {
