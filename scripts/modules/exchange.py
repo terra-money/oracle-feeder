@@ -119,23 +119,29 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]]):
         else:
             nodata.append(currency)
 
+    if not sdr_result:
+        return []
+
     # Post processing
-    if sdr_result:
-        sdr_price = median(sdr_result)
+    sdr_price = median(sdr_result)
+
+    result.append({
+        "currency": "SDR",
+        "price": sdr_price
+    })
+
+    # fill-in
+    for currency in nodata:
+        sdr_rate = sdr_rates.get(currency, 0)
 
         result.append({
-            "currency": "SDR",
-            "price": sdr_price
+            "currency": currency,
+            "price": sdr_price * sdr_rate
         })
 
-        # fill-in
-        for currency in nodata:
-            sdr_rate = sdr_rates.get(currency, 0)
-
-            result.append({
-                "currency": currency,
-                "price": sdr_price * sdr_rate
-            })
+    # calc dispersion
+    for item in result:
+        item['dispersion'] = (sdr_price - item['price']) / sdr_price
 
     # Information printing
     print("")

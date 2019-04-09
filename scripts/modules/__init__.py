@@ -38,7 +38,7 @@ def periodic_update():
 
     for price in data['prices']:
         price['price'] = format(price['price'], ".18f")  # cut data to limit precision to 18
-        print(price['currency'], " : ", price['price'])
+        print("{currency} : {price} ({dispersion:.4f} %)".format(**price))
 
     threading.Timer(60, periodic_update).start()
 
