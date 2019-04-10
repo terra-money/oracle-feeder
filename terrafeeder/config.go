@@ -18,4 +18,6 @@ func registCommands(cmd *cobra.Command) {
 		rest.RegistCommand(cmd)
 	}
 
+	_ = viper.BindPFlags(cmd.Flags())
+	_ = viper.BindPFlags(cmd.PersistentFlags())
 }

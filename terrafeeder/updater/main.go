@@ -96,6 +96,8 @@ func RegistCommand(cmd *cobra.Command) {
 	cmd.PersistentFlags().String(cosmosCli.FlagChainID, "", "Chain ID of tendermint node")
 
 	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
+	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
+
 	cmd.Flags().Duration(flagUpdatingInterval, defaultUpdatingInterval, "Updating interval (Duration format)")
 	cmd.Flags().StringSlice(flagUpdatingSource, []string{defaultUpdatingSource}, "Updating data source urls (separated by comma)")
 
@@ -105,16 +107,17 @@ func RegistCommand(cmd *cobra.Command) {
 
 		// flags about voting
 		cmd.Flags().String(flagVoteBy, "lcd", "change voting method (lcd, rpc, cli)")
+		_ = viper.BindPFlag(flagVoteBy, cmd.Flags().Lookup(flagVoteBy))
 
 		voteBy := viper.GetString(flagVoteBy)
 		if voteBy == "lcd" {
 			cmd.Flags().String(flagLCDAddress, defaultLCDAddress, "the url of lcd daemon to request vote")
 		}
 		if voteBy == "rpc" {
-			// nothing
+			// do nothing
 		}
 		if voteBy == "cli" {
-			// nothing
+			// do nothing
 		}
 
 		cmd.Flags().String(tendermintCli.HomeFlag, defaultCLIHome, "node's home directory")
@@ -122,9 +125,6 @@ func RegistCommand(cmd *cobra.Command) {
 		_ = cmd.MarkFlagRequired(cosmosCli.FlagFrom)
 		_ = cmd.MarkFlagRequired(cosmosCli.FlagChainID)
 	}
-
-	_ = viper.BindPFlags(cmd.Flags())
-	_ = viper.BindPFlags(cmd.PersistentFlags())
 }
 
 // override Start function to set initial interval
