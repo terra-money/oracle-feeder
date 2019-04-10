@@ -3,7 +3,7 @@ import json
 import threading
 import pytz
 
-from modules.exchange import get_data, filter_exchanges
+from modules.exchange.exchange import get_data, filter_exchanges
 
 data = {
     "created_at": "",
