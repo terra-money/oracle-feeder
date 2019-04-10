@@ -44,8 +44,8 @@ type Task struct {
 
 	history *types.History
 
-	sourceURL string
-	noVoting  bool
+	sourceURLs []string
+	noVoting   bool
 
 	voterKey     string
 	voterKeyPass string
@@ -58,7 +58,7 @@ var _ types.Task = (*Task)(nil)
 // Create new Update BaseTask
 func NewTask() *Task {
 
-	sourceURL := viper.GetString(flagUpdatingSource)
+	sourceURLs := viper.GetStringSlice(flagUpdatingSource)
 	noVoting := viper.GetBool(flagNoVoting)
 	voter := viper.GetString(cosmosCli.FlagFrom)
 
@@ -81,7 +81,7 @@ func NewTask() *Task {
 			Name: "Updater",
 		},
 		nil,
-		sourceURL,
+		sourceURLs,
 		noVoting,
 		voter,
 		voterKeyPass,
@@ -94,16 +94,10 @@ func NewTask() *Task {
 // Regist REST Commands
 func RegistCommand(cmd *cobra.Command) {
 	cmd.PersistentFlags().String(cosmosCli.FlagChainID, "", "Chain ID of tendermint node")
-	_ = viper.BindPFlag(cosmosCli.FlagChainID, cmd.PersistentFlags().Lookup(cosmosCli.FlagChainID))
 
 	cmd.Flags().Bool(flagNoVoting, false, "run without voting (alias of --proxy)")
-	_ = viper.BindPFlag(flagNoVoting, cmd.Flags().Lookup(flagNoVoting))
-
 	cmd.Flags().Duration(flagUpdatingInterval, defaultUpdatingInterval, "Updating interval (Duration format)")
-	cmd.Flags().String(flagUpdatingSource, defaultUpdatingSource, "Updating interval (Duration format)")
-
-	_ = viper.BindPFlag(flagUpdatingInterval, cmd.Flags().Lookup(flagUpdatingInterval))
-	_ = viper.BindPFlag(flagUpdatingSource, cmd.Flags().Lookup(flagUpdatingSource))
+	cmd.Flags().StringSlice(flagUpdatingSource, []string{defaultUpdatingSource}, "Updating data source urls (separated by comma)")
 
 	if !viper.GetBool(flagNoVoting) {
 
@@ -111,12 +105,10 @@ func RegistCommand(cmd *cobra.Command) {
 
 		// flags about voting
 		cmd.Flags().String(flagVoteBy, "lcd", "change voting method (lcd, rpc, cli)")
-		_ = viper.BindPFlag(flagVoteBy, cmd.Flags().Lookup(flagVoteBy))
 
 		voteBy := viper.GetString(flagVoteBy)
 		if voteBy == "lcd" {
 			cmd.Flags().String(flagLCDAddress, defaultLCDAddress, "the url of lcd daemon to request vote")
-			_ = viper.BindPFlag(flagLCDAddress, cmd.Flags().Lookup(flagLCDAddress))
 		}
 		if voteBy == "rpc" {
 			// nothing
@@ -127,13 +119,12 @@ func RegistCommand(cmd *cobra.Command) {
 
 		cmd.Flags().String(tendermintCli.HomeFlag, defaultCLIHome, "node's home directory")
 
-		_ = viper.BindPFlag(tendermintCli.HomeFlag, cmd.Flags().Lookup(tendermintCli.HomeFlag))
-		_ = viper.BindPFlag(cosmosCli.FlagFrom, cmd.Flags().Lookup(cosmosCli.FlagFrom))
-
 		_ = cmd.MarkFlagRequired(cosmosCli.FlagFrom)
 		_ = cmd.MarkFlagRequired(cosmosCli.FlagChainID)
-
 	}
+
+	_ = viper.BindPFlags(cmd.Flags())
+	_ = viper.BindPFlags(cmd.PersistentFlags())
 }
 
 // override Start function to set initial interval
@@ -141,9 +132,14 @@ func (task *Task) Start() {
 	task.StartWithInterval(viper.GetDuration(flagUpdatingInterval))
 }
 
-// Change price.go updating source url
-func (task *Task) SetSourceURL(url string) {
-	task.sourceURL = url
+// Updating source url
+func (task *Task) SetSourceURL(url []string) {
+	task.sourceURLs = url
+}
+
+// Add new source url
+func (task *Task) AddSourceURL(url string) {
+	task.sourceURLs = append(task.sourceURLs, url)
 }
 
 // Run task
@@ -180,7 +176,7 @@ func (task *Task) GetHistoryBytes() []byte {
 func (task *Task) updatePrice() (*types.History, error) {
 	fmt.Println("Updating....")
 
-	history, err := utils.UpdatePrices(task.sourceURL)
+	history, err := utils.UpdatePrices(task.sourceURLs)
 
 	if err != nil {
 		fmt.Println(err)

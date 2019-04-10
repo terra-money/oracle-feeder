@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -25,14 +26,22 @@ func setUpdateSource(task *Task) http.HandlerFunc {
 			return
 		}
 
-		sourceURL, err := url.Parse(req.FormValue("url"))
-		if err != nil {
-			res.WriteHeader(http.StatusBadRequest)
-			return
+		sources := strings.Split(req.FormValue("url"), ",")
+		var urls []string
+
+		// cleaning URLs
+		for _, source := range sources {
+			parsed, err := url.Parse(source)
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				errorMsg := fmt.Sprintf("[%s] is not an available URL", source)
+				_, _ = res.Write([]byte(errorMsg))
+				return
+			}
+			urls = append(urls, parsed.String())
 		}
 
-		task.updaterTask.SetSourceURL(sourceURL.String())
-
+		task.updaterTask.SetSourceURL(urls)
 		_, _ = res.Write([]byte("ok"))
 	}
 }

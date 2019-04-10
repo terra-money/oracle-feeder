@@ -7,8 +7,9 @@ import (
 
 // price.go struct for terrafeeder REST API
 type Price struct {
-	Denom string  `json:"currency"`
-	Price sdk.Dec `json:"price"`
+	Denom      string  `json:"currency"`
+	Price      sdk.Dec `json:"price"`
+	Dispersion sdk.Dec `json:"dispersion"`
 }
 
 // Price history
