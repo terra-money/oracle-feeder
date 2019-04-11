@@ -6,6 +6,7 @@ Oracle feeder manual
 ```bash
 $ git clone https://github.com/terra-project/oracle-feeder
 $ cd oracle-feeder
+$ dep ensure
 $ make
 ```
 ## RUN
