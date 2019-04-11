@@ -4,6 +4,7 @@ Oracle feeder manual
 
 ## BUILD
 ```bash
+$ go get -u github.com/golang/dep/cmd/dep
 $ git clone https://github.com/terra-project/oracle-feeder
 $ cd oracle-feeder
 $ dep ensure
