@@ -11,7 +11,23 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# IDE
+.idea/
+.vscode/
+
+# secret
+scripts/setting.json
+
+# output
 build/
 vendor/
-scripts/setting.json
-.idea/
+node_modules/
+out/
+
+# log
+yarn-error.log
+
+# lock files
+Gopkg.lock
+yarn.lock
+package-lock.json
