@@ -3,11 +3,11 @@ Oracle Feeder Daemon
 Oracle feeder manual
 
 ## BUILD
-
+```bash
 $ git clone https://github.com/terra-project/oracle-feeder
 $ cd oracle-feeder
 $ make
-
+```
 ## RUN
 
 #### Option 1 :  enter the password through System Environment
