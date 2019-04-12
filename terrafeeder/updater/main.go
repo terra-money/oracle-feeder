@@ -1,6 +1,7 @@
 package updater
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	cosmosCli "github.com/cosmos/cosmos-sdk/client"
@@ -47,8 +48,9 @@ type Task struct {
 	sourceURLs []string
 	noVoting   bool
 
-	voterKey     string
-	voterKeyPass string
+	voterKey      string
+	encryptedPass string
+	aesKey        []byte
 }
 
 var _ types.Task = (*Task)(nil)
@@ -61,6 +63,9 @@ func NewTask() *Task {
 	sourceURLs := viper.GetStringSlice(flagUpdatingSource)
 	noVoting := viper.GetBool(flagNoVoting)
 	voter := viper.GetString(cosmosCli.FlagFrom)
+
+	aesKey := make([]byte, 16)
+	_, _ = rand.Read(aesKey)
 
 	voterKeyPass := os.Getenv("FEEDER_PASSPHRASE")
 	if !noVoting && voterKeyPass == "" {
@@ -76,6 +81,11 @@ func NewTask() *Task {
 		}
 	}
 
+	encryptedPass, err := utils.Encrypt(aesKey, voterKeyPass)
+	if err != nil {
+		panic(fmt.Errorf("password encryption error"))
+	}
+
 	task := &Task{
 		types.BaseTask{
 			Name: "Updater",
@@ -84,7 +94,8 @@ func NewTask() *Task {
 		sourceURLs,
 		noVoting,
 		voter,
-		voterKeyPass,
+		encryptedPass,
+		aesKey,
 	}
 
 	task.Task = task
@@ -196,7 +207,7 @@ func (task *Task) votePrice(history *types.History) error {
 	chainID := viper.GetString(cosmosCli.FlagChainID)
 	lcdAddress := viper.GetString(flagLCDAddress)
 
-	if err := VoteAll(cliCtx, task.voterKeyPass, chainID, lcdAddress, history.Prices); err != nil {
+	if err := VoteAll(cliCtx, task.encryptedPass, task.aesKey, chainID, lcdAddress, history.Prices); err != nil {
 		return err
 	}
 

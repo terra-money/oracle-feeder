@@ -2,20 +2,21 @@ package client
 
 import (
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
+	cosmosUtils "github.com/cosmos/cosmos-sdk/client/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	terra "github.com/terra-project/core/app"
 	"github.com/terra-project/core/x/oracle"
 	"oracle-feeder/terrafeeder/types"
+	"oracle-feeder/terrafeeder/utils"
 )
 
 // Send vote message to RPC(EXPERIMENTAL)
-func VoteByRPC(cliCtx context.CLIContext, passphrase string, price *types.Price) error {
+func VoteByRPC(cliCtx context.CLIContext, encryptedPass string, aesKey []byte, price *types.Price) error {
 
 	cdc := terra.MakeCodec()
 	cliCtx = cliCtx.WithCodec(cdc).WithAccountDecoder(cdc)
-	txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc)).WithFees("3000mluna")
+	txBldr := authtxb.NewTxBuilderFromCLI().WithTxEncoder(cosmosUtils.GetTxEncoder(cdc)).WithFees("3000mluna")
 
 	msg := oracle.NewMsgPriceFeed(price.Denom, price.Price, cliCtx.GetFromAddress())
 	err := msg.ValidateBasic()
@@ -24,7 +25,7 @@ func VoteByRPC(cliCtx context.CLIContext, passphrase string, price *types.Price)
 	}
 
 	// GenerateOrBroadcastMsgs
-	txBldr, sdkerr := utils.PrepareTxBuilder(txBldr, cliCtx)
+	txBldr, sdkerr := cosmosUtils.PrepareTxBuilder(txBldr, cliCtx)
 	if sdkerr != nil {
 		return sdkerr
 	}
@@ -32,7 +33,11 @@ func VoteByRPC(cliCtx context.CLIContext, passphrase string, price *types.Price)
 	fromName := cliCtx.GetFromName()
 
 	// build and sign the transaction
-	txBytes, sdkerr := txBldr.BuildAndSign(fromName, passphrase, []sdk.Msg{msg})
+	decryptedPass, decerr := utils.Decrypt(aesKey, encryptedPass)
+	if decerr != nil {
+		panic(decerr)
+	}
+	txBytes, sdkerr := txBldr.BuildAndSign(fromName, decryptedPass, []sdk.Msg{msg})
 	if sdkerr != nil {
 		return sdkerr
 	}

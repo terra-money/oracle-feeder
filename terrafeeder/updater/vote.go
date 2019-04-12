@@ -11,7 +11,7 @@ import (
 )
 
 // Voting all price.go data
-func VoteAll(cliCtx context.CLIContext, voterPass string, chainID string, lcdAddress string, prices []types.Price) error {
+func VoteAll(cliCtx context.CLIContext, encryptedPass string, aesKey []byte, chainID string, lcdAddress string, prices []types.Price) error {
 
 	lcd := client.NewLCDClient(lcdAddress)
 	mode := viper.GetString("vote-by")
@@ -23,7 +23,7 @@ func VoteAll(cliCtx context.CLIContext, voterPass string, chainID string, lcdAdd
 		fmt.Println(time.Now().UTC().Format(time.RFC3339), price.Denom, price.Price)
 
 		if mode == "cli" {
-			err = client.VoteByCli(cliCtx, price, voterPass, chainID)
+			err = client.VoteByCli(cliCtx, price, encryptedPass, aesKey, chainID)
 
 		} else if mode == "lcd" {
 
@@ -33,10 +33,10 @@ func VoteAll(cliCtx context.CLIContext, voterPass string, chainID string, lcdAdd
 				continue
 			}
 
-			err = lcd.VoteByREST(cliCtx, account, &price, voterPass, chainID)
+			err = lcd.VoteByREST(cliCtx, account, &price, encryptedPass, aesKey, chainID)
 
 		} else if mode == "rpc" {
-			err = client.VoteByRPC(cliCtx, voterPass, &price)
+			err = client.VoteByRPC(cliCtx, encryptedPass, aesKey, &price)
 		}
 
 		if err != nil {

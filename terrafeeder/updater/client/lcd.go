@@ -62,7 +62,7 @@ func (client *LCDClient) QueryAccount(voterAddress string) (*auth.BaseAccount, e
 }
 
 // Send vote message to LCD
-func (client *LCDClient) VoteByREST(cliCtx context.CLIContext, account *auth.BaseAccount, price *types.Price, voterPass string, chainID string) error {
+func (client *LCDClient) VoteByREST(cliCtx context.CLIContext, account *auth.BaseAccount, price *types.Price, encryptedPass string, aesKey []byte, chainID string) error {
 
 	for i := 0; i < maximumRetry; i++ {
 		fmt.Println("Voting ", price.Denom, " as ", price.Price, " trial #", i)

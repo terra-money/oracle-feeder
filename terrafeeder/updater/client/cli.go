@@ -5,20 +5,25 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"io"
 	"oracle-feeder/terrafeeder/types"
+	"oracle-feeder/terrafeeder/utils"
 	"os/exec"
 	"strings"
 	"time"
 )
 
 // Send vote message via terracli
-func VoteByCli(cliCtx context.CLIContext, price types.Price, voterPass string, chainID string) error {
+func VoteByCli(cliCtx context.CLIContext, price types.Price, encryptedPass string, aesKey []byte, chainID string) error {
 
 	voterName := cliCtx.GetFromName()
 	voteCommand := fmt.Sprintf(
 		"terracli tx oracle vote %v %v --from %v --chain-id %v --fees 2luna",
 		price.Denom, price.Price, voterName, chainID)
 
-	executeCmd(voteCommand, voterPass)
+	decryptedPass, decerr := utils.Decrypt(aesKey, encryptedPass)
+	if decerr != nil {
+		panic(decerr)
+	}
+	executeCmd(voteCommand, decryptedPass)
 
 	return nil
 }
