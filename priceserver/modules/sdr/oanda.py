@@ -88,10 +88,3 @@ def calc_sdr_rates(currency_rates):
         sdr_rates[k] = 1 / calc_sdr_rate(c)
 
     return sdr_rates
-
-
-if __name__ == '__main__':
-    currencies = settings['UPDATER']['CURRENCIES']
-    sdr_rates = get_sdr_rates(currencies)
-    for k, v in sdr_rates.items():
-        print(k, v)

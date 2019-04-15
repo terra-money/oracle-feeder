@@ -10,19 +10,22 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+*.pyc
 
 # IDE
 .idea/
 .vscode/
 
 # secret
-scripts/setting.json
+setting.json
 
 # output
 build/
 vendor/
 node_modules/
 out/
+__pycache__/
+.cache/
 
 # log
 yarn-error.log

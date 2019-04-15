@@ -26,7 +26,7 @@ def get_spot(currencies: List[str]) -> Dict[str, any]:
     return requests.get(url).json()
 
 
-def calc_rate(quotes: Dict[str, str]) -> Dict[str, float]:
+def calc_rate(quotes: Dict[str, float]) -> Dict[str, float]:
     rates = {}
 
     for quote, rate in quotes.items():
