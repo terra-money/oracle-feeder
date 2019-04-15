@@ -3,11 +3,13 @@ Oracle Feeder Daemon
 Oracle feeder manual
 
 ## BUILD
-
+```bash
+$ go get -u github.com/golang/dep/cmd/dep
 $ git clone https://github.com/terra-project/oracle-feeder
 $ cd oracle-feeder
+$ dep ensure -v
 $ make
-
+```
 ## RUN
 
 #### Option 1 :  enter the password through System Environment
