@@ -1,13 +1,14 @@
-import json
+"""
+API client for OANDA
+"""
 import requests
-from typing import Dict
+from typing import Dict, List
 
-# from modules.setting import OANDA_API_KEY
-from modules.sdr_util import calc_sdr_rate
-from modules import settings
+from modules.sdr.utils import calc_sdr_rate
+from modules.settings import settings
 
 SDR_BUDGET = settings['SDR_BUDGET']
-OANDA_API_KEY = settings['OANDA_API_KEY']
+API_KEY = settings['API_KEYS']['OANDA']
 ENTRY_POINT = "https://web-services.oanda.com/rates/api/v2/"
 
 """
@@ -42,34 +43,55 @@ VNCB – The State Bank of Vietnam rates
 """
 
 
-def get_sdr_rates() -> Dict[str, float]:
+def get_sdr_rates(currency_list: List[str]) -> Dict[str, float]:
+
+    quotes = get_spot(currency_list)
+    currency_rates = refine_rates(quotes)
+    sdr_rates = calc_sdr_rates(currency_rates)
+
+    return sdr_rates
+
+
+def get_spot(currency_list: List[str]):
+    currency_set = set(list(SDR_BUDGET.keys()) + currency_list)
+
     params = {
         "data_set": "OANDA",
-        "base": list(SDR_BUDGET.keys()),
-        "api_key": OANDA_API_KEY,
-        "quote": list(SDR_BUDGET.keys())
+        "base": currency_set,
+        "api_key": API_KEY,
+        "quote": currency_set
     }
 
-    quotes = requests.get(ENTRY_POINT+"rates/spot.json", params=params).json()
+    return requests.get(ENTRY_POINT + "rates/spot.json", params=params).json()
 
+
+def refine_rates(quotes):
     currency_rates = {}
+
     for q in quotes['quotes']:
         base = q['base_currency']
         cur = q['quote_currency']
         price = q['midpoint']
-        print(q)
 
         if cur in currency_rates:
             currency_rates[cur][base] = float(price)
         else:
             currency_rates[cur] = {base: float(price)}
 
+    return currency_rates
+
+
+def calc_sdr_rates(currency_rates):
+
     sdr_rates = {}
     for k, c in currency_rates.items():
-        sdr_rates[k] = calc_sdr_rate(c)
+        sdr_rates[k] = 1 / calc_sdr_rate(c)
 
     return sdr_rates
 
 
 if __name__ == '__main__':
-    print(get_sdr_rates())
+    currencies = settings['UPDATER']['CURRENCIES']
+    sdr_rates = get_sdr_rates(currencies)
+    for k, v in sdr_rates.items():
+        print(k, v)

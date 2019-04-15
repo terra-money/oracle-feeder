@@ -1,4 +1,4 @@
-from modules import settings
+from modules.settings import settings
 
 SDR_BUDGET = settings['SDR_BUDGET']
 
@@ -14,7 +14,8 @@ def make_pairs(code: str):
 def calc_sdr_rate(currency_rate):
     rate = 0
     for k, v in currency_rate.items():
-        rate += SDR_BUDGET[k] * currency_rate[k]
+        if k in SDR_BUDGET:
+            rate += SDR_BUDGET[k] * currency_rate[k]
 
     return rate
 

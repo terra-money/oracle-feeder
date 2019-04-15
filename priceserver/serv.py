@@ -1,17 +1,18 @@
 import json
 from flask import Flask
 
-from modules import periodic_update, data
+from .modules import updater
 
 app = Flask(__name__)
 
 
 @app.route("/last")
 def last_price():
-    return json.dumps(data)
+    return json.dumps(updater.get_last_price())
 
 
-periodic_update()
+updater.init_data()
+updater.periodic_update()
 
 if __name__ == '__main__':
     app.run(threaded=False, processes=1)
