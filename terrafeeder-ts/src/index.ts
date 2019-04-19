@@ -10,9 +10,9 @@ import {ArgumentParser} from "argparse"
 import * as wallet from "./wallet"
 import * as keystore from "./keystore"
 
-const ENDPOINT_VOTE = "/oracle/denoms/%s/votes"
-const ENDPOINT_ACCOUNT = "/auth/accounts/%s"
-const ENDPOINT_BROADCAST = "/txs"
+const endpointVote = "/oracle/denoms/%s/votes"
+const endpointAccount = "/auth/accounts/%s"
+const endpointBroadcast = "/txs"
 
 const defaultKeyName = "voter"
 
@@ -120,7 +120,7 @@ async function updateAndVoting(args: any, voter: any) {
   const {source, lcd: lcdAddress, chainID} = args;
   const prices = await getPrice(source)
   
-  var res = await axios.get(util.format(lcdAddress + ENDPOINT_ACCOUNT, voter.terraAddress))
+  var res = await axios.get(util.format(lcdAddress + endpointAccount, voter.terraAddress))
   const account = res.data.value
   
   for ( var currency in prices ) {
@@ -153,7 +153,7 @@ async function votePrice(lcdAddress: string, currency: string, price: string, vo
   
   const denom = "m" + currency.toLowerCase()
   
-  var res = await axios.post(util.format(lcdAddress + ENDPOINT_VOTE, denom), args)
+  var res = await axios.post(util.format(lcdAddress + endpointVote, denom), args)
   var tx = res.data.value
   
   var signature = wallet.sign(tx, voter, args.base_req)
@@ -161,7 +161,7 @@ async function votePrice(lcdAddress: string, currency: string, price: string, vo
   
   var boradcastReq = wallet.createBroadcastBody(signedTx, `sync`)
   
-  var res = await axios.post(lcdAddress + ENDPOINT_BROADCAST, boradcastReq)
+  var res = await axios.post(lcdAddress + endpointBroadcast, boradcastReq)
   if ( res.data.code !== undefined ) {
     console.error("voting failed : " + JSON.stringify(res.data))
   } else {
