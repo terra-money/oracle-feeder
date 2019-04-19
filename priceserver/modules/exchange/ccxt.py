@@ -118,13 +118,9 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
                 success_count += 1
 
-            except (ExchangeError, DDoSProtection, ExchangeNotAvailable, RequestTimeout, NetworkError, KeyError,
-                    ZeroDivisionError):
-                fail_count += 1
-
             except Exception as e:
+                fail_count += 1
                 print(f"{symbol}/{exchange.id}")
-                raise e
 
         if values:
             result.append({
