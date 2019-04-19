@@ -6,11 +6,17 @@ import ccxt
 from statistics import median
 from typing import Dict, List
 
+from .gopax import gopax
+
 from ccxt import ExchangeError, ExchangeNotAvailable, DDoSProtection, BaseError, RequestTimeout, NetworkError
 from modules.settings import settings
 
-EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg', 'theocean']
+EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg', 'theocean', 'bitstamp1']
 DENOM = settings['UPDATER']['DENOM']
+
+
+setattr(ccxt, "gopax", gopax)
+ccxt.exchanges.append("gopax")
 
 
 # ------------------------------------------------------------------------------
@@ -76,6 +82,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
     success_count = 0
     fail_count = 0
+    failed_exchanges = []
 
     currency_tqdm = tqdm.tqdm(currencies, "Fetching")
     for currency in currency_tqdm:
@@ -99,9 +106,9 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
                 success_count += 1
 
-            except Exception as e:
+            except Exception:
                 fail_count += 1
-                print(f"{symbol}/{exchange.id}")
+                failed_exchanges.append("%s(%s)" % (exchange.id, symbol))
 
         if values:
             result.append({
@@ -142,6 +149,6 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
     # Information printing
     print("")
-    print(f"Success: {success_count}, Fail: {fail_count}")
+    print(f"Success: {success_count}, Fail: {fail_count} [{failed_exchanges}]")
 
     return result

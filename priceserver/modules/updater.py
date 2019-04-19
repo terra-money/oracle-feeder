@@ -25,7 +25,7 @@ def init_data():
     exchanges = filter_exchanges(currencies)
 
     for symbol, exchange in exchanges.items():
-        print(f"{symbol} : {len(exchange)} exchanges")
+        print(f"{symbol} : {len(exchange)} exchanges [{[e.id for e in exchange]}]")
 
 
 def get_last_price():
