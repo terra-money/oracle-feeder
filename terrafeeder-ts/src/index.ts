@@ -62,9 +62,8 @@ function registCommands(parser: ArgumentParser) {
 }
 
 async function updateKey() {
-  const password = promptly.password('Enter a passphrase to encrypt your key to disk:')
-  const confirm = promptly.password('Repeat the passphrase:')
-  const seeds = promptly.prompt('> Enter your bip39 mnemonic\n')
+  const password = await promptly.password('Enter a passphrase to encrypt your key to disk:', { replace: '*' })
+  const confirm = await promptly.password('Repeat the passphrase:', { replace: '*' })
 
   if ( password.length < 8 ) {
     console.error("ERROR: password must be at least 8 characters")
@@ -75,6 +74,8 @@ async function updateKey() {
     console.error("ERROR: passphrases don't matchPassword confirm failed")
     return
   }
+
+  const seeds = await promptly.prompt('Enter your bip39 mnemonic : ')
   
   if ( seeds.trim().split(" ").length !== 24 ) {
     console.error("Error: Mnemonic is not valid.")
@@ -180,7 +181,7 @@ async function main() {
   var args = parser.parseArgs();
   
   if ( args.subparser_name == "vote" ) {
-    const password = args.password || await promptly.password('Enter a passphrase:')
+    const password = args.password || await promptly.password('Enter a passphrase:', { replace: '*' })
     const validator = keystore.getKey(defaultKeyName, password)
 
     updateAndVoting(args, validator)

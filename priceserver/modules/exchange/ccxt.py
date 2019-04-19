@@ -68,25 +68,6 @@ def filter_exchanges(currencies) -> Dict[str, List[ccxt.Exchange]]:
     return exchanges
 
 
-v0 = [('fetched ', 'ETH/EUR', 146.57), ('fetched ', 'ETH/GBP', 126.85)]
-
-v1 = [{'currency': 'EUR', 'price': 0.006822678583611927, 'dispersion': -0.29238255365693055},
-      {'currency': 'GBP', 'price': 0.007883326763894364, 'dispersion': -0.2895953580960041},
-      {'currency': 'SDR', 'price': 0.006488793839130121, 'dispersion': 0},
-      {'currency': 'USD', 'price': 0.004665919996590282, 'dispersion': 1.3367071901065067e-16},
-      {'currency': 'KRW', 'price': 4.1194950794272465e-06, 'dispersion': 0.0},
-      {'currency': 'CNY', 'price': 0.0006957394211215282, 'dispersion': 0.0},
-      {'currency': 'JPY', 'price': 4.1686422556553665e-05, 'dispersion': 0.0}]
-
-v2 = [{'currency': 'EUR', 'price': 0.006822678583611927, 'dispersion': -0.29238255365693055},
-      {'currency': 'GBP', 'price': 0.007883326763894364, 'dispersion': -0.2895953580960041},
-      {'currency': 'SDR', 'price': 0.006488793839130121, 'dispersion': 0},
-      {'currency': 'USD', 'price': 0.004665919996590282, 'dispersion': 1.3367071901065067e-16},
-      {'currency': 'KRW', 'price': 4.1194950794272465e-06, 'dispersion': 0.0},
-      {'currency': 'CNY', 'price': 0.0006957394211215282, 'dispersion': 0.0},
-      {'currency': 'JPY', 'price': 4.1686422556553665e-05, 'dispersion': 0.0}]
-
-
 def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
     result = []
     nodata = []

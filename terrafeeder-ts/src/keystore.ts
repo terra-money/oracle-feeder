@@ -36,8 +36,8 @@ export function getKey(name, password) {
   }
 }
 
-function addKey(wallet, name, password) {
-  const keys = loadKeys()
+function setKey(wallet, name, password) {
+  const keys = []
   
   if (keys.find(key => key.name === name))
   throw new Error(`Key with that name already exists`)
@@ -67,20 +67,20 @@ export function testPassword(name, password) {
   }
 }
 
-export function addNewKey(
+export function setNewKey(
   name,
   password,
   randomBytesFunc = standardRandomBytesFunc
   ) {
     const wallet = generateWallet(randomBytesFunc)
-    addKey(wallet, name, password)
+    setKey(wallet, name, password)
     
     return wallet
   }
   export async function importKey(name, password, seed) {
     const wallet = await generateWalletFromSeed(seed)
     
-    addKey(wallet, name, password)
+    setKey(wallet, name, password)
     
     return wallet
   }
