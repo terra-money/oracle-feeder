@@ -92,7 +92,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
             try:
                 last = exchange.fetch_ticker(symbol)['last']
-                values.append(1 / last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
+                values.append(last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
 
                 if sdr_rate:
                     sdr_result.append(last * sdr_rate)
@@ -119,7 +119,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
     result.append({
         "currency": "SDR",
-        "price": 1 / sdr_price
+        "price": sdr_price
     })
 
     # fill-in
@@ -128,7 +128,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
         result.append({
             "currency": currency,
-            "price": 1 / (sdr_price / sdr_rate)
+            "price": (sdr_price / sdr_rate)
         })
 
     # calc dispersion
@@ -138,7 +138,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
             continue
 
         sdr_rate = sdr_rates[item['currency']]
-        item['dispersion'] = 1 - ((sdr_price - (item['price'] / sdr_rate)) / sdr_price)
+        item['dispersion'] = 1 - ((sdr_price - (item['price'] * sdr_rate)) / sdr_price)
 
     # Information printing
     print("")
