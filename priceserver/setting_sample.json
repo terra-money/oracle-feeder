@@ -15,7 +15,7 @@
       "EUR",
       "GBP"
     ],
-    "LUNA_DENOM": "LUNA"
+    "DENOM": "LUNA"
   },
   "API_KEYS": {
     "CURRENCYLAYER": "",

@@ -145,7 +145,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
             continue
 
         sdr_rate = sdr_rates[item['currency']]
-        item['dispersion'] = 1 - ((sdr_price - (item['price'] * sdr_rate)) / sdr_price)
+        item['dispersion'] = 1 - ((sdr_price - (1 / item['price'] / sdr_rate)) / sdr_price)
 
     # Information printing
     print("")
