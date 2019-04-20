@@ -1,23 +1,23 @@
 # USAGE
 
-## install depencancies
+## Install depencancies
 ```
 $ yarn
 ```
 
-## create key by mnemonic 
+## Create key by mnemonic 
 ```
-$ yarn start setkey
+$ yarn start update-key
 Enter a passphrase to encrypt your key to disk: ********
 Repeat the passphrase: ********
-Enter your bip39 mnemonic : <some nide mnemonic>
+Enter your bip39 mnemonic : <some nice mnemonic>
 saved!
 ✨  Done in 9.19s.
 ```
 
-## voting
+## Voting
 ```
-$ yarn start vote -s "http://price.terra.money/last" -l "https://lcd.terra.money" -c terra-0001
+$ yarn start vote --source "http://price.terra.money/last" --lcd "https://lcd.terra.money" --chain-id terra-0001 --denoms krw,usd
 Enter a passphrase: *******
 Voted : musd = xxxx.xxxxxxxxxxxxx,  txhash : 096A3C93058CC4A1B4C5F50F0CA8DF7F4F89DFA8533047AB69FCA46E32ABF860
 Voted : mkrw = xxxx.xxxxxxxxxxxxx,  txhash : F2CBAF070ADF29F616670082784807220DE25307D79EF4784682752AE1A5CD9D
