@@ -152,8 +152,7 @@ async function votePrice({lcd: lcdAddress, chainID}, currency: string, price: st
             chain_id: chainID,
             account_number: account.account_number,
             sequence: account.sequence,
-            fees: [{amount: "0", denom: "mluna"}],
-            gas_prices: [{amount: "300", denom: "mluna"}],
+            fees: [{amount: "0", denom: "uluna"}],
             gas: "200000",
             gas_adjustment: "0",
             simulate: false
@@ -161,7 +160,7 @@ async function votePrice({lcd: lcdAddress, chainID}, currency: string, price: st
         price
     };
 
-    const denom = "m" + currency.toLowerCase()
+    const denom = "u" + currency.toLowerCase()
 
     var res = await axios.post(util.format(lcdAddress + endpointVote, denom), txArgs)
     var tx = res.data.value
