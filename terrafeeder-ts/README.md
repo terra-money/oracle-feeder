@@ -17,7 +17,7 @@ saved!
 
 ## Voting
 ```
-$ yarn start vote --source "http://price.terra.money/last" --lcd "https://lcd.terra.money" --chain-id terra-0001 --denoms krw,usd
+$ yarn start vote --source "http://price.terra.money/last" --lcd "https://lcd.terra.money" --chain-id terra-0001 --denoms krw,usd,sdr
 Enter a passphrase: *******
 Voted : musd = xxxx.xxxxxxxxxxxxx,  txhash : 096A3C93058CC4A1B4C5F50F0CA8DF7F4F89DFA8533047AB69FCA46E32ABF860
 Voted : mkrw = xxxx.xxxxxxxxxxxxx,  txhash : F2CBAF070ADF29F616670082784807220DE25307D79EF4784682752AE1A5CD9D
