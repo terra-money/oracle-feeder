@@ -1,5 +1,3 @@
-import json
-import os
 import tqdm
 import ccxt
 
@@ -8,10 +6,17 @@ from typing import Dict, List
 
 from .gopax import gopax
 
-from ccxt import ExchangeError, ExchangeNotAvailable, DDoSProtection, BaseError, RequestTimeout, NetworkError
+from ccxt import BaseError
 from modules.settings import settings
 
-EXCHANGE_BLACKLIST = ['coingi', 'jubi', 'coinegg', 'theocean', 'bitstamp1']
+EXCHANGE = settings.get('EXCHANGE', {
+    "BLACKLIST": [],
+    "WHITELIST": [],
+})
+
+EXCHANGE_BLACKLIST = EXCHANGE.get('BLACKLIST', [])
+EXCHANGE_WHITELIST = EXCHANGE.get('WHITELIST', None)
+
 DENOM = settings['UPDATER']['DENOM']
 
 
@@ -36,11 +41,9 @@ def filter_exchanges(currencies) -> Dict[str, List[ccxt.Exchange]]:
 
     print("Checking available exchanges --")
 
-    exchange_list = ccxt.exchanges
-    if os.getenv("FLASK_DEBUG", False):
-        exchange_list = exchange_list[:10]
+    exchange_list = EXCHANGE_WHITELIST or ccxt.exchanges
 
-    exchange_tqdm = tqdm.tqdm(exchange_list, "Checking available exchanges")
+    exchange_tqdm = tqdm.tqdm(exchange_list, "Checking available exchanges", disable=None)
     for exchange_id in exchange_tqdm:
         exchange_tqdm.set_description_str(f"Checking '{exchange_id}' ")
 
@@ -84,7 +87,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
     fail_count = 0
     failed_exchanges = []
 
-    currency_tqdm = tqdm.tqdm(currencies, "Fetching")
+    currency_tqdm = tqdm.tqdm(currencies, "Fetching", disable=None)
     for currency in currency_tqdm:
         currency_tqdm.set_description_str(f"Currency '{currency}'")
 
@@ -93,7 +96,7 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
 
         sdr_rate = sdr_rates.get(currency, 0)
 
-        exchange_tqdm = tqdm.tqdm(exchanges[symbol])
+        exchange_tqdm = tqdm.tqdm(exchanges[symbol], disable=None)
         for exchange in exchange_tqdm:
             exchange_tqdm.set_description_str(f"Updating from '{exchange.id}'")
 
