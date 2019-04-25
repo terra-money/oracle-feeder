@@ -96,6 +96,7 @@ async function updateKey(): Promise<void> {
 
 async function votePrice(
     { lcd: lcdAddress, chainID, ledger: ledgerMode },
+    ledger,
     currency: string,
     price: string,
     voter,
@@ -118,20 +119,25 @@ async function votePrice(
     };
     /* eslint-enable @typescript-eslint/camelcase */
     const denom = `u` + currency.toLowerCase();
+    const url = util.format(lcdAddress + endpointVote, denom);
 
-    let res = await axios.post(util.format(lcdAddress + endpointVote, denom), txArgs);
+    let res = await axios.post(url, txArgs);
     let tx = res.data.value;
 
-    let signature = await keystore.signTx(voter, ledgerMode, tx, txArgs.base_req);
+    let signature = await keystore.signTx(ledger, voter, ledgerMode, tx, txArgs.base_req);
     let signedTx = wallet.createSignedTx(tx, signature);
-
     let boradcastReq = wallet.createBroadcastBody(signedTx, `sync`);
 
-    res = await axios.post(lcdAddress + endpointBroadcast, boradcastReq);
-    if (res.data.code !== undefined) {
-        console.error(`voting failed : ` + JSON.stringify(res.data));
-    } else {
-        console.log(`Voted : ${denom} = ${price},  txhash : ${res.data.txhash}`);
+    try {
+        res = await axios.post(lcdAddress + endpointBroadcast, boradcastReq);
+
+        if (res.data.code !== undefined) {
+            console.error(`voting failed : ` + JSON.stringify(res.statusText));
+        } else {
+            console.log(`Voted : ${denom} = ${price},  txhash : ${res.data.txhash}`);
+        }
+    } catch (e) {
+        console.error(e.toString());
     }
 }
 
@@ -180,13 +186,21 @@ async function updateAndVoting(args): Promise<void> {
         source = [source];
     }
 
+    console.info(`getting price data`);
     const prices = await getPrice(source);
     let voter;
 
+    console.info(`check account information`);
+    let ledgerNode = null;
+    let ledgerApp = null;
+
     if (args.ledger) {
-        voter = await keystore.getAccountFromLedger();
-        if (voter === undefined) {
-            console.log(`Ledger is not connected or locked`);
+        ledgerNode = await keystore.getLedgerNode();
+        ledgerApp = await keystore.getLedgerApp(ledgerNode);
+
+        voter = await keystore.getAccountFromLedger(ledgerApp);
+        if (voter === null) {
+            console.error(`Ledger is not connected or locked`);
             return null;
         }
     } else {
@@ -194,24 +208,38 @@ async function updateAndVoting(args): Promise<void> {
         voter = getKey(password);
     }
 
-    let res = await axios.get(util.format(lcdAddress + endpointAccount, voter.terraAddress));
-    if (res.status != 200) {
-        console.error(`Not registered account`);
+    const query = util.format(lcdAddress + endpointAccount, voter.terraAddress);
+    console.info(`bring account number and sequence: ${query}`);
+    let res;
+    try {
+        res = await axios.get(query);
+        if (res.status != 200) {
+            console.error(`Failed to bringing account number and sequence : ${res.statusText}`);
+            return;
+        }
+    } catch (e) {
+        console.error(`Failed to bringing account number and sequence : ${e.toString()}`);
         return;
     }
 
     const account = res.data.value;
     const lowerDenoms = denoms.toLowerCase();
 
+    console.info(`votting denoms`);
     for (let currency in prices) {
         if (lowerDenoms !== `all` && lowerDenoms.indexOf(currency.toLowerCase()) === -1) continue;
 
         try {
-            await votePrice(args, currency, prices[currency].toString(), voter, account);
+            // await votePrice(args, ledger, currency, prices[currency].toString(), voter, account);
+            await votePrice(args, ledgerApp, currency, `123456`, voter, account);
             account.sequence = (parseInt(account.sequence) + 1).toString();
         } catch (e) {
-            console.error(e.response.data);
+            console.error(e.toString());
         }
+    }
+
+    if (ledgerNode !== null) {
+        ledgerNode.close_async();
     }
 }
 

@@ -10,39 +10,54 @@ const iterations = 100;
 
 const keyFilename = `voter.json`;
 const defaultKeyName = `voter`;
-const Timeout = 5;
+const LongTimeout = 45000;
 const hdpath = [44, 118, 0, 0, 0];
 
 import { generateWalletFromSeed } from './wallet';
 
 /* eslint-enable @typescript-eslint/camelcase */
+
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-function signByLedger(byteTx) {
-    return ledger.comm_node.create_async(Timeout, true).then(function(comm) {
-        let app = new ledger.App(comm);
-
-        return app.sign(hdpath, byteTx);
-    });
+export async function getLedgerNode() {
+    return await ledger.comm_node.create_async(LongTimeout, false);
 }
 
-export function getAccountFromLedger() {
-    return ledger.comm_node.create_async(Timeout, true).then(function(comm) {
-        let app = new ledger.App(comm);
-
-        return {
-            name: defaultKeyName,
-            address: wallet.createTerraAddress(app.publicKey(hdpath)),
-            wallet: ``,
-        };
-    });
+export async function getLedgerApp(ledgerNode) {
+    return new ledger.App(ledgerNode);
 }
 
-export async function signTx(voter, ledgerMode, tx, baseRequest) {
+async function signByLedger(ledger, byteTx) {
+    return await ledger.sign(hdpath, byteTx);
+}
+
+export async function getAccountFromLedger(ledger) {
+    const pubKey = await ledger.publicKey(hdpath);
+
+    if (pubKey.return_code != 36864) {
+        console.error(`getting account failed`);
+        return null;
+    }
+
+    return {
+        name: defaultKeyName,
+        publicKey: pubKey.compressed_pk,
+        terraAddress: wallet.createTerraAddress(new Buffer(pubKey.compressed_pk)),
+        wallet: ``,
+    };
+}
+
+export async function signTx(ledger, voter, ledgerMode, tx, baseRequest) {
     if (ledgerMode) {
         const signMessage = wallet.createSignMessage(tx, baseRequest);
-        const signatureByteArray = await signByLedger(signMessage);
-        const signatureBuffer = signatureImport(signatureByteArray);
+        const signatureByteArray = await signByLedger(ledger, signMessage);
+
+        if (signatureByteArray.return_code != 36864) {
+            console.error(`Signing error : ${signatureByteArray.error_message}`);
+        }
+
+        const signature = signatureByteArray[`signature`];
+        const signatureBuffer = signatureImport(signature);
 
         return wallet.createSignature(
             signatureBuffer,
