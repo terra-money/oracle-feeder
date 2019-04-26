@@ -230,8 +230,7 @@ async function updateAndVoting(args): Promise<void> {
         if (lowerDenoms !== `all` && lowerDenoms.indexOf(currency.toLowerCase()) === -1) continue;
 
         try {
-            // await votePrice(args, ledger, currency, prices[currency].toString(), voter, account);
-            await votePrice(args, ledgerApp, currency, `123456`, voter, account);
+            await votePrice(args, ledgerApp, currency, prices[currency].toString(), voter, account);
             account.sequence = (parseInt(account.sequence) + 1).toString();
         } catch (e) {
             console.error(e.toString());
