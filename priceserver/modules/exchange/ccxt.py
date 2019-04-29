@@ -4,6 +4,7 @@ import ccxt
 from statistics import median
 from typing import Dict, List
 
+from modules.exchange import Price
 from .gopax import gopax
 
 from ccxt import BaseError
@@ -19,14 +20,12 @@ EXCHANGE_WHITELIST = EXCHANGE.get('WHITELIST', None)
 
 DENOM = settings['UPDATER']['DENOM']
 
-
+# Inserting lite implementation of gopax API to ccxt
 setattr(ccxt, "gopax", gopax)
 ccxt.exchanges.append("gopax")
 
 
-# ------------------------------------------------------------------------------
-
-def filter_exchanges(currencies) -> Dict[str, List[ccxt.Exchange]]:
+def filter_exchanges(currencies, from_exchanges) -> Dict[str, List[ccxt.Exchange]]:
     """
     filtering exchanges, has fetch_ticker for luna/currency
     :return:
@@ -41,9 +40,7 @@ def filter_exchanges(currencies) -> Dict[str, List[ccxt.Exchange]]:
 
     print("Checking available exchanges --")
 
-    exchange_list = EXCHANGE_WHITELIST or ccxt.exchanges
-
-    exchange_tqdm = tqdm.tqdm(exchange_list, "Checking available exchanges", disable=None)
+    exchange_tqdm = tqdm.tqdm(from_exchanges, "Checking available exchanges", disable=None)
     for exchange_id in exchange_tqdm:
         exchange_tqdm.set_description_str(f"Checking '{exchange_id}' ")
 
@@ -77,22 +74,54 @@ def filter_exchanges(currencies) -> Dict[str, List[ccxt.Exchange]]:
     return exchanges
 
 
-def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
-    result = []
-    nodata = []
+def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies) -> List[Price]:
+    """
+    fetch add exchanges and calulcating additional values.
+    :param exchanges: ccxt exchange object list to query
+    :param sdr_rates: sdr rate information
+    :param currencies: currencies ticker names to get
+    :return: price list dictionary
+    """
+    prices, sdr_prices, unfetched_currencies = fetch_all_exchanges(exchanges, sdr_rates, currencies)
 
-    sdr_result = []
+    if not sdr_prices:  # in case of no data fetched
+        return []
+
+    # calculate LUNA/SDR price
+    sdr_price = median(sdr_prices)
+    prices.append(Price("SDR", sdr_price, dispersion=0))
+
+    # fill unfetched prices in
+    for currency in unfetched_currencies:
+        sdr_rate = sdr_rates[currency]
+        prices.append(Price(currency, (sdr_price / sdr_rate)))
+
+    # calc. dispersion
+    for price in prices:
+        if price.currency == "SDR":
+            continue
+
+        sdr_rate = sdr_rates[price.currency]
+        price.dispersion = 1 - ((sdr_price - (1 / price.raw_price / sdr_rate)) / sdr_price)
+
+    return prices
+
+
+def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Dict[str, float], currencies: List[str]) -> (List[float]):
+    prices: List[Price] = []
+    sdr_prices: List[float] = []
+
+    unfetched_currencies: List[str] = []
 
     success_count = 0
-    fail_count = 0
-    failed_exchanges = []
+    failed_exchanges: List[str] = []
 
     currency_tqdm = tqdm.tqdm(currencies, "Fetching", disable=None)
     for currency in currency_tqdm:
         currency_tqdm.set_description_str(f"Currency '{currency}'")
 
         symbol = f"{DENOM}/{currency}"
-        values = []
+        values: List[float] = []
 
         sdr_rate = sdr_rates.get(currency, 0)
 
@@ -100,58 +129,26 @@ def get_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies):
         for exchange in exchange_tqdm:
             exchange_tqdm.set_description_str(f"Updating from '{exchange.id}'")
 
+            # noinspection PyBroadException
             try:
                 last = exchange.fetch_ticker(symbol)['last']
                 values.append(last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
 
                 if sdr_rate:
-                    sdr_result.append(last * sdr_rate)
+                    sdr_prices.append(last * sdr_rate)
 
                 success_count += 1
 
             except Exception:
-                fail_count += 1
                 failed_exchanges.append("%s(%s)" % (exchange.id, symbol))
 
         if values:
-            result.append({
-                "currency": currency,
-                "price": median(values)
-            })
+            prices.append(Price(currency, median(values)))
         else:
-            nodata.append(currency)
+            unfetched_currencies.append(currency)
 
-    if not sdr_result:
-        return []
-
-    # Post processing
-    sdr_price = median(sdr_result)
-
-    result.append({
-        "currency": "SDR",
-        "price": sdr_price
-    })
-
-    # fill-in
-    for currency in nodata:
-        sdr_rate = sdr_rates[currency]
-
-        result.append({
-            "currency": currency,
-            "price": (sdr_price / sdr_rate)
-        })
-
-    # calc dispersion
-    for item in result:
-        if item['currency'] == "SDR":
-            item['dispersion'] = 0
-            continue
-
-        sdr_rate = sdr_rates[item['currency']]
-        item['dispersion'] = 1 - ((sdr_price - (1 / item['price'] / sdr_rate)) / sdr_price)
-
-    # Information printing
+    # result logging
     print("")
-    print(f"Success: {success_count}, Fail: {fail_count} [{failed_exchanges}]")
+    print(f"Success: {success_count}, Fail: {len(failed_exchanges)} [{failed_exchanges}]")
 
-    return result
+    return prices, sdr_prices, unfetched_currencies

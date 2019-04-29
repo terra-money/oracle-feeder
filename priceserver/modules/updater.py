@@ -1,70 +1,74 @@
 import datetime
 import threading
+from typing import Dict, List, Union
 
+import ccxt
 import pytz
 
-from modules.exchange.ccxt import filter_exchanges, get_data
+from modules.exchange.ccxt import filter_exchanges, get_prices_data, EXCHANGE_WHITELIST
+from modules.exchange import Price
 from modules.settings import settings
 
-from modules.sdr import oanda
-from modules.sdr import clayer
-from modules.sdr import imf
+from modules import sdr
 
-data = {
-    "created_at": "",
-    "prices": ""
-}
-
-exchanges = []
+UPDATING_PERIOD = settings['UPDATER'].get("PERIOD", 300)
+EXCHANGE_REFRESH = settings['UPDATER'].get("EXCHANGE_REFRESH", 3600)
+TARGET_CURRENCIES = settings['UPDATER']['CURRENCIES']
 
 
-def init_data():
-    global data, exchanges
+class Updater:
+    data = {
+        "created_at": "",
+        "prices": List[Dict[str, Price]]
+    }
 
-    currencies = settings['UPDATER']['CURRENCIES']
-    exchanges = filter_exchanges(currencies)
+    exchanges = Dict[str, List[ccxt.Exchange]]
+    exchange_updated: datetime.datetime
 
-    for symbol, exchange in exchanges.items():
-        print(f"{symbol} : {len(exchange)} exchanges [{[e.id for e in exchange]}]")
+    def __init__(self):
+        """ initial update """
+        from_exchanges = EXCHANGE_WHITELIST or ccxt.exchanges
+        self.update_exchange(from_exchanges)
+        self.update_data()
 
+    def get_last_price(self):
+        return self.data
 
-def get_last_price():
-    return data
+    def periodic_task(self):
+        self.update_data()
+        threading.Timer(UPDATING_PERIOD, self.periodic_task).start()
 
+    def update_exchange(self, from_exchanges):
+        self.exchange_updated = datetime.datetime.utcnow()
+        self.exchanges = filter_exchanges(TARGET_CURRENCIES, from_exchanges)
 
-def periodic_update():
-    global data, exchanges
-    print("Updating...")
+        for symbol, exchange in self.exchanges.items():
+            print(f"{symbol} : {len(exchange)} exchanges [{[e.id for e in exchange]}]")
 
-    currencies = settings['UPDATER']['CURRENCIES']
-    sdr_rates = None
+    def update_data(self):
+        print("Updating...")
 
-    try:
-        sdr_rates = oanda.get_sdr_rates(currencies)
-    except Exception as e:
-        print("Error on primary currency rate API. Fallback", e)
+        # periodic exchange filtering
+        if datetime.datetime.utcnow() - self.exchange_updated >= datetime.timedelta(seconds=EXCHANGE_REFRESH):
+            self.update_exchange(ccxt.exchanges)
 
-    if not sdr_rates:
-        try:
-            sdr_rates = clayer.get_sdr_rates(currencies)
-        except Exception as e:
-            print("Error on backup currency rate API. Fallback again", e)
+        # fetching exchange rates
+        currencies = settings['UPDATER']['CURRENCIES']
+        sdr_rates = sdr.get_exchange_rates(currencies)
 
-    if not sdr_rates:
-        try:
-            sdr_rates = imf.get_sdr_rates(currencies)
-        except Exception as e:
-            print("Error on secondary backup currency rate API. Updating failed", e)
+        # fetching price data
+        prices = get_prices_data(self.exchanges, sdr_rates, currencies)
+        if not prices:
+            print("Updating failed!")
+            return
 
-    if sdr_rates:
-        data['prices'] = get_data(exchanges, sdr_rates, currencies)
-        data['created_at'] = datetime.datetime.utcnow().replace(tzinfo=pytz.utc).isoformat()
+        self.data = {
+            'prices': prices,
+            'created_at': datetime.datetime.utcnow().replace(tzinfo=pytz.utc).isoformat()
+        }
 
-        print("Updated! at ", data['created_at'])
+        # printing logs
+        for price in self.data['prices']:
+            print(f"{price.currency} : {price.price} ({price.dispersion:.4f})")
 
-        for price in data['prices']:
-            price['price'] = format(price['price'], ".18f")  # cut data to limit precision to 18
-            print("{currency} : {price} ({dispersion:.4f})".format(**price))
-
-    threading.Timer(60, periodic_update).start()
-
+        print("Updated! at ", self.data['created_at'])
