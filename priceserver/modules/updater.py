@@ -29,7 +29,7 @@ class Updater:
         """ initial update """
         from_exchanges = EXCHANGE_WHITELIST or ccxt.exchanges
         self.update_exchange(from_exchanges)
-        self.update_data()
+        self.periodic_task()
 
     def get_last_price(self):
         return self.data
@@ -59,7 +59,7 @@ class Updater:
         # fetching price data
         prices = get_prices_data(self.exchanges, sdr_rates, currencies)
         if not prices:
-            print("Updating failed!")
+            print("Updating failed!\n")
             return
 
         self.data = {
@@ -71,4 +71,4 @@ class Updater:
         for price in self.data['prices']:
             print(f"{price.currency} : {price.price} ({price.dispersion:.4f})")
 
-        print("Updated! at ", self.data['created_at'])
+        print(f"Updated! at {self.data['created_at']}\n")

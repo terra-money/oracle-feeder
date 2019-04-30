@@ -25,6 +25,7 @@ setattr(ccxt, "gopax", gopax)
 ccxt.exchanges.append("gopax")
 
 
+# noinspection PyBroadException
 def filter_exchanges(currencies, from_exchanges) -> Dict[str, List[ccxt.Exchange]]:
     """
     filtering exchanges, has fetch_ticker for luna/currency
@@ -68,7 +69,7 @@ def filter_exchanges(currencies, from_exchanges) -> Dict[str, List[ccxt.Exchange
                 if symbol in exchanges and hasattr(exchange, 'fetch_ticker'):
                     exchanges[symbol].append(exchange)
 
-        except (BaseError, AttributeError):
+        except Exception:
             pass
 
     return exchanges
