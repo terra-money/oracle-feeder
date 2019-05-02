@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/terra-project/oracle-feeder/terrafeeder/types"
 	"io/ioutil"
 	"net/http"
-	"oracle-feeder/terrafeeder/types"
 	"sort"
 	"time"
 )

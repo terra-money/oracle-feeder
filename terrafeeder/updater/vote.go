@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/spf13/viper"
-	"oracle-feeder/terrafeeder/types"
-	"oracle-feeder/terrafeeder/updater/client"
+	"github.com/terra-project/oracle-feeder/terrafeeder/types"
+	"github.com/terra-project/oracle-feeder/terrafeeder/updater/client"
 	"strings"
 	"time"
 )

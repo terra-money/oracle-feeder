@@ -7,8 +7,8 @@ import (
 	authtxb "github.com/cosmos/cosmos-sdk/x/auth/client/txbuilder"
 	terra "github.com/terra-project/core/app"
 	"github.com/terra-project/core/x/oracle"
-	"oracle-feeder/terrafeeder/types"
-	"oracle-feeder/terrafeeder/utils"
+	"github.com/terra-project/oracle-feeder/terrafeeder/types"
+	"github.com/terra-project/oracle-feeder/terrafeeder/utils"
 )
 
 // Send vote message to RPC(EXPERIMENTAL)

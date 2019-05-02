@@ -3,9 +3,9 @@ package client
 import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/terra-project/oracle-feeder/terrafeeder/types"
+	"github.com/terra-project/oracle-feeder/terrafeeder/utils"
 	"io"
-	"oracle-feeder/terrafeeder/types"
-	"oracle-feeder/terrafeeder/utils"
 	"os/exec"
 	"strings"
 	"time"

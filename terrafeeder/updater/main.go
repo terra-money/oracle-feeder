@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tendermintCli "github.com/tendermint/tendermint/libs/cli"
-	"oracle-feeder/terrafeeder/types"
-	"oracle-feeder/terrafeeder/utils"
+	"github.com/terra-project/oracle-feeder/terrafeeder/types"
+	"github.com/terra-project/oracle-feeder/terrafeeder/utils"
 	"os"
 	"time"
 )

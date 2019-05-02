@@ -6,9 +6,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/terra-project/oracle-feeder/terrafeeder/types"
+	"github.com/terra-project/oracle-feeder/terrafeeder/updater"
 	"net/http"
-	"oracle-feeder/terrafeeder/types"
-	"oracle-feeder/terrafeeder/updater"
 	"strings"
 	"time"
 )
