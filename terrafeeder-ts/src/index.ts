@@ -65,11 +65,23 @@ function registCommands(parser: ArgumentParser): void {
         defaultValue: `all`,
     });
 
+    voteCommand.addArgument([`-k`, `--keystore`], {
+        action: `store`,
+        help: `key store path to save encrypted key`,
+        defaultValue: `voter.json`,
+    });
+
     // Updating Key command
-    subparsers.addParser(`update-key`, { addHelp: true });
+    const keyCommand = subparsers.addParser(`update-key`, { addHelp: true });
+
+    keyCommand.addArgument([`-k`, `--keystore`], {
+        action: `store`,
+        help: `key store path to save encrypted key`,
+        defaultValue: `voter.json`,
+    });
 }
 
-async function updateKey(): Promise<void> {
+async function updateKey(args): Promise<void> {
     const password = await promptly.password(`Enter a passphrase to encrypt your key to disk:`, { replace: `*` });
     const confirm = await promptly.password(`Repeat the passphrase:`, { replace: `*` });
 
@@ -90,7 +102,7 @@ async function updateKey(): Promise<void> {
         return;
     }
 
-    await keystore.importKey(password, seeds);
+    await keystore.importKey(args.keystore, password, seeds);
     console.log(`saved!`);
 }
 
@@ -205,7 +217,7 @@ async function updateAndVoting(args): Promise<void> {
         }
     } else {
         const password = args.password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }));
-        voter = getKey(password);
+        voter = getKey(args.keystore, password);
     }
 
     const query = util.format(lcdAddress + endpointAccount, voter.terraAddress);
@@ -255,7 +267,7 @@ async function main(): Promise<void> {
     if (args.subparser_name == `vote`) {
         updateAndVoting(args);
     } else if (args.subparser_name == `update-key`) {
-        await updateKey();
+        await updateKey(args);
     }
 }
 

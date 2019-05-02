@@ -8,7 +8,6 @@ import { signatureImport } from 'secp256k1';
 const keySize = 256;
 const iterations = 100;
 
-const keyFilename = `voter.json`;
 const defaultKeyName = `voter`;
 const LongTimeout = 45000;
 const hdpath = [44, 118, 0, 0, 0];
@@ -71,9 +70,9 @@ export async function signTx(ledger, voter, ledgerMode, tx, baseRequest) {
     }
 }
 
-export function loadKeys() {
+export function loadKeys(keystore) {
     try {
-        return JSON.parse(fs.readFileSync(keyFilename, `utf8`) || `[]`);
+        return JSON.parse(fs.readFileSync(keystore, `utf8`) || `[]`);
     } catch (UnhandledPromiseRejectionWarning) {
         return [];
     }
@@ -96,8 +95,8 @@ function decrypt(transitmessage, pass) {
     }).toString(CryptoJS.enc.Utf8);
 }
 
-export function getKey(password) {
-    const keys = loadKeys();
+export function getKey(keystore, password) {
+    const keys = loadKeys(keystore);
     const key = keys.find(key => key.name === defaultKeyName);
     try {
         const decrypted = decrypt(key.wallet, password);
@@ -129,7 +128,7 @@ function encrypt(msg, pass) {
     return salt.toString() + iv.toString() + encrypted.toString();
 }
 
-function setKey(wallet, password) {
+function setKey(keystore, wallet, password) {
     const keys = [];
     if (keys.find(key => key.name === defaultKeyName)) throw new Error(`Key with that name already exists`);
 
@@ -141,10 +140,10 @@ function setKey(wallet, password) {
         wallet: ciphertext,
     });
 
-    fs.writeFileSync(keyFilename, JSON.stringify(keys));
+    fs.writeFileSync(keystore, JSON.stringify(keys));
 }
 
-export async function importKey(password, seed) {
+export async function importKey(keystore, password, seed) {
     const wallet = await generateWalletFromSeed(seed);
-    setKey(wallet, password);
+    setKey(keystore, wallet, password);
 }
