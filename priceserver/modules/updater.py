@@ -40,6 +40,8 @@ class Updater:
 
     def update_exchange(self, from_exchanges):
         self.exchange_updated = datetime.datetime.utcnow()
+
+        from_exchanges = list(set(from_exchanges))
         self.exchanges = filter_exchanges(TARGET_CURRENCIES, from_exchanges)
 
         for symbol, exchange in self.exchanges.items():

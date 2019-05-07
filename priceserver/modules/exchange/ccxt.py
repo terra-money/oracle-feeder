@@ -25,7 +25,6 @@ ccxt.exchanges.append("gopax")
 
 # replace coinone exchange with custom lite implementation to support LUNA/KRW pair
 setattr(ccxt, "coinone", coinone)
-ccxt.exchanges.append("coinone")
 
 
 # noinspection PyBroadException
