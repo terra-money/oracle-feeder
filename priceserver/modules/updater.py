@@ -12,7 +12,7 @@ from modules.settings import settings
 from modules import sdr
 
 UPDATING_PERIOD = settings['UPDATER'].get("PERIOD", 300)
-EXCHANGE_REFRESH = settings['UPDATER'].get("EXCHANGE_REFRESH", 3600)
+EXCHANGE_REFRESH = settings['UPDATER'].get("EXCHANGE_REFRESH", 0)
 TARGET_CURRENCIES = settings['UPDATER']['CURRENCIES']
 
 
@@ -49,7 +49,7 @@ class Updater:
         print("\n# Updating...")
 
         # periodic exchange filtering
-        if datetime.datetime.utcnow() - self.exchange_updated >= datetime.timedelta(seconds=EXCHANGE_REFRESH):
+        if EXCHANGE_REFRESH and datetime.datetime.utcnow() - self.exchange_updated >= datetime.timedelta(seconds=EXCHANGE_REFRESH):
             self.update_exchange(ccxt.exchanges)
 
         # fetching exchange rates

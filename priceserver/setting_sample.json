@@ -6,14 +6,21 @@
     "JPY": 11.900,
     "GBP": 0.085946
   },
+  "EXCHANGE": {
+    "WHITELIST": [
+      "bitbay", "bitlish", "bitmex", "bitsane", "cex", "coinbase",  "coinmarketcap", "dsx", "gdax", "liquid","okex",
+      "bithumb", "coinmarketcap", "coinnest", "coinone", "upbit", "gopax"
+    ],
+    "BLACKLIST": [
+      "anxpro", "coingi", "jubi", "coinegg", "theocean", "bitstamp1", "mixcoins"
+    ]
+  },
   "UPDATER": {
+    "PERIOD": 60,
+    "EXCHANGE_REFRESH": 300,
     "CURRENCIES": [
       "USD",
-      "KRW",
-      "CNY",
-      "JPY",
-      "EUR",
-      "GBP"
+      "KRW"
     ],
     "DENOM": "LUNA"
   },
