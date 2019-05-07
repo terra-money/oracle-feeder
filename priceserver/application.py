@@ -4,6 +4,8 @@ from flask import Flask
 from modules.exchange import PriceEncoder
 from .modules.updater import Updater
 
+print("# Terra price server --------------------------")
+
 app = Flask(__name__)
 
 updater = Updater()

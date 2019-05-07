@@ -46,7 +46,7 @@ class Updater:
             print(f"{symbol} : {len(exchange)} exchanges [{[e.id for e in exchange]}]")
 
     def update_data(self):
-        print("Updating...")
+        print("\n# Updating...")
 
         # periodic exchange filtering
         if datetime.datetime.utcnow() - self.exchange_updated >= datetime.timedelta(seconds=EXCHANGE_REFRESH):
@@ -59,7 +59,7 @@ class Updater:
         # fetching price data
         prices = get_prices_data(self.exchanges, sdr_rates, currencies)
         if not prices:
-            print("Updating failed!\n")
+            print("Updating failed!")
             return
 
         self.data = {
@@ -71,4 +71,4 @@ class Updater:
         for price in self.data['prices']:
             print(f"{price.currency} : {price.price} ({price.dispersion:.4f})")
 
-        print(f"Updated! at {self.data['created_at']}\n")
+        print(f"Updated! at {self.data['created_at']}")

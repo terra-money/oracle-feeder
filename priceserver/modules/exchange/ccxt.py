@@ -1,14 +1,13 @@
-import tqdm
-import ccxt
-
 from statistics import median
 from typing import Dict, List
 
-from modules.exchange import Price
-from .gopax import gopax
+import ccxt
+import tqdm
 
-from ccxt import BaseError
+from modules.exchange import Price
 from modules.settings import settings
+from .coinone import coinone
+from .gopax import gopax
 
 EXCHANGE = settings.get('EXCHANGE', {
     "BLACKLIST": [],
@@ -23,6 +22,10 @@ DENOM = settings['UPDATER']['DENOM']
 # Inserting lite implementation of gopax API to ccxt
 setattr(ccxt, "gopax", gopax)
 ccxt.exchanges.append("gopax")
+
+# replace coinone exchange with custom lite implementation to support LUNA/KRW pair
+setattr(ccxt, "coinone", coinone)
+ccxt.exchanges.append("coinone")
 
 
 # noinspection PyBroadException
@@ -108,7 +111,8 @@ def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, curren
     return prices
 
 
-def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Dict[str, float], currencies: List[str]) -> (List[float]):
+def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Dict[str, float],
+                        currencies: List[str]) -> (List[float]):
     prices: List[Price] = []
     sdr_prices: List[float] = []
 
@@ -132,7 +136,7 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
 
             # noinspection PyBroadException
             try:
-                last = exchange.fetch_ticker(symbol)['last']
+                last = float(exchange.fetch_ticker(symbol)['last'])
                 values.append(last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
 
                 if sdr_rate:
