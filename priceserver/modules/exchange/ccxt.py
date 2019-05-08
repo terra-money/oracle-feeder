@@ -50,8 +50,8 @@ def filter_exchanges(currencies, from_exchanges) -> Dict[str, List[ccxt.Exchange
         if exchange_id in EXCHANGE_BLACKLIST:
             continue
 
-        exchange = getattr(ccxt, exchange_id)()
         try:
+            exchange = getattr(ccxt, exchange_id)()
             markets = exchange.fetch_markets()
             if type(markets) == dict:
                 markets = list(markets.values())
