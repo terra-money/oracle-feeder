@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-PYTHONPATH=${PYTHONPATH}:.
-FLASK_ENV:=develop
+export PYTHONPATH=${PYTHONPATH:-.}
+export FLASH_ENV=${FLASK_ENV:-develop}
 
 case "${FLASK_ENV}" in
     production) FLASK_APP=application.py flask run --port=7658 --eager-loading $*;;

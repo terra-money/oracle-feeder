@@ -11,7 +11,7 @@ from modules.settings import settings
 
 from modules import sdr
 
-UPDATING_PERIOD = settings['UPDATER'].get("PERIOD", 300)
+UPDATING_PERIOD = settings['UPDATER'].get("PERIOD", 10)
 EXCHANGE_REFRESH = settings['UPDATER'].get("EXCHANGE_REFRESH", 0)
 TARGET_CURRENCIES = settings['UPDATER']['CURRENCIES']
 
