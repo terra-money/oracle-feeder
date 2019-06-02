@@ -1,82 +1,32 @@
 import * as sha256 from 'crypto-js/sha256';
-import * as ripemd160 from 'crypto-js/ripemd160';
-import * as CryptoJS from 'crypto-js';
-
-import * as bip32 from 'bip32';
-import * as bip39 from 'bip39';
-import * as bech32 from 'bech32';
-
 import * as secp256k1 from 'secp256k1';
 
-const hdPathAtom = `m/44'/118'/0'/0/0`; // key controlling ATOM allocation
+const HD_PATH = [44, 118, 0, 0, 0];
 
 /* eslint-enable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-function bech32ify(address, prefix) {
-    const words = bech32.toWords(address);
-    return bech32.encode(prefix, words);
-}
-
-async function deriveMasterKey(mnemonic) {
-    // throws if mnemonic is invalid
-    bip39.validateMnemonic(mnemonic);
-
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    return await bip32.fromSeed(seed);
-}
-
-function deriveKeypair(masterKey) {
-    const terraHD = masterKey.derivePath(hdPathAtom);
-    const privateKey = terraHD.privateKey;
-    const publicKey = secp256k1.publicKeyCreate(privateKey, true);
-
-    return {
-        privateKey,
-        publicKey,
-    };
-}
-
-// NOTE: this only works with a compressed public key (33 bytes)
-export function createTerraAddress(publicKey) {
-    const message = CryptoJS.enc.Hex.parse(publicKey.toString(`hex`));
-    const hash = ripemd160(sha256(message)).toString();
-    const address = Buffer.from(hash, `hex`);
-    return bech32ify(address, `terra`);
-}
-
-export async function generateWalletFromSeed(mnemonic) {
-    const masterKey = await deriveMasterKey(mnemonic);
-    const { privateKey, publicKey } = deriveKeypair(masterKey);
-    const terraAddress = createTerraAddress(publicKey);
-    return {
-        privateKey: privateKey.toString(`hex`),
-        publicKey: publicKey.toString(`hex`),
-        terraAddress,
-    };
-}
-
 // Transactions often have amino decoded objects in them {type, value}.
 // We need to strip this clutter as we need to sign only the values.
-export function prepareSignBytes(jsonTx) {
-    if (Array.isArray(jsonTx)) {
-        return jsonTx.map(prepareSignBytes);
-    }
+function prepareSignBytes(jsonTx) {
+  if (Array.isArray(jsonTx)) {
+    return jsonTx.map(prepareSignBytes);
+  }
 
-    // string or number
-    if (typeof jsonTx !== `object`) {
-        return jsonTx;
-    }
+  // string or number
+  if (typeof jsonTx !== `object`) {
+    return jsonTx;
+  }
 
-    const sorted = {};
-    Object.keys(jsonTx)
-        .sort()
-        .forEach(key => {
-            if (jsonTx[key] === undefined || jsonTx[key] === null) return;
+  const sorted = {};
+  Object.keys(jsonTx)
+    .sort()
+    .forEach(key => {
+      if (jsonTx[key] === undefined || jsonTx[key] === null) return;
 
-            sorted[key] = prepareSignBytes(jsonTx[key]);
-        });
-    return sorted;
+      sorted[key] = prepareSignBytes(jsonTx[key]);
+    });
+  return sorted;
 }
 
 /*
@@ -92,66 +42,82 @@ type StdSignMsg struct {
 }
 */
 /* eslint-disable @typescript-eslint/camelcase */
-export function createSignMessage(jsonTx, { sequence, account_number, chain_id }) {
-    // sign bytes need amount to be an array
-    const fee = {
-        amount: jsonTx.fee.amount || [],
-        gas: jsonTx.fee.gas,
-    };
+function createSignMessage(jsonTx, { sequence, account_number, chain_id }) {
+  // sign bytes need amount to be an array
+  const fee = {
+    amount: jsonTx.fee.amount || [],
+    gas: jsonTx.fee.gas
+  };
 
-    return JSON.stringify(
-        prepareSignBytes({
-            fee,
-            memo: jsonTx.memo,
-            msgs: jsonTx.msg, // weird msg vs. msgs
-            sequence,
-            account_number,
-            chain_id,
-        }),
-    );
+  return JSON.stringify(
+    prepareSignBytes({
+      fee,
+      memo: jsonTx.memo,
+      msgs: jsonTx.msg, // weird msg vs. msgs
+      sequence,
+      account_number,
+      chain_id
+    })
+  );
 }
 
 // produces the signature for a message (returns Buffer)
-export function signWithPrivateKey(signMessage, privateKey) {
-    const signHash = Buffer.from(sha256(signMessage).toString(), `hex`);
-    const { signature } = secp256k1.sign(signHash, Buffer.from(privateKey, `hex`));
-    return signature;
+function signWithPrivateKey(signMessage, privateKey) {
+  const signHash = Buffer.from(sha256(signMessage).toString(), `hex`);
+  const { signature } = secp256k1.sign(signHash, Buffer.from(privateKey, `hex`));
+  return signature;
 }
 
-export function createSignature(signature, sequence, account_number, publicKey) {
-    return {
-        signature: signature.toString(`base64`),
-        account_number,
-        sequence,
-        pub_key: {
-            type: `tendermint/PubKeySecp256k1`, // TODO: allow other keytypes
-            value: publicKey.toString(`base64`),
-        },
-    };
+function createSignature(signature, sequence, accountNumber, publicKey) {
+  return {
+    signature: signature.toString(`base64`),
+    account_number: accountNumber,
+    sequence,
+    pub_key: {
+      type: `tendermint/PubKeySecp256k1`, // TODO: allow other keytypes
+      value: publicKey.toString(`base64`)
+    }
+  };
 }
 
-// main function to sign a jsonTx using the local keystore wallet
-// returns the complete signature object to add to the tx
-export function sign(jsonTx, wallet, requestMetaData) {
-    const { sequence, account_number } = requestMetaData;
-    const signMessage = createSignMessage(jsonTx, requestMetaData);
-    const signatureBuffer = signWithPrivateKey(signMessage, wallet.privateKey);
-    const pubKeyBuffer = Buffer.from(wallet.publicKey, `hex`);
-    return createSignature(signatureBuffer, sequence, account_number, pubKeyBuffer);
+// main function to get a signature from ledger or local keystore
+export async function sign(ledger, voter, tx, baseRequest) {
+  // Use ledger for signing
+  if (ledger) {
+    const signMessage = createSignMessage(tx, baseRequest);
+    const signatureByteArray = await ledger.sign(HD_PATH, signMessage);
+
+    if (signatureByteArray.return_code !== 36864) {
+      console.error(`Signing error : ${signatureByteArray.error_message}`);
+      throw new Error('signatureByteArray.error_message');
+    }
+
+    const signature = signatureByteArray[`signature`];
+    const signatureBuffer = secp256k1.signatureImport(signature);
+
+    return createSignature(signatureBuffer, baseRequest.sequence, baseRequest.account_number, voter.publicKey);
+  }
+
+  // Use private key for signing
+  const { sequence, account_number } = baseRequest;
+  const signMessage = createSignMessage(tx, baseRequest);
+  const signatureBuffer = signWithPrivateKey(signMessage, voter.privateKey);
+  const pubKeyBuffer = Buffer.from(voter.publicKey, `hex`);
+  return createSignature(signatureBuffer, sequence, account_number, pubKeyBuffer);
 }
 
 // adds the signature object to the tx
 export function createSignedTx(tx, signature) {
-    return Object.assign({}, tx, {
-        signatures: [signature],
-    });
+  return Object.assign({}, tx, {
+    signatures: [signature]
+  });
 }
 
 // the broadcast body consists of the signed tx and a return type
 // returnType can be block (inclusion in block), async (right away), sync (after checkTx has passed)
 export function createBroadcastBody(signedTx, modeType = `block`) {
-    return JSON.stringify({
-        tx: signedTx,
-        mode: modeType,
-    });
+  return JSON.stringify({
+    tx: signedTx,
+    mode: modeType
+  });
 }

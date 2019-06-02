@@ -1,9 +1,9 @@
-from . import oanda
+#from . import oanda
 from . import clayer
 from . import imf
 
 AVAILABLE_EXCHANGE_RATE_APIS = [
-    oanda,
+    #oanda,
     clayer,
     imf
 ]
