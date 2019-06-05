@@ -163,7 +163,8 @@ async function txVote({
   price,
   salt,
   account,
-  isPrevote = false
+  isPrevote = false,
+  broadcastMode = 'sync'
 }): Promise<number> {
   /* eslint-disable @typescript-eslint/camelcase */
   const txArgs = {
@@ -197,7 +198,7 @@ async function txVote({
   // Sign
   const signature = await wallet.sign(ledgerApp, voter, tx, txArgs.base_req);
   const signedTx = wallet.createSignedTx(tx, signature);
-  const broadcastReq = wallet.createBroadcastBody(signedTx, `block`);
+  const broadcastReq = wallet.createBroadcastBody(signedTx, broadcastMode);
 
   // Send broadcast
   const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
@@ -205,12 +206,16 @@ async function txVote({
     throw e;
   });
 
-  if (data.code !== undefined || !data.logs[0].success) {
+  if (data.code !== undefined) {
     console.error('voting failed:', data.logs);
     return 0;
   }
 
-  console.log(`${denom} = ${price}, txhash: ${data.txhash}`);
+  if (data.logs && !data.logs[0].success) {
+    console.error('voting tx sent, but failed:', data.logs);
+  } else {
+    console.log(`${denom} = ${price}, txhash: ${data.txhash}`);
+  }
 
   account.sequence = (parseInt(account.sequence, 10) + 1).toString();
   return +data.height;
@@ -271,6 +276,8 @@ async function vote(args): Promise<void> {
   const prevotePeriods = {};
 
   while (1) {
+    const startTime = Date.now();
+
     try {
       const prices = await getPrice(source);
       const latestBlock = await queryLatestBlock({ ...args });
@@ -292,18 +299,17 @@ async function vote(args): Promise<void> {
         if (votePeriod !== prevotePeriods[currency]) {
           console.log(`vote! ${currency} ${prevotePrices[currency]}`);
 
-          if (
-            await txVote({
-              ...args,
-              ledgerApp,
-              voter,
-              currency,
-              price: prevotePrices[currency].toString(),
-              account
-            })
-          ) {
-            prevotePeriods[currency] = votePeriod;
-          }
+          await txVote({
+            ...args,
+            ledgerApp,
+            voter,
+            currency,
+            price: prevotePrices[currency].toString(),
+            account,
+            broadcastMode: `sync`
+          }).catch(console.error);
+
+          prevotePeriods[currency] = votePeriod;
         }
       });
 
@@ -323,7 +329,8 @@ async function vote(args): Promise<void> {
             currency,
             price: prices[currency].toString(),
             account,
-            isPrevote: true
+            isPrevote: true,
+            broadcastMode: `block`
           });
 
           if (height) {
@@ -336,7 +343,8 @@ async function vote(args): Promise<void> {
       console.error('Error in loop:', e.toString());
     }
 
-    await delay(10000);
+    // Sleep 2s at least
+    await delay(Math.max(2000, 5000 - (Date.now() - startTime)));
   }
 
   if (ledgerNode !== null) {
