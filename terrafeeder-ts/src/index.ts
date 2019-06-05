@@ -3,15 +3,20 @@ import axios from 'axios';
 import * as util from 'util';
 import * as promptly from 'promptly';
 import { ArgumentParser } from 'argparse';
+import delay from 'delay';
 
 import * as wallet from './wallet';
 import * as keystore from './keystore';
 
-const endpointVote = `/oracle/denoms/%s/votes`;
-const endpointAccount = `/auth/accounts/%s`;
-const endpointBroadcast = `/txs`;
+const ENDPOINT_TX_PREVOTE = `/oracle/denoms/%s/prevotes`;
+const ENDPOINT_TX_VOTE = `/oracle/denoms/%s/votes`;
+const ENDPOINT_TX_BROADCAST = `/txs`;
+const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
+const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
+const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
+const VOTE_PERIOD = 6;
 
-function registCommands(parser: ArgumentParser): void {
+function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
     title: `commands`,
     dest: `subparser_name`,
@@ -42,6 +47,18 @@ function registCommands(parser: ArgumentParser): void {
     action: `store`,
     help: `chain ID`,
     dest: `chainID`,
+    required: true
+  });
+
+  voteCommand.addArgument([`--validator`], {
+    action: `store`,
+    help: `validator address (e.g. terravaloper1...)`,
+    required: true
+  });
+
+  voteCommand.addArgument([`--salt`], {
+    action: `store`,
+    help: `salt for hashing`,
     required: true
   });
 
@@ -103,14 +120,51 @@ async function updateKey(args): Promise<void> {
   console.log(`saved!`);
 }
 
-async function votePrice(
-  { lcdAddress, chainID },
-  ledger,
-  currency: string,
-  price: string,
+async function queryAccount({ lcdAddress, voter }) {
+  const url = util.format(lcdAddress + ENDPOINT_QUERY_ACCOUNT, voter.terraAddress);
+  console.info(`querying: ${url}`);
+
+  const res = await axios.get(url).catch(e => {
+    console.error(`Failed to bringing account number and sequence: ${e.toString()}`);
+    return;
+  });
+
+  if (!res || res.status !== 200) {
+    if (res) console.error(`Failed to bringing account number and sequence: ${res.statusText}`);
+    return;
+  }
+
+  return res.data.value;
+}
+
+async function queryLatestBlock({ lcdAddress }) {
+  const res = await axios.get(lcdAddress + ENDPOINT_QUERY_LATEST_BLOCK);
+  if (res) return res.data;
+}
+
+async function queryPrevote({ lcdAddress, currency, validator }) {
+  const denom = `u${currency.toLowerCase()}`;
+  const url = util.format(lcdAddress + ENDPOINT_QUERY_PREVOTE, denom, validator);
+
+  const res = await axios.get(url);
+
+  if (res.status === 200) {
+    return res.data[0];
+  }
+}
+
+async function txVote({
+  lcdAddress,
+  chainID,
+  validator,
+  ledgerApp,
   voter,
-  account: { account_number: string; sequence: string }
-): Promise<void> {
+  currency,
+  price,
+  salt,
+  account,
+  isPrevote = false
+}): Promise<number> {
   /* eslint-disable @typescript-eslint/camelcase */
   const txArgs = {
     base_req: {
@@ -119,46 +173,57 @@ async function votePrice(
       chain_id: chainID,
       account_number: account.account_number,
       sequence: account.sequence,
-      fees: [{ amount: `0`, denom: `uluna` }],
-      gas: `50000`,
+      fees: [{ amount: `450`, denom: `uluna` }],
+      gas: `30000`,
       gas_adjustment: `0`,
       simulate: false
     },
-    price
+    price,
+    salt,
+    validator
   };
 
   const denom = `u${currency.toLowerCase()}`;
-  const url = util.format(lcdAddress + endpointVote, denom);
+  const url = util.format(lcdAddress + (isPrevote ? ENDPOINT_TX_PREVOTE : ENDPOINT_TX_VOTE), denom);
 
   // Create unsinged tx for voting
-  let res = await axios.post(url, txArgs).catch(e => {
+  const {
+    data: { value: tx }
+  } = await axios.post(url, txArgs).catch(e => {
+    console.error(e.response.data.error);
     throw e;
   });
-
-  const tx = res.data.value;
 
   // Sign
-  const signature = await wallet.sign(ledger, voter, tx, txArgs.base_req);
+  const signature = await wallet.sign(ledgerApp, voter, tx, txArgs.base_req);
   const signedTx = wallet.createSignedTx(tx, signature);
-  const boradcastReq = wallet.createBroadcastBody(signedTx, `sync`);
+  const broadcastReq = wallet.createBroadcastBody(signedTx, `block`);
 
   // Send broadcast
-  res = await axios.post(lcdAddress + endpointBroadcast, boradcastReq).catch(e => {
+  const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
+    console.error(e.response.data.error);
     throw e;
   });
 
-  if (res.data.code !== undefined) {
-    console.error('voting failed:', JSON.stringify(res.statusText));
-  } else {
-    console.log(`Voted: ${denom} = ${price}, txhash: ${res.data.txhash}`);
+  if (data.code !== undefined || !data.logs[0].success) {
+    console.error('voting failed:', data.logs);
+    return 0;
   }
+
+  console.log(`${denom} = ${price}, txhash: ${data.txhash}`);
+
+  account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+  return +data.height;
 }
 
 async function getPrice(sources: [string]): Promise<{}> {
-  const total = {};
-  const res = await Bluebird.some(sources.map(s => axios.get(s)), 1);
+  console.info(`getting price data from`, sources);
 
-  if (res.status === 200) {
+  const total = {};
+  const results = await Bluebird.some(sources.map(s => axios.get(s)), 1);
+
+  if (results.length > 0) {
+    const res = results[0];
     const prices = res.data.prices;
 
     prices.forEach(
@@ -175,14 +240,11 @@ async function getPrice(sources: [string]): Promise<{}> {
   return total;
 }
 
-async function updateAndVoting(args): Promise<void> {
+async function vote(args): Promise<void> {
   const { lcdAddress, denoms } = args;
   const source = args.source instanceof Array ? args.source : [args.source];
 
-  console.info(`getting price data from`, source);
-  const prices = await getPrice(source);
   let voter;
-
   let ledgerNode = null;
   let ledgerApp = null;
 
@@ -204,39 +266,77 @@ async function updateAndVoting(args): Promise<void> {
     voter = keystore.getKey(args.keystore, password);
   }
 
-  const query = util.format(lcdAddress + endpointAccount, voter.terraAddress);
-  console.info(`query account number and sequence: ${query}`);
+  const denomArray = denoms.split(',').map(s => s.toLowerCase());
+  const prevotePrices = {};
+  const prevotePeriods = {};
 
-  const res = await axios.get(query).catch(e => {
-    console.error(`Failed to bringing account number and sequence : ${e.toString()}`);
-    return;
-  });
-
-  if (!res) {
-    return;
-  }
-
-  if (res.status !== 200) {
-    console.error(`Failed to bringing account number and sequence : ${res.statusText}`);
-    return;
-  }
-
-  const account = res.data.value;
-  const lowerDenoms = denoms.toLowerCase();
-
-  console.info(`votting denoms`);
-
-  for (const currency in prices) {
-    if (lowerDenoms !== 'all' && lowerDenoms.indexOf(currency.toLowerCase()) === -1) {
-      continue;
-    }
-
+  while (1) {
     try {
-      await votePrice(args, ledgerApp, currency, prices[currency].toString(), voter, account);
-      account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+      const prices = await getPrice(source);
+      const latestBlock = await queryLatestBlock({ ...args });
+      const currentBlockHeight = parseInt(latestBlock.block.header.height, 10);
+      const votePeriod = Math.floor(currentBlockHeight / VOTE_PERIOD);
+
+      const account = await queryAccount({ lcdAddress, voter });
+
+      // Vote
+      await Bluebird.mapSeries(Object.keys(prices), async currency => {
+        if (denomArray.indexOf(currency.toLowerCase()) === -1) {
+          return;
+        }
+
+        if (!prevotePeriods[currency]) {
+          return;
+        }
+
+        if (votePeriod !== prevotePeriods[currency]) {
+          console.log(`vote! ${currency} ${prevotePrices[currency]}`);
+
+          if (
+            await txVote({
+              ...args,
+              ledgerApp,
+              voter,
+              currency,
+              price: prevotePrices[currency].toString(),
+              account
+            })
+          ) {
+            prevotePeriods[currency] = votePeriod;
+          }
+        }
+      });
+
+      if (currentBlockHeight % VOTE_PERIOD <= 3) {
+        // Prevote
+        await Bluebird.mapSeries(Object.keys(prices), async currency => {
+          if (denomArray.indexOf(currency.toLowerCase()) === -1) {
+            return;
+          }
+
+          console.log(`prevote! ${currency} ${prices[currency]}`);
+
+          const height = await txVote({
+            ...args,
+            ledgerApp,
+            voter,
+            currency,
+            price: prices[currency].toString(),
+            account,
+            isPrevote: true
+          });
+
+          if (height) {
+            prevotePrices[currency] = prices[currency];
+            prevotePeriods[currency] = Math.floor(height / VOTE_PERIOD);
+          }
+        });
+      }
     } catch (e) {
-      console.error(e.toString());
+      console.error('Error in loop:', e.toString());
     }
+
+    await delay(10000);
   }
 
   if (ledgerNode !== null) {
@@ -246,16 +346,16 @@ async function updateAndVoting(args): Promise<void> {
 
 async function main(): Promise<void> {
   const parser = new ArgumentParser({
-    version: `0.1.0`,
+    version: `0.2.0`,
     addHelp: true,
     description: `Terra oracle voter`
   });
 
-  registCommands(parser);
+  registerCommands(parser);
   const args = parser.parseArgs();
 
   if (args.subparser_name === `vote`) {
-    await updateAndVoting(args);
+    await vote(args);
   } else if (args.subparser_name === `update-key`) {
     await updateKey(args);
   }

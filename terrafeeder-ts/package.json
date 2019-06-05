@@ -1,6 +1,6 @@
 {
-  "name": "terravoter",
-  "version": "1.0.0",
+  "name": "terra-oracle-voter",
+  "version": "0.2.0",
   "main": "src/index.ts",
   "license": "MIT",
   "scripts": {
@@ -15,7 +15,8 @@
     "bip39": "^3.0.1",
     "bluebird": "^3.5.5",
     "crypto-js": "^3.1.9-1",
-    "ledger-cosmos-js": "https://github.com/cosmos/ledger-cosmos-js",
+    "delay": "^4.2.0",
+    "ledger-cosmos-js": "^2.0.2",
     "prompt": "^1.0.0",
     "promptly": "^3.0.3",
     "secp256k1": "^3.6.2",
