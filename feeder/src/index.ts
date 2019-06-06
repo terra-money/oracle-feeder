@@ -111,7 +111,7 @@ async function updateKey(args): Promise<void> {
   }
 
   await keystore.importKey(args.keystore, password, mnemonic);
-  console.log(`saved!`);
+  console.info(`saved!`);
 }
 
 async function queryAccount({ lcdAddress, voter }) {
@@ -139,7 +139,7 @@ async function queryLatestBlock({ lcdAddress }) {
 async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number> {
   // Send broadcast
   const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
-    console.error(e.response.data.error);
+    if (e.response) console.error(e.response.data.error);
     throw e;
   });
 
@@ -151,7 +151,7 @@ async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number>
   if (data.logs && !data.logs[0].success) {
     console.error('voting tx sent, but failed:', data.logs);
   } else {
-    console.log(`txhash: ${data.txhash}`);
+    console.info(`txhash: ${data.txhash}`);
   }
 
   account.sequence = (parseInt(account.sequence, 10) + 1).toString();
@@ -234,7 +234,7 @@ async function vote(args): Promise<void> {
             return;
           }
 
-          console.log(`vote! ${currency} ${prevotePrices[currency]}`);
+          console.info(`vote! ${currency} ${prevotePrices[currency]}`);
 
           voteMsgs.push(
             msg.generateVoteMsg(
@@ -257,7 +257,7 @@ async function vote(args): Promise<void> {
             return;
           }
 
-          console.log(`prevote! ${currency} ${prices[currency]}`);
+          console.info(`prevote! ${currency} ${prices[currency]}`);
 
           priceUpdateSaltMap[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
             .toString()
@@ -295,8 +295,8 @@ async function vote(args): Promise<void> {
           broadcastReq
         }).catch(err => {
           done = true;
-          console.log(err);
           if (err.response) console.error(err.response.data);
+          console.error(err.message, err.stack);
         });
       }
 
@@ -316,8 +316,8 @@ async function vote(args): Promise<void> {
           account,
           broadcastReq
         }).catch(err => {
-          console.log(err);
           if (err.response) console.error(err.response.data);
+          console.error(err.message, err.stack);
         });
 
         if (height) {
