@@ -248,6 +248,7 @@ async function vote(args): Promise<void> {
       }
 
       const priceUpdateMap = {};
+      const priceUpdateSaltMap = {};
       if (currentBlockHeight % VOTE_PERIOD <= VOTE_PERIOD - 2) {
         // Prevote
         await Bluebird.mapSeries(Object.keys(prices), async currency => {
@@ -257,13 +258,13 @@ async function vote(args): Promise<void> {
 
           console.log(`prevote! ${currency} ${prices[currency]}`);
 
-          prevoteSalts[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
+          priceUpdateSaltMap[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
             .toString()
             .substring(0, 4);
 
           const denom = `u${currency.toLowerCase()}`;
           const hash = msg.generateVoteHash(
-            prevoteSalts[currency],
+            priceUpdateSaltMap[currency],
             prices[currency].toString(),
             denom,
             args.validator || voter.terraValAddress
@@ -315,6 +316,7 @@ async function vote(args): Promise<void> {
 
         if (height) {
           Object.assign(prevotePrices, priceUpdateMap);
+          Object.assign(prevoteSalts, priceUpdateSaltMap);
           prevotePeriod = Math.floor(height / VOTE_PERIOD);
         }
       }
