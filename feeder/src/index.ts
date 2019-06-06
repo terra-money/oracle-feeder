@@ -151,10 +151,11 @@ async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number>
   if (data.logs && !data.logs[0].success) {
     console.error('voting tx sent, but failed:', data.logs);
   } else {
-    account.sequence = (parseInt(account.sequence, 10) + 1).toString();
     console.log(`txhash: ${data.txhash}`);
   }
 
+  account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+  
   return +data.height;
 }
 
