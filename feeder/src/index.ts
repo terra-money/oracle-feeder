@@ -4,13 +4,12 @@ import * as util from 'util';
 import * as promptly from 'promptly';
 import { ArgumentParser } from 'argparse';
 import delay from 'delay';
+import * as CryptoJS from 'crypto-js';
 
 import * as wallet from './wallet';
 import * as keystore from './keystore';
-import msg from './msg';
+import * as msg from './msg';
 
-const ENDPOINT_TX_PREVOTE = `/oracle/denoms/%s/prevotes`;
-const ENDPOINT_TX_VOTE = `/oracle/denoms/%s/votes`;
 const ENDPOINT_TX_BROADCAST = `/txs`;
 const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
@@ -56,7 +55,6 @@ function registerCommands(parser: ArgumentParser): void {
     help: `validator address (e.g. terravaloper1...)`,
     required: false
   });
-
 
   voteCommand.addArgument([`-s`, `--source`], {
     action: `append`,
@@ -291,8 +289,8 @@ async function vote(args): Promise<void> {
 
   const denomArray = denoms.split(',').map(s => s.toLowerCase());
   const prevotePrices = {};
+  const prevoteSalts = {};
   let prevotePeriod;
-  const prevotePeriods = {};
 
   while (1) {
     const startTime = Date.now();
@@ -319,7 +317,7 @@ async function vote(args): Promise<void> {
           voteMsgs.push(
             msg.buildVoteMsg(
               prevotePrices[currency].toString(),
-              args.salt,
+              prevoteSalts[currency],
               `u${currency.toLowerCase()}`,
               voter.terraAddress,
               voter.terraValAddress
@@ -338,11 +336,19 @@ async function vote(args): Promise<void> {
 
           console.log(`prevote! ${currency} ${prices[currency]}`);
 
+          prevoteSalts[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
+            .toString()
+            .substring(0, 4);
+
           const denom = `u${currency.toLowerCase()}`;
-          const hash = msg.voteHash(args.salt, prices[currency].toString(), denom, voter.terraValAddress);
+          const hash = msg.generateVoteHash(
+            prevoteSalts[currency],
+            prices[currency].toString(),
+            denom,
+            voter.terraValAddress
+          );
 
           prevoteMsgs.push(msg.buildPrevoteMsg(hash, denom, voter.terraAddress, voter.terraValAddress));
-
           priceUpdateMap[currency] = prices[currency];
         });
       }
