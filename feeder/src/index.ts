@@ -269,7 +269,7 @@ async function vote(args): Promise<void> {
             args.validator || voter.terraValAddress
           );
 
-          prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, voter.terraValAddress));
+          prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, args.validator || voter.terraValAddress));
           priceUpdateMap[currency] = prices[currency];
         });
       }
