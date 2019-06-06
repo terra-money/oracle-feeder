@@ -56,11 +56,6 @@ function registerCommands(parser: ArgumentParser): void {
     required: true
   });
 
-  voteCommand.addArgument([`--salt`], {
-    action: `store`,
-    help: `salt for hashing`,
-    required: true
-  });
 
   voteCommand.addArgument([`-s`, `--source`], {
     action: `append`,
