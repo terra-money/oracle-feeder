@@ -315,7 +315,7 @@ async function vote(args): Promise<void> {
           console.log(`vote! ${currency} ${prevotePrices[currency]}`);
 
           voteMsgs.push(
-            msg.buildVoteMsg(
+            msg.generateVoteMsg(
               prevotePrices[currency].toString(),
               prevoteSalts[currency],
               `u${currency.toLowerCase()}`,
@@ -348,14 +348,14 @@ async function vote(args): Promise<void> {
             voter.terraValAddress
           );
 
-          prevoteMsgs.push(msg.buildPrevoteMsg(hash, denom, voter.terraAddress, voter.terraValAddress));
+          prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, voter.terraValAddress));
           priceUpdateMap[currency] = prices[currency];
         });
       }
 
       if (voteMsgs.length > 0) {
         const fees = { amount: [{ amount: `1500`, denom: `uluna` }], gas: `100000` };
-        const { value: tx } = msg.buildStdTx(voteMsgs, fees, `Voting from terra feeder`);
+        const { value: tx } = msg.generateStdTx(voteMsgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
           chain_id: args.chainID,
           account_number: account.account_number,
@@ -375,7 +375,7 @@ async function vote(args): Promise<void> {
 
       if (prevoteMsgs.length > 0) {
         const fees = { amount: [{ amount: `1500`, denom: `uluna` }], gas: `100000` };
-        const { value: tx } = msg.buildStdTx(prevoteMsgs, fees, `Voting from terra feeder`);
+        const { value: tx } = msg.generateStdTx(prevoteMsgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
           chain_id: args.chainID,
           account_number: account.account_number,
