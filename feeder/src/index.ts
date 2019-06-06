@@ -229,7 +229,7 @@ async function vote(args): Promise<void> {
 
       // Vote
       if (prevotePeriod && prevotePeriod !== votePeriod) {
-        await Bluebird.mapSeries(Object.keys(prices), async currency => {
+        Object.keys(prices).forEach(currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
             return;
           }
@@ -252,7 +252,7 @@ async function vote(args): Promise<void> {
       const priceUpdateSaltMap = {};
       if (currentBlockHeight % VOTE_PERIOD <= VOTE_PERIOD - 2) {
         // Prevote
-        await Bluebird.mapSeries(Object.keys(prices), async currency => {
+        Object.keys(prices).forEach(currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
             return;
           }
