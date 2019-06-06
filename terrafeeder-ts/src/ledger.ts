@@ -19,10 +19,12 @@ async function getAccountFromLedger(ledger) {
     throw new Error('cannot get pubkey from ledger');
   }
 
+  const address = keyUtils.createTerraAddress(new Buffer(pubKey.compressed_pk));
   return {
     name: '',
     publicKey: pubKey.compressed_pk,
-    terraAddress: keyUtils.createTerraAddress(new Buffer(pubKey.compressed_pk)),
+    terraAddress: address,
+    terraValAddress: keyUtils.terraAddressToValidatorAddress(address),
     wallet: ''
   };
 }

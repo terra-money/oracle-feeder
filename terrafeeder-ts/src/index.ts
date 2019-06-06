@@ -7,6 +7,7 @@ import delay from 'delay';
 
 import * as wallet from './wallet';
 import * as keystore from './keystore';
+import msg from './msg';
 
 const ENDPOINT_TX_PREVOTE = `/oracle/denoms/%s/prevotes`;
 const ENDPOINT_TX_VOTE = `/oracle/denoms/%s/votes`;
@@ -14,7 +15,7 @@ const ENDPOINT_TX_BROADCAST = `/txs`;
 const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
 const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
-const VOTE_PERIOD = 6;
+const VOTE_PERIOD = 10;
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
@@ -53,7 +54,7 @@ function registerCommands(parser: ArgumentParser): void {
   voteCommand.addArgument([`--validator`], {
     action: `store`,
     help: `validator address (e.g. terravaloper1...)`,
-    required: true
+    required: false
   });
 
   voteCommand.addArgument([`--salt`], {
@@ -153,53 +154,75 @@ async function queryPrevote({ lcdAddress, currency, validator }) {
   }
 }
 
-async function txVote({
-  lcdAddress,
-  chainID,
-  validator,
-  ledgerApp,
-  voter,
-  currency,
-  price,
-  salt,
-  account,
-  isPrevote = false,
-  broadcastMode = 'sync'
-}): Promise<number> {
-  /* eslint-disable @typescript-eslint/camelcase */
-  const txArgs = {
-    base_req: {
-      from: voter.terraAddress,
-      memo: `Voting from terra feeder`,
-      chain_id: chainID,
-      account_number: account.account_number,
-      sequence: account.sequence,
-      fees: [{ amount: `450`, denom: `uluna` }],
-      gas: `30000`,
-      gas_adjustment: `0`,
-      simulate: false
-    },
-    price,
-    salt,
-    validator
-  };
+// async function txVote({
+//   lcdAddress,
+//   chainID,
+//   validator,
+//   ledgerApp,
+//   voter,
+//   currency,
+//   price,
+//   salt,
+//   account,
+//   isPrevote = false,
+//   broadcastMode = 'sync'
+// }): Promise<number> {
+//   /* eslint-disable @typescript-eslint/camelcase */
+//   const txArgs = {
+//     base_req: {
+//       from: voter.terraAddress,
+//       memo: `Voting from terra feeder`,
+//       chain_id: chainID,
+//       account_number: account.account_number,
+//       sequence: account.sequence,
+//       fees: [{ amount: `450`, denom: `uluna` }],
+//       gas: `30000`,
+//       gas_adjustment: `0`,
+//       simulate: false
+//     },
+//     price,
+//     salt,
+//     validator
+//   };
 
-  const denom = `u${currency.toLowerCase()}`;
-  const url = util.format(lcdAddress + (isPrevote ? ENDPOINT_TX_PREVOTE : ENDPOINT_TX_VOTE), denom);
+//   const denom = `u${currency.toLowerCase()}`;
+//   const url = util.format(lcdAddress + (isPrevote ? ENDPOINT_TX_PREVOTE : ENDPOINT_TX_VOTE), denom);
 
-  // Create unsinged tx for voting
-  const {
-    data: { value: tx }
-  } = await axios.post(url, txArgs).catch(e => {
-    console.error(e.response.data.error);
-    throw e;
-  });
+//   // Create unsinged tx for voting
+//   const {
+//     data: { value: tx }
+//   } = await axios.post(url, txArgs).catch(e => {
+//     console.error(e.response.data.error);
+//     throw e;
+//   });
 
-  // Sign
-  const signature = await wallet.sign(ledgerApp, voter, tx, txArgs.base_req);
-  const signedTx = wallet.createSignedTx(tx, signature);
-  const broadcastReq = wallet.createBroadcastBody(signedTx, broadcastMode);
+//   // Sign
+//   const signature = await wallet.sign(ledgerApp, voter, tx, txArgs.base_req);
+//   const signedTx = wallet.createSignedTx(tx, signature);
+//   const broadcastReq = wallet.createBroadcastBody(signedTx, broadcastMode);
 
+//   // Send broadcast
+//   const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
+//     console.error(e.response.data.error);
+//     throw e;
+//   });
+
+//   if (data.code !== undefined) {
+//     console.error('voting failed:', data.logs);
+//     return 0;
+//   }
+
+//   if (data.logs && !data.logs[0].success) {
+//     console.error('voting tx sent, but failed:', data.logs);
+//   } else {
+//     console.log(`${denom} = ${price}, txhash: ${data.txhash}`);
+//   }
+
+//   account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+//   return +data.height;
+// }
+
+async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number> {
   // Send broadcast
   const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
     console.error(e.response.data.error);
@@ -214,7 +237,7 @@ async function txVote({
   if (data.logs && !data.logs[0].success) {
     console.error('voting tx sent, but failed:', data.logs);
   } else {
-    console.log(`${denom} = ${price}, txhash: ${data.txhash}`);
+    console.log(`txhash: ${data.txhash}`);
   }
 
   account.sequence = (parseInt(account.sequence, 10) + 1).toString();
@@ -273,12 +296,15 @@ async function vote(args): Promise<void> {
 
   const denomArray = denoms.split(',').map(s => s.toLowerCase());
   const prevotePrices = {};
+  let prevotePeriod;
   const prevotePeriods = {};
 
   while (1) {
     const startTime = Date.now();
 
     try {
+      const voteMsgs = [];
+      const prevoteMsgs = [];
       const prices = await getPrice(source);
       const latestBlock = await queryLatestBlock({ ...args });
       const currentBlockHeight = parseInt(latestBlock.block.header.height, 10);
@@ -287,33 +313,28 @@ async function vote(args): Promise<void> {
       const account = await queryAccount({ lcdAddress, voter });
 
       // Vote
-      await Bluebird.mapSeries(Object.keys(prices), async currency => {
-        if (denomArray.indexOf(currency.toLowerCase()) === -1) {
-          return;
-        }
+      if (prevotePeriod && prevotePeriod !== votePeriod) {
+        await Bluebird.mapSeries(Object.keys(prices), async currency => {
+          if (denomArray.indexOf(currency.toLowerCase()) === -1) {
+            return;
+          }
 
-        if (!prevotePeriods[currency]) {
-          return;
-        }
-
-        if (votePeriod !== prevotePeriods[currency]) {
           console.log(`vote! ${currency} ${prevotePrices[currency]}`);
 
-          await txVote({
-            ...args,
-            ledgerApp,
-            voter,
-            currency,
-            price: prevotePrices[currency].toString(),
-            account,
-            broadcastMode: `sync`
-          }).catch(console.error);
+          voteMsgs.push(
+            msg.buildVoteMsg(
+              prevotePrices[currency].toString(),
+              args.salt,
+              `u${currency.toLowerCase()}`,
+              voter.terraAddress,
+              voter.terraValAddress
+            )
+          );
+        });
+      }
 
-          prevotePeriods[currency] = votePeriod;
-        }
-      });
-
-      if (currentBlockHeight % VOTE_PERIOD <= 3) {
+      const priceUpdateMap = {};
+      if (currentBlockHeight % VOTE_PERIOD <= VOTE_PERIOD - 2) {
         // Prevote
         await Bluebird.mapSeries(Object.keys(prices), async currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
@@ -322,29 +343,65 @@ async function vote(args): Promise<void> {
 
           console.log(`prevote! ${currency} ${prices[currency]}`);
 
-          const height = await txVote({
-            ...args,
-            ledgerApp,
-            voter,
-            currency,
-            price: prices[currency].toString(),
-            account,
-            isPrevote: true,
-            broadcastMode: `block`
-          });
+          const denom = `u${currency.toLowerCase()}`;
+          const hash = msg.voteHash(args.salt, prices[currency].toString(), denom, voter.terraValAddress);
 
-          if (height) {
-            prevotePrices[currency] = prices[currency];
-            prevotePeriods[currency] = Math.floor(height / VOTE_PERIOD);
-          }
+          prevoteMsgs.push(msg.buildPrevoteMsg(hash, denom, voter.terraAddress, voter.terraValAddress));
+
+          priceUpdateMap[currency] = prices[currency];
         });
+      }
+
+      if (voteMsgs.length > 0) {
+        const fees = { amount: [{ amount: `1500`, denom: `uluna` }], gas: `100000` };
+        const { value: tx } = msg.buildStdTx(voteMsgs, fees, `Voting from terra feeder`);
+        const signature = await wallet.sign(ledgerApp, voter, tx, {
+          chain_id: args.chainID,
+          account_number: account.account_number,
+          sequence: account.sequence
+        });
+
+        const signedTx = wallet.createSignedTx(tx, signature);
+        const broadcastReq = wallet.createBroadcastBody(signedTx, `block`);
+        await broadcast({
+          lcdAddress,
+          account,
+          broadcastReq
+        }).catch(err => {
+          console.error(err.response.data);
+        });
+      }
+
+      if (prevoteMsgs.length > 0) {
+        const fees = { amount: [{ amount: `1500`, denom: `uluna` }], gas: `100000` };
+        const { value: tx } = msg.buildStdTx(prevoteMsgs, fees, `Voting from terra feeder`);
+        const signature = await wallet.sign(ledgerApp, voter, tx, {
+          chain_id: args.chainID,
+          account_number: account.account_number,
+          sequence: account.sequence
+        });
+
+        const signedTx = wallet.createSignedTx(tx, signature);
+        const broadcastReq = wallet.createBroadcastBody(signedTx, `block`);
+        const height = await broadcast({
+          lcdAddress,
+          account,
+          broadcastReq
+        }).catch(err => {
+          console.error(err.response.data);
+        });
+
+        if (height) {
+          Object.assign(prevotePrices, priceUpdateMap);
+          prevotePeriod = Math.floor(height / VOTE_PERIOD);
+        }
       }
     } catch (e) {
       console.error('Error in loop:', e.toString());
     }
 
     // Sleep 2s at least
-    await delay(Math.max(2000, 5000 - (Date.now() - startTime)));
+    await delay(Math.max(10000, 15000 - (Date.now() - startTime)));
   }
 
   if (ledgerNode !== null) {

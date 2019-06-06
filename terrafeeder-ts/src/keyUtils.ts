@@ -49,6 +49,12 @@ export async function generateFromMnemonic(mnemonic) {
   return {
     privateKey: privateKey.toString(`hex`),
     publicKey: publicKey.toString(`hex`),
-    terraAddress
+    terraAddress,
+    terraValAddress: terraAddressToValidatorAddress(terraAddress)
   };
+}
+
+export function terraAddressToValidatorAddress(terraAddress) {
+  const { words } = bech32.decode(terraAddress);
+  return bech32.encode(`terravaloper`, words);
 }

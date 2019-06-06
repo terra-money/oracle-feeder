@@ -81,7 +81,16 @@ function createSignature(signature, sequence, accountNumber, publicKey) {
 }
 
 // main function to get a signature from ledger or local keystore
-export async function sign(ledger, voter, tx, baseRequest) {
+export async function sign(
+  ledger,
+  voter,
+  tx,
+  baseRequest: {
+    chain_id: string;
+    sequence: string;
+    account_number: string;
+  }
+) {
   // Use ledger for signing
   if (ledger) {
     const signMessage = createSignMessage(tx, baseRequest);
