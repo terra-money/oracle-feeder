@@ -14,7 +14,7 @@ const ENDPOINT_TX_BROADCAST = `/txs`;
 const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
 const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
-const VOTE_PERIOD = 10;
+const VOTE_PERIOD = 12;
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
