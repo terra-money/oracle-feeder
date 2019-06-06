@@ -16,8 +16,7 @@
     ]
   },
   "UPDATER": {
-    "PERIOD": 60,
-    "EXCHANGE_REFRESH": 300,
+    "PERIOD": 10,
     "CURRENCIES": [
       "USD",
       "KRW"
