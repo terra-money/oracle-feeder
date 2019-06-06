@@ -136,85 +136,6 @@ async function queryLatestBlock({ lcdAddress }) {
   if (res) return res.data;
 }
 
-async function queryPrevote({ lcdAddress, currency, validator }) {
-  const denom = `u${currency.toLowerCase()}`;
-  const url = util.format(lcdAddress + ENDPOINT_QUERY_PREVOTE, denom, validator);
-
-  const res = await axios.get(url);
-
-  if (res.status === 200) {
-    return res.data[0];
-  }
-}
-
-// async function txVote({
-//   lcdAddress,
-//   chainID,
-//   validator,
-//   ledgerApp,
-//   voter,
-//   currency,
-//   price,
-//   salt,
-//   account,
-//   isPrevote = false,
-//   broadcastMode = 'sync'
-// }): Promise<number> {
-//   /* eslint-disable @typescript-eslint/camelcase */
-//   const txArgs = {
-//     base_req: {
-//       from: voter.terraAddress,
-//       memo: `Voting from terra feeder`,
-//       chain_id: chainID,
-//       account_number: account.account_number,
-//       sequence: account.sequence,
-//       fees: [{ amount: `450`, denom: `uluna` }],
-//       gas: `30000`,
-//       gas_adjustment: `0`,
-//       simulate: false
-//     },
-//     price,
-//     salt,
-//     validator
-//   };
-
-//   const denom = `u${currency.toLowerCase()}`;
-//   const url = util.format(lcdAddress + (isPrevote ? ENDPOINT_TX_PREVOTE : ENDPOINT_TX_VOTE), denom);
-
-//   // Create unsinged tx for voting
-//   const {
-//     data: { value: tx }
-//   } = await axios.post(url, txArgs).catch(e => {
-//     console.error(e.response.data.error);
-//     throw e;
-//   });
-
-//   // Sign
-//   const signature = await wallet.sign(ledgerApp, voter, tx, txArgs.base_req);
-//   const signedTx = wallet.createSignedTx(tx, signature);
-//   const broadcastReq = wallet.createBroadcastBody(signedTx, broadcastMode);
-
-//   // Send broadcast
-//   const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
-//     console.error(e.response.data.error);
-//     throw e;
-//   });
-
-//   if (data.code !== undefined) {
-//     console.error('voting failed:', data.logs);
-//     return 0;
-//   }
-
-//   if (data.logs && !data.logs[0].success) {
-//     console.error('voting tx sent, but failed:', data.logs);
-//   } else {
-//     console.log(`${denom} = ${price}, txhash: ${data.txhash}`);
-//   }
-
-//   account.sequence = (parseInt(account.sequence, 10) + 1).toString();
-//   return +data.height;
-// }
-
 async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number> {
   // Send broadcast
   const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
@@ -320,7 +241,7 @@ async function vote(args): Promise<void> {
               prevoteSalts[currency],
               `u${currency.toLowerCase()}`,
               voter.terraAddress,
-              voter.terraValAddress
+              args.validator || voter.terraValAddress
             )
           );
         });
@@ -345,7 +266,7 @@ async function vote(args): Promise<void> {
             prevoteSalts[currency],
             prices[currency].toString(),
             denom,
-            voter.terraValAddress
+            args.validator || voter.terraValAddress
           );
 
           prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, voter.terraValAddress));
