@@ -151,10 +151,10 @@ async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number>
   if (data.logs && !data.logs[0].success) {
     console.error('voting tx sent, but failed:', data.logs);
   } else {
-    account.sequence = (parseInt(account.sequence, 10) + 1).toString();
     console.log(`txhash: ${data.txhash}`);
   }
 
+  account.sequence = (parseInt(account.sequence, 10) + 1).toString();
   return +data.height;
 }
 
@@ -212,8 +212,9 @@ async function vote(args): Promise<void> {
   const prevotePrices = {};
   const prevoteSalts = {};
   let prevotePeriod;
+  let done = false;
 
-  while (1) {
+  while (!done) {
     const startTime = Date.now();
 
     try {
@@ -270,7 +271,9 @@ async function vote(args): Promise<void> {
             args.validator || voter.terraValAddress
           );
 
-          prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, args.validator || voter.terraValAddress));
+          prevoteMsgs.push(
+            msg.generatePrevoteMsg(hash, denom, voter.terraAddress, args.validator || voter.terraValAddress)
+          );
           priceUpdateMap[currency] = prices[currency];
         });
       }
@@ -291,7 +294,9 @@ async function vote(args): Promise<void> {
           account,
           broadcastReq
         }).catch(err => {
-          console.error(err.response.data);
+          done = true;
+          console.log(err);
+          if (err.response) console.error(err.response.data);
         });
       }
 
@@ -311,7 +316,8 @@ async function vote(args): Promise<void> {
           account,
           broadcastReq
         }).catch(err => {
-          console.error(err.response.data);
+          console.log(err);
+          if (err.response) console.error(err.response.data);
         });
 
         if (height) {
@@ -321,7 +327,7 @@ async function vote(args): Promise<void> {
         }
       }
     } catch (e) {
-      console.error('Error in loop:', e.toString());
+      console.error('Error in loop:', e);
     }
 
     // Sleep 2s at least
