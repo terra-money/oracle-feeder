@@ -16,7 +16,6 @@ const ENDPOINT_TX_BROADCAST = `/txs`;
 const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
 const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
-const VOTE_PERIOD = 10;
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -249,7 +248,7 @@ async function vote(args): Promise<void> {
       const votePeriod = Math.floor(currentBlockHeight / oracleVotePeriod);
 
       // Vote
-      if (prevotePeriod && prevotePeriod < votePeriod) {
+      if (prevotePeriod && prevotePeriod !== votePeriod) {
         console.log(`votePeriod: ${votePeriod}`);
 
         Object.keys(prices).forEach(currency => {
@@ -344,7 +343,7 @@ async function vote(args): Promise<void> {
         if (height) {
           Object.assign(prevotePrices, priceUpdateMap);
           Object.assign(prevoteSalts, priceUpdateSaltMap);
-          prevotePeriod = Math.floor(height / VOTE_PERIOD);
+          prevotePeriod = Math.floor(height / oracleVotePeriod);
           console.log(`prevotePeriod: ${prevotePeriod}`);
         }
       }
