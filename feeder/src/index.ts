@@ -14,7 +14,7 @@ const ENDPOINT_TX_BROADCAST = `/txs`;
 const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
 const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
-const VOTE_PERIOD = 12;
+const VOTE_PERIOD = 10;
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
@@ -131,6 +131,11 @@ async function queryAccount({ lcdAddress, voter }) {
   return res.data.value;
 }
 
+async function queryOracleParams({ lcdAddress }) {
+  const { data } = await axios.get(`${lcdAddress}/oracle/params`);
+  return data;
+}
+
 async function queryLatestBlock({ lcdAddress }) {
   const res = await axios.get(lcdAddress + ENDPOINT_QUERY_LATEST_BLOCK);
   if (res) return res.data;
@@ -210,6 +215,15 @@ async function vote(args): Promise<void> {
     voter = keystore.getKey(args.keystore, password);
   }
 
+  const [oracleParams, account] = await Promise.all([
+    queryOracleParams({ lcdAddress }),
+    queryAccount({ lcdAddress, voter })
+  ]);
+
+  const oracleVotePeriod = parseInt(oracleParams.vote_period, 10);
+
+  console.info(`Oracle Vote Period: ${oracleVotePeriod}`);
+
   const denomArray = denoms.split(',').map(s => s.toLowerCase());
   const prevotePrices = {};
   const prevoteSalts = {};
@@ -222,15 +236,14 @@ async function vote(args): Promise<void> {
     try {
       const voteMsgs = [];
       const prevoteMsgs = [];
-      const prices = await getPrice(source);
-      const latestBlock = await queryLatestBlock({ ...args });
+      const [prices, latestBlock] = await Promise.all([getPrice(source), queryLatestBlock({ ...args })]);
       const currentBlockHeight = parseInt(latestBlock.block.header.height, 10);
-      const votePeriod = Math.floor(currentBlockHeight / VOTE_PERIOD);
-
-      const account = await queryAccount({ lcdAddress, voter });
+      const votePeriod = Math.floor(currentBlockHeight / oracleVotePeriod);
 
       // Vote
-      if (prevotePeriod && prevotePeriod !== votePeriod) {
+      if (prevotePeriod && prevotePeriod < votePeriod) {
+        console.log(`votePeriod: ${votePeriod}`);
+
         Object.keys(prices).forEach(currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
             return;
@@ -252,7 +265,7 @@ async function vote(args): Promise<void> {
 
       const priceUpdateMap = {};
       const priceUpdateSaltMap = {};
-      if (currentBlockHeight % VOTE_PERIOD <= VOTE_PERIOD - 2) {
+      if (currentBlockHeight % oracleVotePeriod <= oracleVotePeriod - 2) {
         // Prevote
         Object.keys(prices).forEach(currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
@@ -324,14 +337,14 @@ async function vote(args): Promise<void> {
           Object.assign(prevotePrices, priceUpdateMap);
           Object.assign(prevoteSalts, priceUpdateSaltMap);
           prevotePeriod = Math.floor(height / VOTE_PERIOD);
+          console.log(`prevotePeriod: ${prevotePeriod}`);
         }
       }
     } catch (e) {
       console.error('Error in loop:', e);
     }
 
-    // Sleep 2s at least
-    await delay(Math.max(10000, 15000 - (Date.now() - startTime)));
+    await delay(Math.max(1, 10000 - (Date.now() - startTime)));
   }
 
   if (ledgerNode !== null) {
