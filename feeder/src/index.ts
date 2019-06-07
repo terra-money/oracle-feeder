@@ -1,3 +1,5 @@
+import * as http from 'http';
+import * as https from 'https';
 import * as Bluebird from 'bluebird';
 import axios from 'axios';
 import * as util from 'util';
@@ -15,6 +17,12 @@ const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
 const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
 const VOTE_PERIOD = 10;
+
+const ax = axios.create({
+  httpAgent: new http.Agent({ keepAlive: true }),
+  httpsAgent: new https.Agent({ keepAlive: true }),
+  timeout: 15000
+});
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
@@ -118,7 +126,7 @@ async function queryAccount({ lcdAddress, voter }) {
   const url = util.format(lcdAddress + ENDPOINT_QUERY_ACCOUNT, voter.terraAddress);
   console.info(`querying: ${url}`);
 
-  const res = await axios.get(url).catch(e => {
+  const res = await ax.get(url).catch(e => {
     console.error(`Failed to bringing account number and sequence: ${e.toString()}`);
     return;
   });
@@ -132,18 +140,18 @@ async function queryAccount({ lcdAddress, voter }) {
 }
 
 async function queryOracleParams({ lcdAddress }) {
-  const { data } = await axios.get(`${lcdAddress}/oracle/params`);
+  const { data } = await ax.get(`${lcdAddress}/oracle/params`);
   return data;
 }
 
 async function queryLatestBlock({ lcdAddress }) {
-  const res = await axios.get(lcdAddress + ENDPOINT_QUERY_LATEST_BLOCK);
+  const res = await ax.get(lcdAddress + ENDPOINT_QUERY_LATEST_BLOCK);
   if (res) return res.data;
 }
 
 async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number> {
   // Send broadcast
-  const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
+  const { data } = await ax.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
     if (e.response) return e.response;
     throw e;
   });
@@ -169,7 +177,7 @@ async function getPrice(sources: [string]): Promise<{}> {
   console.info(`getting price data from`, sources);
 
   const total = {};
-  const results = await Bluebird.some(sources.map(s => axios.get(s)), 1);
+  const results = await Bluebird.some(sources.map(s => ax.get(s)), 1);
 
   if (results.length > 0) {
     const res = results[0];
