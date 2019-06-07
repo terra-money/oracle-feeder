@@ -139,17 +139,19 @@ async function queryLatestBlock({ lcdAddress }) {
 async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number> {
   // Send broadcast
   const { data } = await axios.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
-    if (e.response) console.error(e.response.data.error);
+    if (e.response) return e.response;
     throw e;
   });
 
   if (data.code !== undefined) {
-    console.error('voting failed:', data.logs);
+    console.error('broadcast failed:', data.logs);
     return 0;
   }
 
   if (data.logs && !data.logs[0].success) {
-    console.error('voting tx sent, but failed:', data.logs);
+    console.error('broadcast sent, but failed:', data.logs);
+  } else if (data.error) {
+    console.error('broadcast raised an error:', data.error);
   } else {
     console.info(`txhash: ${data.txhash}`);
   }
@@ -295,8 +297,7 @@ async function vote(args): Promise<void> {
           broadcastReq
         }).catch(err => {
           done = true;
-          if (err.response) console.error(err.response.data);
-          console.error(err.message, err.stack);
+          console.error(err.stack);
         });
       }
 
@@ -316,8 +317,7 @@ async function vote(args): Promise<void> {
           account,
           broadcastReq
         }).catch(err => {
-          if (err.response) console.error(err.response.data);
-          console.error(err.message, err.stack);
+          console.error(err.stack);
         });
 
         if (height) {
