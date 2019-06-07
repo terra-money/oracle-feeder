@@ -58,8 +58,8 @@ function registerCommands(parser: ArgumentParser): void {
   });
 
   voteCommand.addArgument([`--validator`], {
-    action: `store`,
-    help: `validator address (e.g. terravaloper1...)`,
+    action: `append`,
+    help: `validator address (e.g. terravaloper1...), can have multiple`,
     required: false
   });
 
@@ -182,15 +182,13 @@ async function getPrice(sources: [string]): Promise<{}> {
     const res = results[0];
     const prices = res.data.prices;
 
-    prices.forEach(
-      (price): void => {
-        if (typeof total[price.currency] !== 'undefined') {
-          total[price.currency].push(price.price);
-        } else {
-          total[price.currency] = [price.price];
-        }
+    prices.forEach((price): void => {
+      if (typeof total[price.currency] !== 'undefined') {
+        total[price.currency].push(price.price);
+      } else {
+        total[price.currency] = [price.price];
       }
-    );
+    });
   }
 
   return total;
@@ -249,29 +247,35 @@ async function vote(args): Promise<void> {
 
       // Vote
       if (prevotePeriod && prevotePeriod !== votePeriod) {
-        console.log(`votePeriod: ${votePeriod}`);
+        console.info(`votePeriod: ${votePeriod}`);
 
         Object.keys(prices).forEach(currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
             return;
           }
 
-          console.info(`vote! ${currency} ${prevotePrices[currency]}`);
+          const valAddrs = args.validator || [voter.terraValAddress];
+          const denom = `u${currency.toLowerCase()}`;
 
-          voteMsgs.push(
-            msg.generateVoteMsg(
-              prevotePrices[currency].toString(),
-              prevoteSalts[currency],
-              `u${currency.toLowerCase()}`,
-              voter.terraAddress,
-              args.validator || voter.terraValAddress
-            )
-          );
+          console.info(`vote! ${denom} ${prices[currency]} ${valAddrs}`);
+
+          valAddrs.forEach(valAddr => {
+            voteMsgs.push(
+              msg.generateVoteMsg(
+                prevotePrices[currency].toString(),
+                prevoteSalts[currency],
+                denom,
+                voter.terraAddress,
+                valAddr
+              )
+            );
+          });
         });
       }
 
       const priceUpdateMap = {};
       const priceUpdateSaltMap = {};
+
       if (currentBlockHeight % oracleVotePeriod <= oracleVotePeriod - 2) {
         // Prevote
         Object.keys(prices).forEach(currency => {
@@ -279,23 +283,26 @@ async function vote(args): Promise<void> {
             return;
           }
 
-          console.info(`prevote! ${currency} ${prices[currency]}`);
-
           priceUpdateSaltMap[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
             .toString()
             .substring(0, 4);
 
+          const valAddrs = args.validator || [voter.terraValAddress];
           const denom = `u${currency.toLowerCase()}`;
-          const hash = msg.generateVoteHash(
-            priceUpdateSaltMap[currency],
-            prices[currency].toString(),
-            denom,
-            args.validator || voter.terraValAddress
-          );
 
-          prevoteMsgs.push(
-            msg.generatePrevoteMsg(hash, denom, voter.terraAddress, args.validator || voter.terraValAddress)
-          );
+          console.info(`prevote! ${denom} ${prices[currency]} ${valAddrs}`);
+
+          valAddrs.forEach(valAddr => {
+            const hash = msg.generateVoteHash(
+              priceUpdateSaltMap[currency],
+              prices[currency].toString(),
+              denom,
+              valAddr
+            );
+
+            prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, valAddr));
+          });
+
           priceUpdateMap[currency] = prices[currency];
         });
       }
@@ -344,7 +351,7 @@ async function vote(args): Promise<void> {
           Object.assign(prevotePrices, priceUpdateMap);
           Object.assign(prevoteSalts, priceUpdateSaltMap);
           prevotePeriod = Math.floor(height / oracleVotePeriod);
-          console.log(`prevotePeriod: ${prevotePeriod}`);
+          console.info(`prevotePeriod: ${prevotePeriod}`);
         }
       }
     } catch (e) {
