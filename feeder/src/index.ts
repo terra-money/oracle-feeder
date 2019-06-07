@@ -233,22 +233,27 @@ async function vote(args): Promise<void> {
   const prevotePrices = {};
   const prevoteSalts = {};
   let prevotePeriod;
-  let done = false;
 
-  while (!done) {
+  while (true) {
     const startTime = Date.now();
 
     try {
-      const voteMsgs = [];
-      const prevoteMsgs = [];
-      const [prices, latestBlock] = await Promise.all([getPrice(source), queryLatestBlock({ ...args })]);
+      const latestBlock = await queryLatestBlock({ ...args });
       const currentBlockHeight = parseInt(latestBlock.block.header.height, 10);
       const votePeriod = Math.floor(currentBlockHeight / oracleVotePeriod);
+      const indexInVotePeriod = currentBlockHeight % oracleVotePeriod;
 
-      // Vote
-      if (prevotePeriod && prevotePeriod !== votePeriod) {
-        console.info(`votePeriod: ${votePeriod}`);
+      if (indexInVotePeriod >= oracleVotePeriod - 3 || (prevotePeriod && prevotePeriod === votePeriod)) {
+        throw 'skip';
+      }
 
+      const voteMsgs = [];
+      const prevoteMsgs = [];
+      const prices = await getPrice(source);
+      const account = await queryAccount({ lcdAddress, voter });
+
+      if (prevotePeriod && votePeriod - prevotePeriod === 1) {
+        // Vote
         Object.keys(prices).forEach(currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
             return;
@@ -275,8 +280,7 @@ async function vote(args): Promise<void> {
 
       const priceUpdateMap = {};
       const priceUpdateSaltMap = {};
-
-      if (currentBlockHeight % oracleVotePeriod <= oracleVotePeriod - 2) {
+      if (!prevotePeriod || prevotePeriod !== votePeriod) {
         // Prevote
         Object.keys(prices).forEach(currency => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
@@ -323,8 +327,14 @@ async function vote(args): Promise<void> {
           account,
           broadcastReq
         }).catch(err => {
-          done = true;
-          console.error(err.stack);
+          if (err && err.isAxiosError) {
+            console.error('===VOTE', 'ignore axio error', err.code);
+            account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+          } else if (err && err.response && err.response.data) {
+            console.error('===VOTE', err.response.data);
+          } else {
+            console.error('===VOTE', err);
+          }
         });
       }
 
@@ -344,7 +354,13 @@ async function vote(args): Promise<void> {
           account,
           broadcastReq
         }).catch(err => {
-          console.error(err.stack);
+          if (err && err.isAxiosError) {
+            console.error('===PREVOTE', 'ignore axio error', err.code);
+          } else if (err && err.response && err.response.data) {
+            console.error('====PREVOTE', err.response.data);
+          } else {
+            console.error('====PREVOTE', err);
+          }
         });
 
         if (height) {
@@ -355,10 +371,14 @@ async function vote(args): Promise<void> {
         }
       }
     } catch (e) {
-      console.error('Error in loop:', e);
+      if (e !== 'skip') {
+        console.error('Error in loop:', e.toString(), 'restart immediately');
+        continue;
+      }
     }
 
-    await delay(Math.max(1, 10000 - (Date.now() - startTime)));
+    // Sleep 2s at least
+    await delay(Math.max(5000, 6000 - (Date.now() - startTime)));
   }
 
   if (ledgerNode !== null) {
