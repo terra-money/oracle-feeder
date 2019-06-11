@@ -312,7 +312,7 @@ async function vote(args): Promise<void> {
       }
 
       if (voteMsgs.length > 0) {
-        const fees = { amount: [{ amount: `1500`, denom: `uluna` }], gas: `100000` };
+        const fees = { amount: [{ amount: `720`, denom: `ukrw` }], gas: `48000` };
         const { value: tx } = msg.generateStdTx(voteMsgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
           chain_id: args.chainID,
@@ -339,7 +339,7 @@ async function vote(args): Promise<void> {
       }
 
       if (prevoteMsgs.length > 0) {
-        const fees = { amount: [{ amount: `1500`, denom: `uluna` }], gas: `100000` };
+        const fees = { amount: [{ amount: `600`, denom: `ukrw` }], gas: `40000` };
         const { value: tx } = msg.generateStdTx(prevoteMsgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
           chain_id: args.chainID,
