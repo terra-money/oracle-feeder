@@ -16,6 +16,9 @@ const ENDPOINT_TX_BROADCAST = `/txs`;
 const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
 const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
+const ENDPOINT_QUERY_TX = `/txs/%s`;
+
+const secTimeout = 30;
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -148,28 +151,27 @@ async function queryLatestBlock({ lcdAddress }) {
   if (res) return res.data;
 }
 
-async function broadcast({ lcdAddress, account, broadcastReq }): Promise<number> {
-  // Send broadcast
-  const { data } = await ax.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq).catch(e => {
-    if (e.response) return e.response;
-    throw e;
+async function queryTx({ lcdAddress, txhash }) {
+  const res = await ax.get(util.format(lcdAddress + ENDPOINT_QUERY_TX, txhash)).catch(err => { 
+    if(err.response.status !== 404) 
+      console.error(err.response.status, err.response.statusText); 
   });
 
-  if (data.code !== undefined) {
-    console.error('broadcast failed:', data.logs);
-    return 0;
-  }
+  if (res) return res.data;
+}
 
-  if (data.logs && !data.logs[0].success) {
-    console.error('broadcast sent, but failed:', data.logs);
-  } else if (data.error) {
-    console.error('broadcast raised an error:', data.error);
-  } else {
-    console.info(`txhash: ${data.txhash}`);
+async function waitTx({ lcdAddress, txhash }) {
+  for (let t = 0; t < secTimeout; t++) {
+    await Bluebird.delay(1000)
+    const txQueryData = await queryTx({ lcdAddress, txhash })
+    if (txQueryData) return txQueryData
   }
+}
 
-  account.sequence = (parseInt(account.sequence, 10) + 1).toString();
-  return +data.height;
+async function broadcast({ lcdAddress, account, broadcastReq }) {
+  // Broadcast
+  const { data } = await ax.post(lcdAddress + ENDPOINT_TX_BROADCAST, broadcastReq);
+  return data;
 }
 
 async function getPrice(sources: [string]): Promise<{}> {
@@ -321,21 +323,32 @@ async function vote(args): Promise<void> {
         });
 
         const signedTx = wallet.createSignedTx(tx, signature);
-        const broadcastReq = wallet.createBroadcastBody(signedTx, `block`);
-        await broadcast({
+        const broadcastReq = wallet.createBroadcastBody(signedTx, `sync`);
+        
+        const data = await broadcast({
           lcdAddress,
           account,
           broadcastReq
         }).catch(err => {
           if (err && err.isAxiosError) {
-            console.error('===VOTE', 'ignore axio error', err.code);
-            account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+            console.error('===VOTE', 'axio error', err.code);
           } else if (err && err.response && err.response.data) {
             console.error('===VOTE', err.response.data);
           } else {
             console.error('===VOTE', err);
           }
         });
+
+        if (data && !data.code)  {
+          const txhash = data.txhash;
+          const txQueryData = await waitTx({ lcdAddress, txhash });
+          if (txQueryData) {
+            account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+            console.info(`txhash: ${txhash}`);
+          } else {
+            console.error(`Failed to find ${txhash}`)
+          }
+        }
       }
 
       if (prevoteMsgs.length > 0) {
@@ -347,21 +360,33 @@ async function vote(args): Promise<void> {
           sequence: account.sequence
         });
 
+        let height = 0;
         const signedTx = wallet.createSignedTx(tx, signature);
-        const broadcastReq = wallet.createBroadcastBody(signedTx, `block`);
-        const height = await broadcast({
+        const broadcastReq = wallet.createBroadcastBody(signedTx, `sync`);
+        const data = await broadcast({
           lcdAddress,
           account,
           broadcastReq
         }).catch(err => {
           if (err && err.isAxiosError) {
-            console.error('===PREVOTE', 'ignore axio error', err.code);
+            console.error('===PREVOTE', 'axio error', err.code);
           } else if (err && err.response && err.response.data) {
             console.error('====PREVOTE', err.response.data);
           } else {
             console.error('====PREVOTE', err);
           }
         });
+
+        if (data && !data.code) { 
+          const txhash = data.txhash;
+          const txQueryData = await waitTx({ lcdAddress, txhash });
+          if (txQueryData) {
+            height = Number(txQueryData.height);
+            console.info(`txhash: ${txhash}`);
+          } else {
+            console.error(`Failed to find ${txhash}`)
+          }
+        }
 
         if (height) {
           Object.assign(prevotePrices, priceUpdateMap);
@@ -377,8 +402,8 @@ async function vote(args): Promise<void> {
       }
     }
 
-    // Sleep 2s at least
-    await delay(Math.max(5000, 6000 - (Date.now() - startTime)));
+    // Sleep 5s at least
+    await Bluebird.delay(Math.max(5000, 6000 - (Date.now() - startTime)));
   }
 
   if (ledgerNode !== null) {
