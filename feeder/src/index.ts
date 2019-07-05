@@ -152,19 +152,20 @@ async function queryLatestBlock({ lcdAddress }) {
 }
 
 async function queryTx({ lcdAddress, txhash }) {
-  const res = await ax.get(util.format(lcdAddress + ENDPOINT_QUERY_TX, txhash)).catch(err => { 
-    if(err.response.status !== 404) 
-      console.error(err.response.status, err.response.statusText); 
+  const res = await ax.get(util.format(lcdAddress + ENDPOINT_QUERY_TX, txhash)).catch(err => {
+    if (err.response.status !== 404) {
+      console.error(err.response.status, err.response.statusText);
+    }
   });
 
   if (res) return res.data;
 }
 
 async function waitTx({ lcdAddress, txhash }) {
-  for (let t = 0; t < secTimeout; t++) {
-    await Bluebird.delay(1000)
-    const txQueryData = await queryTx({ lcdAddress, txhash })
-    if (txQueryData) return txQueryData
+  for (let t = 0; t < secTimeout; t += 1) {
+    await Bluebird.delay(1000);
+    const txQueryData = await queryTx({ lcdAddress, txhash });
+    if (txQueryData) return txQueryData;
   }
 }
 
@@ -298,19 +299,13 @@ async function vote(args): Promise<void> {
         console.info(`prevote! ${denom} ${prices[currency]} ${valAddrs}`);
 
         valAddrs.forEach(valAddr => {
-          const hash = msg.generateVoteHash(
-            priceUpdateSaltMap[currency],
-            prices[currency].toString(),
-            denom,
-            valAddr
-          );
+          const hash = msg.generateVoteHash(priceUpdateSaltMap[currency], prices[currency].toString(), denom, valAddr);
 
           prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, valAddr));
         });
 
         priceUpdateMap[currency] = prices[currency];
       });
-      
 
       const msgs = [...voteMsgs, ...prevoteMsgs];
       if (msgs.length > 0) {
@@ -324,7 +319,7 @@ async function vote(args): Promise<void> {
 
         const signedTx = wallet.createSignedTx(tx, signature);
         const broadcastReq = wallet.createBroadcastBody(signedTx, `sync`);
-        
+
         const data = await broadcast({
           lcdAddress,
           account,
@@ -340,7 +335,7 @@ async function vote(args): Promise<void> {
         });
 
         // successfully broadcast
-        if (data && !data.code)  {
+        if (data && !data.code) {
           const txhash = data.txhash;
           const txQueryData = await waitTx({ lcdAddress, txhash });
           if (txQueryData) {
@@ -357,7 +352,6 @@ async function vote(args): Promise<void> {
           console.error(`Failed to broadcast`);
         }
       }
-
     } catch (e) {
       if (e !== 'skip') {
         console.error('Error in loop:', e.toString(), 'restart immediately');
