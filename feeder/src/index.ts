@@ -282,40 +282,40 @@ async function vote(args): Promise<void> {
 
       const priceUpdateMap = {};
       const priceUpdateSaltMap = {};
-      if (!prevotePeriod || prevotePeriod !== votePeriod) {
-        // Prevote
-        Object.keys(prices).forEach(currency => {
-          if (denomArray.indexOf(currency.toLowerCase()) === -1) {
-            return;
-          }
+      // Prevote
+      Object.keys(prices).forEach(currency => {
+        if (denomArray.indexOf(currency.toLowerCase()) === -1) {
+          return;
+        }
 
-          priceUpdateSaltMap[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
-            .toString()
-            .substring(0, 4);
+        priceUpdateSaltMap[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
+          .toString()
+          .substring(0, 4);
 
-          const valAddrs = args.validator || [voter.terraValAddress];
-          const denom = `u${currency.toLowerCase()}`;
+        const valAddrs = args.validator || [voter.terraValAddress];
+        const denom = `u${currency.toLowerCase()}`;
 
-          console.info(`prevote! ${denom} ${prices[currency]} ${valAddrs}`);
+        console.info(`prevote! ${denom} ${prices[currency]} ${valAddrs}`);
 
-          valAddrs.forEach(valAddr => {
-            const hash = msg.generateVoteHash(
-              priceUpdateSaltMap[currency],
-              prices[currency].toString(),
-              denom,
-              valAddr
-            );
+        valAddrs.forEach(valAddr => {
+          const hash = msg.generateVoteHash(
+            priceUpdateSaltMap[currency],
+            prices[currency].toString(),
+            denom,
+            valAddr
+          );
 
-            prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, valAddr));
-          });
-
-          priceUpdateMap[currency] = prices[currency];
+          prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, valAddr));
         });
-      }
 
-      if (voteMsgs.length > 0) {
-        const fees = { amount: [{ amount: `720`, denom: `ukrw` }], gas: `48000` };
-        const { value: tx } = msg.generateStdTx(voteMsgs, fees, `Voting from terra feeder`);
+        priceUpdateMap[currency] = prices[currency];
+      });
+      
+
+      const msgs = [...voteMsgs, ...prevoteMsgs];
+      if (msgs.length > 0) {
+        const fees = { amount: [{ amount: `1200`, denom: `ukrw` }], gas: `80000` };
+        const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
           chain_id: args.chainID,
           account_number: account.account_number,
@@ -331,70 +331,33 @@ async function vote(args): Promise<void> {
           broadcastReq
         }).catch(err => {
           if (err && err.isAxiosError) {
-            console.error('===VOTE', 'axio error', err.code);
+            console.error('===TX', 'axio error', err.code);
           } else if (err && err.response && err.response.data) {
-            console.error('===VOTE', err.response.data);
+            console.error('===TX', err.response.data);
           } else {
-            console.error('===VOTE', err);
+            console.error('===TX', err);
           }
         });
 
+        // successfully broadcast
         if (data && !data.code)  {
           const txhash = data.txhash;
           const txQueryData = await waitTx({ lcdAddress, txhash });
           if (txQueryData) {
-            account.sequence = (parseInt(account.sequence, 10) + 1).toString();
+            Object.assign(prevotePrices, priceUpdateMap);
+            Object.assign(prevoteSalts, priceUpdateSaltMap);
+            prevotePeriod = Math.floor(Number(txQueryData.height) / oracleVotePeriod);
+
             console.info(`txhash: ${txhash}`);
+            console.info(`prevotePeriod: ${prevotePeriod}`);
           } else {
-            console.error(`Failed to find ${txhash}`)
+            console.error(`Failed to find ${txhash}`);
           }
+        } else {
+          console.error(`Failed to broadcast`);
         }
       }
 
-      if (prevoteMsgs.length > 0) {
-        const fees = { amount: [{ amount: `600`, denom: `ukrw` }], gas: `40000` };
-        const { value: tx } = msg.generateStdTx(prevoteMsgs, fees, `Voting from terra feeder`);
-        const signature = await wallet.sign(ledgerApp, voter, tx, {
-          chain_id: args.chainID,
-          account_number: account.account_number,
-          sequence: account.sequence
-        });
-
-        let height = 0;
-        const signedTx = wallet.createSignedTx(tx, signature);
-        const broadcastReq = wallet.createBroadcastBody(signedTx, `sync`);
-        const data = await broadcast({
-          lcdAddress,
-          account,
-          broadcastReq
-        }).catch(err => {
-          if (err && err.isAxiosError) {
-            console.error('===PREVOTE', 'axio error', err.code);
-          } else if (err && err.response && err.response.data) {
-            console.error('====PREVOTE', err.response.data);
-          } else {
-            console.error('====PREVOTE', err);
-          }
-        });
-
-        if (data && !data.code) { 
-          const txhash = data.txhash;
-          const txQueryData = await waitTx({ lcdAddress, txhash });
-          if (txQueryData) {
-            height = Number(txQueryData.height);
-            console.info(`txhash: ${txhash}`);
-          } else {
-            console.error(`Failed to find ${txhash}`)
-          }
-        }
-
-        if (height) {
-          Object.assign(prevotePrices, priceUpdateMap);
-          Object.assign(prevoteSalts, priceUpdateSaltMap);
-          prevotePeriod = Math.floor(height / oracleVotePeriod);
-          console.info(`prevotePeriod: ${prevotePeriod}`);
-        }
-      }
     } catch (e) {
       if (e !== 'skip') {
         console.error('Error in loop:', e.toString(), 'restart immediately');
