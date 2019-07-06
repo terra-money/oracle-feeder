@@ -18,7 +18,7 @@ const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
 const ENDPOINT_QUERY_PREVOTE = `/oracle/denoms/%s/prevotes/%s`;
 const ENDPOINT_QUERY_TX = `/txs/%s`;
 
-const secTimeout = 30;
+const secTimeout = 45;
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
