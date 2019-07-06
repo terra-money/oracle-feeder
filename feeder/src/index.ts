@@ -343,7 +343,7 @@ async function vote(args): Promise<void> {
         if (data && !data.code)  {
           const txhash = data.txhash;
           const txQueryData = await waitTx({ lcdAddress, txhash });
-          if (txQueryData) {
+          if (txQueryData && !txQueryData.code) {
             Object.assign(prevotePrices, priceUpdateMap);
             Object.assign(prevoteSalts, priceUpdateSaltMap);
             prevotePeriod = Math.floor(Number(txQueryData.height) / oracleVotePeriod);
