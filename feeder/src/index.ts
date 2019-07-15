@@ -265,7 +265,7 @@ async function vote(args): Promise<void> {
           const valAddrs = args.validator || [voter.terraValAddress];
           const denom = `u${currency.toLowerCase()}`;
 
-          console.info(`vote! ${denom} ${prices[currency]} ${valAddrs}`);
+          console.info(`vote! ${denom} ${prevotePrices[currency].toString()} ${valAddrs}`);
 
           valAddrs.forEach(valAddr => {
             voteMsgs.push(
