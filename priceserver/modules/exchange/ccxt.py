@@ -1,4 +1,4 @@
-from statistics import median
+from weightedstats import weighted_median
 from typing import Dict, List
 
 import ccxt
@@ -12,10 +12,12 @@ from .gopax import gopax
 EXCHANGE = settings.get('EXCHANGE', {
     "BLACKLIST": [],
     "WHITELIST": [],
+    "WEIGHT": {},
 })
 
 EXCHANGE_BLACKLIST = EXCHANGE.get('BLACKLIST', [])
 EXCHANGE_WHITELIST = EXCHANGE.get('WHITELIST', None)
+WEIGHT = EXCHANGE.get('WEIGHT', {})
 
 DENOM = settings['UPDATER']['DENOM']
 
@@ -85,13 +87,13 @@ def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, curren
     :param currencies: currencies ticker names to get
     :return: price list dictionary
     """
-    prices, sdr_prices, unfetched_currencies = fetch_all_exchanges(exchanges, sdr_rates, currencies)
+    prices, sdr_prices, unfetched_currencies, weights = fetch_all_exchanges(exchanges, sdr_rates, currencies)
 
     if not sdr_prices:  # in case of no data fetched
         return []
 
     # calculate LUNA/SDR price
-    sdr_price = median(sdr_prices)
+    sdr_price = weighted_median(sdr_prices, weights=weights)
     prices.append(Price("SDR", sdr_price, dispersion=0))
 
     # fill unfetched prices in
@@ -126,6 +128,7 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
 
         symbol = f"{DENOM}/{currency}"
         values: List[float] = []
+        weights: List[float] = []
 
         sdr_rate = sdr_rates.get(currency, 0)
 
@@ -137,6 +140,11 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
             try:
                 last = float(exchange.fetch_ticker(symbol)['last'])
                 values.append(last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
+                
+                if exchange.id in WEIGHT:
+                    weights.append(WEIGHT[exchange.id])
+                else:
+                    weights.append(1)
 
                 if sdr_rate:
                     sdr_prices.append(last * sdr_rate)
@@ -146,8 +154,9 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
             except Exception:
                 failed_exchanges.append("%s(%s)" % (exchange.id, symbol))
 
+        print(values, weights)
         if values:
-            prices.append(Price(currency, median(values)))
+            prices.append(Price(currency, weighted_median(values, weights=weights)))
         else:
             unfetched_currencies.append(currency)
 
@@ -155,4 +164,4 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
     print("")
     print(f"Success: {success_count}, Fail: {len(failed_exchanges)} [{failed_exchanges}]")
 
-    return prices, sdr_prices, unfetched_currencies
+    return prices, sdr_prices, unfetched_currencies, weights

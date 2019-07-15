@@ -13,7 +13,11 @@
     ],
     "BLACKLIST": [
       "anxpro", "coingi", "jubi", "coinegg", "theocean", "bitstamp1", "mixcoins"
-    ]
+    ],
+    "WEIGHT": {
+      "coinone": 4,
+      "gopax": 1
+    }
   },
   "UPDATER": {
     "PERIOD": 10,
