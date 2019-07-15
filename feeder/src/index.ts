@@ -309,7 +309,8 @@ async function vote(args): Promise<void> {
 
       const msgs = [...voteMsgs, ...prevoteMsgs];
       if (msgs.length > 0) {
-        const fees = { amount: [{ amount: `1200`, denom: `ukrw` }], gas: `80000` };
+        const gas = 50000 + msgs.length * 7500;
+        const fees = { amount: [{ amount: (gas * 0.015).toString(), denom: `ukrw` }], gas: gas.toString() };
         const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
           chain_id: args.chainID,
@@ -326,7 +327,7 @@ async function vote(args): Promise<void> {
           broadcastReq
         }).catch(err => {
           if (err && err.isAxiosError) {
-            console.error('===TX', 'axio error', err.code);
+            console.error('===TX', 'axio error', err.message, err.response.data);
           } else if (err && err.response && err.response.data) {
             console.error('===TX', err.response.data);
           } else {
