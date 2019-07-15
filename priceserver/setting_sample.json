@@ -25,7 +25,8 @@
       "USD",
       "KRW"
     ],
-    "DENOM": "LUNA"
+    "DENOM": "LUNA",
+    "MOVING_AVG_PERIOD_NUM": 15
   },
   "API_KEYS": {
     "CURRENCYLAYER": "",
