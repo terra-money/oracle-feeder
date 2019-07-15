@@ -17,7 +17,7 @@ class MovingAvgPrice:
       self.prices.append(price)
       
       if len(self.prices) > MOVING_AVG_PERIOD_NUM:
-        self.prices = self.prices[:1]
+        self.prices = self.prices[1:]
 
     def get_price(self) -> float:
       return statistics.mean(self.prices)
