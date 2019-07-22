@@ -8,23 +8,22 @@ import pytz
 from modules.exchange.ccxt import filter_exchanges, get_prices_data, EXCHANGE_WHITELIST
 from modules.exchange import Price
 from modules.settings import settings
-from modules import sdr, MovingAvgPrice
+from modules import sdr
 
-UPDATING_PERIOD = settings['UPDATER'].get("PERIOD", 10)
+UPDATING_PERIOD = settings['UPDATER'].get("PERIOD", 30)
 EXCHANGE_REFRESH = settings['UPDATER'].get("EXCHANGE_REFRESH", 0)
 TARGET_CURRENCIES = settings['UPDATER']['CURRENCIES']
-MOVING_AVG_PERIOD_NUM = settings['UPDATER'].get("MOVING_AVG_PERIOD_NUM", 15)
 
 class Updater:
     data = {
         "created_at": "",
-        "prices": List[Price]
+        "prices": []
     }
 
     exchanges = Dict[str, List[ccxt.Exchange]]
     exchange_updated: datetime.datetime
 
-    moving_avg_prices: Dict[str, MovingAvgPrice] = {}
+    #moving_avg_prices: Dict[str, MovingAvgPrice] = {}
 
     def __init__(self):
         """ initial update """
@@ -61,38 +60,39 @@ class Updater:
 
         # fetching price data
         prices = get_prices_data(self.exchanges, sdr_rates, currencies)
+
         if not prices:
             print("Updating failed!")
             return
 
-        # store new prices to self.moving_avg_prices
-        for price in prices:
-            avg_price = self.moving_avg_prices.get(price.currency, None)
-            if avg_price:
-                avg_price.append(price.raw_price)
-            else:
-                self.moving_avg_prices[price.currency] = MovingAvgPrice(price.currency, [price.raw_price])
-                
+        # # store new prices to self.moving_avg_prices
+        # for price in prices:
+        #     avg_price = self.moving_avg_prices.get(price.currency, None)
+        #     if avg_price:
+        #         avg_price.append(price.raw_price)
+        #     else:
+        #         self.moving_avg_prices[price.currency] = MovingAvgPrice(price.currency, [price.raw_price])
 
-        sdr_price: float
-        updated_prices: List[Price] = []
-        # calc. dispersion
-        for currency, avg_price in self.moving_avg_prices.items():
-            updated_prices.append(Price(avg_price.currency, avg_price.get_price()))
+        # sdr_price: float
+        # updated_prices: List[Price] = []
 
-            if avg_price.currency == "SDR":
-                sdr_price = updated_prices[-1].raw_price
+        # # calc. dispersion
+        # for avg_price in self.moving_avg_prices.values():
+        #     updated_prices.append(Price(avg_price.currency, avg_price.get_price()))
 
-        for price in updated_prices:
-            if price.currency == "SDR":
-                continue
+        #     if avg_price.currency == "SDR":
+        #         sdr_price = updated_prices[-1].raw_price
 
-            sdr_rate = sdr_rates.get(price.currency, 0)
-            if sdr_rate:
-                price.dispersion = (sdr_price - (price.raw_price * sdr_rate)) / sdr_price
+        # for price in updated_prices:
+        #     if price.currency == "SDR":
+        #         continue
+
+        #     sdr_rate = sdr_rates.get(price.currency, 0)
+        #     if sdr_rate:
+        #         price.dispersion = (sdr_price - (price.raw_price * sdr_rate)) / sdr_price
         
         self.data = {
-            'prices': updated_prices,
+            'prices': prices,
             'created_at': datetime.datetime.utcnow().replace(tzinfo=pytz.utc).isoformat()
         }
 

@@ -20,13 +20,13 @@
     }
   },
   "UPDATER": {
-    "PERIOD": 10,
+    "PERIOD": 30,
+    "MOVING_AVG_SPAN": 1800000,
     "CURRENCIES": [
       "USD",
       "KRW"
     ],
-    "DENOM": "LUNA",
-    "MOVING_AVG_PERIOD_NUM": 15
+    "DENOM": "LUNA"
   },
   "API_KEYS": {
     "CURRENCYLAYER": "",

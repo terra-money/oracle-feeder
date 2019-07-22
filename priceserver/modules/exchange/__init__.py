@@ -23,7 +23,7 @@ class Price:
 
 
 class PriceEncoder(json.JSONEncoder):
-    def default(self, obj):
+    def default(self, obj): # pylint: disable=E0202
         if isinstance(obj, Price):
             return obj.__json__()
 

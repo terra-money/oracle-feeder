@@ -181,8 +181,8 @@ async function getPrices(sources: [string]): Promise<{ currency: string; price: 
         return false;
       }
 
-      // Ignore prices more than 30 seconds ago
-      if (Date.now() - new Date(data.created_at).getTime() > 30 * 1000) {
+      // Ignore prices older than 60 seconds ago
+      if (Date.now() - new Date(data.created_at).getTime() > 60 * 1000) {
         console.info('price is too old');
         return false;
       }
