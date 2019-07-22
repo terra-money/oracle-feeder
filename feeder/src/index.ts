@@ -126,16 +126,12 @@ async function updateKey(args): Promise<void> {
 
 async function queryAccount({ lcdAddress, voter }) {
   const url = util.format(lcdAddress + ENDPOINT_QUERY_ACCOUNT, voter.terraAddress);
-  console.info(`querying: ${url}`);
+  const res = await ax.get(url);
 
-  const res = await ax.get(url).catch(e => {
-    console.error(`Failed to bringing account number and sequence: ${e.toString()}`);
-    return;
-  });
+  const { account_number, sequence } = res.data.value;
 
-  if (!res || res.status !== 200) {
-    if (res) console.error(`Failed to bringing account number and sequence: ${res.statusText}`);
-    return;
+  if (typeof account_number !== 'string' || typeof sequence !== 'string') {
+    throw new Error('Failed to fetch account number and sequence');
   }
 
   return res.data.value;
@@ -175,26 +171,31 @@ async function broadcast({ lcdAddress, account, broadcastReq }) {
   return data;
 }
 
-async function getPrice(sources: [string]): Promise<{}> {
+async function getPrices(sources: [string]): Promise<{ currency: string; price: string }[]> {
   console.info(`getting price data from`, sources);
 
-  const total = {};
-  const results = await Bluebird.some(sources.map(s => ax.get(s)), 1);
-
-  if (results.length > 0) {
-    const res = results[0];
-    const prices = res.data.prices;
-
-    prices.forEach((price): void => {
-      if (typeof total[price.currency] !== 'undefined') {
-        total[price.currency].push(price.price);
-      } else {
-        total[price.currency] = [price.price];
+  const results = await Bluebird.some(sources.map(s => ax.get(s)), 1).then(results =>
+    results.filter(({ data }) => {
+      if (typeof data.created_at !== 'string' || !Array.isArray(data.prices)) {
+        console.error('invalid price response');
+        return false;
       }
-    });
+
+      // Ignore prices more than 30 seconds ago
+      if (Date.now() - new Date(data.created_at).getTime() > 30 * 1000) {
+        console.info('price is too old');
+        return false;
+      }
+
+      return true;
+    })
+  );
+
+  if (!results.length) {
+    throw new Error('could not fetch any price');
   }
 
-  return total;
+  return results[0].data.prices;
 }
 
 async function vote(args): Promise<void> {
@@ -223,11 +224,7 @@ async function vote(args): Promise<void> {
     voter = keystore.getKey(args.keystore, password);
   }
 
-  const [oracleParams, account] = await Promise.all([
-    queryOracleParams({ lcdAddress }),
-    queryAccount({ lcdAddress, voter })
-  ]);
-
+  const oracleParams = await queryOracleParams({ lcdAddress });
   const oracleVotePeriod = parseInt(oracleParams.vote_period, 10);
 
   console.info(`Oracle Vote Period: ${oracleVotePeriod}`);
@@ -246,18 +243,25 @@ async function vote(args): Promise<void> {
       const votePeriod = Math.floor(currentBlockHeight / oracleVotePeriod);
       const indexInVotePeriod = currentBlockHeight % oracleVotePeriod;
 
-      if (indexInVotePeriod >= oracleVotePeriod - 3 || (prevotePeriod && prevotePeriod === votePeriod)) {
+      // skip(wait) until period is about to end
+      if (indexInVotePeriod < oracleVotePeriod - 3 || (prevotePeriod && prevotePeriod === votePeriod)) {
         throw 'skip';
       }
 
       const voteMsgs = [];
       const prevoteMsgs = [];
-      const prices = await getPrice(source);
-      const account = await queryAccount({ lcdAddress, voter });
+      const prices = await getPrices(source).catch(err => {
+        console.error(err.message);
+        throw 'skip';
+      });
+      const account = await queryAccount({ lcdAddress, voter }).catch(err => {
+        console.error(err.message);
+        throw 'skip';
+      });
 
       if (prevotePeriod && votePeriod - prevotePeriod === 1) {
         // Vote
-        Object.keys(prices).forEach(currency => {
+        prices.forEach(({ currency }) => {
           if (denomArray.indexOf(currency.toLowerCase()) === -1) {
             return;
           }
@@ -269,13 +273,7 @@ async function vote(args): Promise<void> {
 
           valAddrs.forEach(valAddr => {
             voteMsgs.push(
-              msg.generateVoteMsg(
-                prevotePrices[currency].toString(),
-                prevoteSalts[currency],
-                denom,
-                voter.terraAddress,
-                valAddr
-              )
+              msg.generateVoteMsg(prevotePrices[currency], prevoteSalts[currency], denom, voter.terraAddress, valAddr)
             );
           });
         });
@@ -284,7 +282,7 @@ async function vote(args): Promise<void> {
       const priceUpdateMap = {};
       const priceUpdateSaltMap = {};
       // Prevote
-      Object.keys(prices).forEach(currency => {
+      prices.forEach(({ currency, price }) => {
         if (denomArray.indexOf(currency.toLowerCase()) === -1) {
           return;
         }
@@ -296,28 +294,28 @@ async function vote(args): Promise<void> {
         const valAddrs = args.validator || [voter.terraValAddress];
         const denom = `u${currency.toLowerCase()}`;
 
-        console.info(`prevote! ${denom} ${prices[currency]} ${valAddrs}`);
+        console.info(`prevote! ${denom} ${price} ${valAddrs}`);
 
         valAddrs.forEach(valAddr => {
-          const hash = msg.generateVoteHash(priceUpdateSaltMap[currency], prices[currency].toString(), denom, valAddr);
+          const hash = msg.generateVoteHash(priceUpdateSaltMap[currency], price, denom, valAddr);
 
           prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voter.terraAddress, valAddr));
         });
 
-        priceUpdateMap[currency] = prices[currency];
+        priceUpdateMap[currency] = price;
       });
 
       const msgs = [...voteMsgs, ...prevoteMsgs];
-      if (msgs.length > 0) {
+
+      if (msgs.length) {
         const gas = 50000 + msgs.length * 7500;
-        const fees = { amount: [{ amount: (gas * 0.015).toString(), denom: `ukrw` }], gas: gas.toString() };
+        const fees = { amount: [{ amount: Math.ceil(gas * 0.015).toString(), denom: `ukrw` }], gas: gas.toString() };
         const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
           chain_id: args.chainID,
           account_number: account.account_number,
           sequence: account.sequence
         });
-
         const signedTx = wallet.createSignedTx(tx, signature);
         const broadcastReq = wallet.createBroadcastBody(signedTx, `sync`);
 
