@@ -5,7 +5,6 @@ import axios from 'axios';
 import * as util from 'util';
 import * as promptly from 'promptly';
 import { ArgumentParser } from 'argparse';
-import delay from 'delay';
 import * as CryptoJS from 'crypto-js';
 
 import * as wallet from './wallet';

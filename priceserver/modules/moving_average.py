@@ -9,4 +9,7 @@ class MovingAverage:
         self.prices.append(price)
 
     def get_price(self) -> float:
+        if len(self.prices) == 0:
+            raise ValueError
+
         return statistics.mean(self.prices)
