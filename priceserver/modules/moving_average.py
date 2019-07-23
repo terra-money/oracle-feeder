@@ -3,7 +3,10 @@ import statistics
 from typing import Dict, List, Union
 
 class MovingAverage:
-    prices: List[float] = []
+    prices: List[float]
+
+    def __init__(self):
+        self.prices = []
 
     def append(self, price: float):
         self.prices.append(price)
