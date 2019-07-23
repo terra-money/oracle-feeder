@@ -98,6 +98,16 @@ def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, curren
         if sdr_rate:
             prices.append(Price(currency, (sdr_price / sdr_rate)))
 
+    # dispersion calculation
+    for price in prices:
+        if price.currency == 'SDR':
+            continue
+
+        sdr_rate = sdr_rates.get(price.currency, 0)
+        if sdr_rate:
+            price.dispersion = (sdr_price - (price.raw_price * sdr_rate)) / sdr_price
+    
+
     return prices
 
 
