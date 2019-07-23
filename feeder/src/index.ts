@@ -243,7 +243,7 @@ async function vote(args): Promise<void> {
       const indexInVotePeriod = currentBlockHeight % oracleVotePeriod;
 
       // skip(wait) until period is about to end
-      if (indexInVotePeriod < oracleVotePeriod - 3 || (prevotePeriod && prevotePeriod === votePeriod)) {
+      if (indexInVotePeriod < oracleVotePeriod - 5 || (prevotePeriod && prevotePeriod === votePeriod)) {
         throw 'skip';
       }
 
