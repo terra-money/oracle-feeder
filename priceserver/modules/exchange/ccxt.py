@@ -162,11 +162,14 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
         else:
             unfetched_currencies.append(currency)
 
-            # calculate LUNA/SDR price
-
+    # calculate LUNA/SDR price
     sdr_price: float = 0
+
     if sdr_prices:
-        sdr_price = weighted_median(sdr_prices, weights=sdr_weights)
+        if len(sdr_weights) == 0:
+            sdr_price = sdr_prices[0]
+        else:
+            sdr_price = weighted_median(sdr_prices, weights=sdr_weights)
         prices.append(Price("SDR", sdr_price, dispersion=0))
 
     # result logging
