@@ -127,18 +127,22 @@ async function queryAccount({ lcdAddress, voter }) {
   const url = util.format(lcdAddress + ENDPOINT_QUERY_ACCOUNT, voter.terraAddress);
   const res = await ax.get(url);
 
-  const { account_number, sequence } = res.data.value;
+  if (!res.data.result || !res.data.result.value) {
+    throw new Error('Failed to fetch account');
+  }
+
+  const { account_number, sequence } = res.data.result.value;
 
   if (typeof account_number !== 'string' || typeof sequence !== 'string') {
     throw new Error('Failed to fetch account number and sequence');
   }
 
-  return res.data.value;
+  return res.data.result.value;
 }
 
 async function queryOracleParams({ lcdAddress }) {
-  const { data } = await ax.get(`${lcdAddress}/oracle/params`);
-  return data;
+  const { data } = await ax.get(`${lcdAddress}/oracle/parameters`);
+  return data.result;
 }
 
 async function queryLatestBlock({ lcdAddress }) {
@@ -307,7 +311,7 @@ async function vote(args): Promise<void> {
       const msgs = [...voteMsgs, ...prevoteMsgs];
 
       if (msgs.length) {
-        const gas = 50000 + msgs.length * 7500;
+        const gas = 50000 + msgs.length * 10000;
         const fees = { amount: [{ amount: Math.ceil(gas * 0.015).toString(), denom: `ukrw` }], gas: gas.toString() };
         const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
         const signature = await wallet.sign(ledgerApp, voter, tx, {
