@@ -37,7 +37,7 @@ export function generateStdTx(msgs: object[], fee: object, memo: string) {
 
 export function generatePrevoteMsg(hash: string, denom: string, feeder: string, validator: string) {
   return {
-    type: 'oracle/MsgPricePrevote',
+    type: 'oracle/MsgExchangeRatePrevote',
     value: {
       hash,
       denom,
@@ -49,9 +49,9 @@ export function generatePrevoteMsg(hash: string, denom: string, feeder: string, 
 
 export function generateVoteMsg(price: string, salt: string, denom: string, feeder: string, validator: string) {
   return {
-    type: 'oracle/MsgPriceVote',
+    type: 'oracle/MsgExchangeRateVote',
     value: {
-      price,
+      exchange_rate: price,
       salt,
       denom,
       feeder,

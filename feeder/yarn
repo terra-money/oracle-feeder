@@ -1,0 +1,1 @@
+12345678 start vote --source http://127.0.0.1:7658/last --lcd http://127.0.0.1:1317 --chain-id test --denoms krw,usd,sdr
