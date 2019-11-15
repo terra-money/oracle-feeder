@@ -27,7 +27,7 @@ class Updater:
 
     def __init__(self):
         """ initial update """
-        from_exchanges = EXCHANGE_WHITELIST or ccxt.exchanges
+        from_exchanges = EXCHANGE_WHITELIST # or ccxt.exchanges
         self.update_exchange(from_exchanges)
         self.periodic_task()
 
@@ -64,32 +64,6 @@ class Updater:
         if not prices:
             print("Updating failed!")
             return
-
-        # # store new prices to self.moving_avg_prices
-        # for price in prices:
-        #     avg_price = self.moving_avg_prices.get(price.currency, None)
-        #     if avg_price:
-        #         avg_price.append(price.raw_price)
-        #     else:
-        #         self.moving_avg_prices[price.currency] = MovingAvgPrice(price.currency, [price.raw_price])
-
-        # sdr_price: float
-        # updated_prices: List[Price] = []
-
-        # # calc. dispersion
-        # for avg_price in self.moving_avg_prices.values():
-        #     updated_prices.append(Price(avg_price.currency, avg_price.get_price()))
-
-        #     if avg_price.currency == "SDR":
-        #         sdr_price = updated_prices[-1].raw_price
-
-        # for price in updated_prices:
-        #     if price.currency == "SDR":
-        #         continue
-
-        #     sdr_rate = sdr_rates.get(price.currency, 0)
-        #     if sdr_rate:
-        #         price.dispersion = (sdr_price - (price.raw_price * sdr_rate)) / sdr_price
         
         self.data = {
             'prices': prices,
@@ -98,6 +72,6 @@ class Updater:
 
         # printing logs
         for price in self.data['prices']:
-            print(f"{price.currency} : {price.price} ({price.dispersion:.4f})")
+            print(f"{price.currency} : {price.price}")
 
         print(f"Updated! at {self.data['created_at']}")

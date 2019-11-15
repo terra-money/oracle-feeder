@@ -87,49 +87,41 @@ def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, curren
     :param currencies: currencies ticker names to get
     :return: price list dictionary
     """
-    prices, unfetched_currencies, sdr_price = fetch_all_exchanges(exchanges, sdr_rates, currencies)
+    sdr_price = fetch_all_exchanges(exchanges, sdr_rates, currencies)
 
-    if not prices or not sdr_price:  # in case of no data fetched
+    if not sdr_price:  # in case of no data fetched
         return []
 
-    # fill unfetched prices in
-    for currency in unfetched_currencies:
+    # fill prices
+    prices: List[float] = []
+    for currency in currencies:
+        if currency == 'SDR':
+            continue
+
         sdr_rate = sdr_rates.get(currency, 0)
         if sdr_rate:
             prices.append(Price(currency, (sdr_price / sdr_rate)))
-
-    # dispersion calculation
-    for price in prices:
-        if price.currency == 'SDR':
-            continue
-
-        sdr_rate = sdr_rates.get(price.currency, 0)
-        if sdr_rate:
-            price.dispersion = (sdr_price - (price.raw_price * sdr_rate)) / sdr_price
 
     return prices
 
 
 def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Dict[str, float],
                         currencies: List[str]) -> (List[float]):
-    prices: List[Price] = []
     sdr_prices: List[float] = []
-
-    unfetched_currencies: List[str] = []
 
     success_count = 0
     failed_exchanges: List[str] = []
 
     currency_tqdm = tqdm.tqdm(currencies, "Fetching", disable=None)
     for currency in currency_tqdm:
+        sdr_rate = sdr_rates.get(currency, 0)
+        if not sdr_rate:
+            continue
+
         currency_tqdm.set_description_str(f"Currency '{currency}'")
 
         symbol = f"{DENOM}/{currency}"
-        values: List[float] = []
         weights: List[float] = []
-        sdr_weights: List[float] = []
-
-        sdr_rate = sdr_rates.get(currency, 0)
 
         exchange_tqdm = tqdm.tqdm(exchanges[symbol], disable=None)
         for exchange in exchange_tqdm:
@@ -138,42 +130,28 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
             # noinspection PyBroadException
             try:
                 last = float(exchange.fetch_ticker(symbol)['last'])
-                values.append(last)  # LUNA/CURRENCY <=> CURRENCY/LUNA
-                
+
+                sdr_prices.append(last * sdr_rate)
                 if exchange.id in WEIGHT:
                     weights.append(WEIGHT[exchange.id])
-                else:
-                    weights.append(1)
-
-                if sdr_rate:
-                    sdr_prices.append(last * sdr_rate)
-                    if exchange.id in WEIGHT:
-                        sdr_weights.append(WEIGHT[exchange.id])
-                    else:
-                        sdr_weights.append(1)
 
                 success_count += 1
 
             except Exception:
                 failed_exchanges.append("%s(%s)" % (exchange.id, symbol))
 
-        if values:
-            prices.append(Price(currency, weighted_median(values, weights=weights)))
-        else:
-            unfetched_currencies.append(currency)
-
     # calculate LUNA/SDR price
     sdr_price: float = 0
 
-    if sdr_prices:
-        if len(sdr_weights) == 0:
-            sdr_price = sdr_prices[0]
-        else:
-            sdr_price = weighted_median(sdr_prices, weights=sdr_weights)
-        prices.append(Price("SDR", sdr_price, dispersion=0))
+    if len(sdr_prices) == 0:
+        sdr_price = 0
+    elif len(weights) == 0:
+        sdr_price = sdr_prices[0]
+    else:
+        sdr_price = weighted_median(sdr_prices, weights=weights)
 
     # result logging
     print("")
     print(f"Success: {success_count}, Fail: {len(failed_exchanges)} [{failed_exchanges}]")
 
-    return prices, unfetched_currencies, sdr_price
+    return sdr_price

@@ -32,7 +32,6 @@ class coinone:
 
         for row in result['data']:
             if (time() * 1000 - int(row['DT'])) < MOVING_AVG_SPAN:
-                print(row)
                 ma.append((float(row['Low']) + float(row['High'])) / 2)
 
         return {
