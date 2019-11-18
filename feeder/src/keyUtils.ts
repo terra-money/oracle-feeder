@@ -7,7 +7,7 @@ import * as bech32 from 'bech32';
 
 import * as secp256k1 from 'secp256k1';
 
-const hdPathAtom = `m/44'/118'/0'/0/0`; // key controlling ATOM allocation
+const hdPathAtom = `m/44'/330'/0'/0/0`; // key controlling ATOM allocation
 
 function bech32ify(address, prefix) {
   const words = bech32.toWords(address);

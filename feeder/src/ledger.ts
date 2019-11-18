@@ -2,7 +2,7 @@ import * as ledger from 'ledger-cosmos-js';
 import * as keyUtils from './keyUtils';
 
 const LONG_TIMEOUT = 45000;
-const HD_PATH = [44, 118, 0, 0, 0];
+const HD_PATH = [44, 330, 0, 0, 0];
 
 function getLedgerNode() {
   return ledger.comm_node.create_async(LONG_TIMEOUT, false);

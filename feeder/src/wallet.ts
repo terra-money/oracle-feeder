@@ -1,7 +1,7 @@
 import * as sha256 from 'crypto-js/sha256';
 import * as secp256k1 from 'secp256k1';
 
-const HD_PATH = [44, 118, 0, 0, 0];
+const HD_PATH = [44, 330, 0, 0, 0];
 
 /* eslint-enable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
