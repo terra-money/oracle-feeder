@@ -96,6 +96,7 @@ def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, curren
     prices: List[float] = []
     for currency in currencies:
         if currency == 'SDR':
+            prices.append(Price(currency, sdr_price))
             continue
 
         sdr_rate = sdr_rates.get(currency, 0)
