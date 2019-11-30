@@ -1,6 +1,6 @@
 # Oracle Feeder
 
-## Install depencancies
+## Install dependencies
 ```
 $ yarn
 ```
@@ -17,6 +17,6 @@ saved!
 
 ## Voting
 ```
-$ yarn start vote --source "http://price.terra.money/latest" --lcd <lcd url> --chain-id columbus-2 --denoms krw,usd,sdr
+$ yarn start vote --source "http://price.terra.money/latest" --lcd <lcd url> --chain-id columbus-3 --denoms krw,usd,sdr
 Enter a passphrase: *******
 ```
