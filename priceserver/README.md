@@ -38,7 +38,6 @@ $ cp setting_sample.json setting.json
   },
   "API_KEYS": {
     "CURRENCYLAYER": "",
-    "OANDA": ""
   }
 }
 ```
