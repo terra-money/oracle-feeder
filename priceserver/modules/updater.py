@@ -23,12 +23,10 @@ class Updater:
     exchanges = Dict[str, List[ccxt.Exchange]]
     exchange_updated: datetime.datetime
 
-    #moving_avg_prices: Dict[str, MovingAvgPrice] = {}
-
     def __init__(self):
         """ initial update """
-        from_exchanges = EXCHANGE_WHITELIST # or ccxt.exchanges
-        self.update_exchange(from_exchanges)
+        exchanges = EXCHANGE_WHITELIST # or ccxt.exchanges
+        self.update_exchange(exchanges)
         self.periodic_task()
 
     def get_last_price(self):
@@ -38,17 +36,18 @@ class Updater:
         self.update_data()
         threading.Timer(UPDATING_PERIOD, self.periodic_task).start()
 
-    def update_exchange(self, from_exchanges):
+    def update_exchange(self, exchanges):
         self.exchange_updated = datetime.datetime.utcnow()
 
-        from_exchanges = list(set(from_exchanges))
-        self.exchanges = filter_exchanges(TARGET_CURRENCIES, from_exchanges)
+        exchanges = list(set(exchanges))
 
-        for symbol, exchange in self.exchanges.items():
+        self.exchange_map = filter_exchanges(TARGET_CURRENCIES, exchanges)
+
+        for symbol, exchange in self.exchange_map.items():
             print(f"{symbol} : {len(exchange)} exchanges [{[e.id for e in exchange]}]")
 
     def update_data(self):
-        print("\n# Updating...")
+        print("\n\n#############################")
 
         # periodic exchange filtering
         if EXCHANGE_REFRESH and datetime.datetime.utcnow() - self.exchange_updated >= datetime.timedelta(seconds=EXCHANGE_REFRESH):
@@ -56,10 +55,10 @@ class Updater:
 
         # fetching exchange rates
         currencies = settings['UPDATER']['CURRENCIES']
-        sdr_rates = sdr.get_exchange_rates(currencies)
+        sdr_rates = sdr.get_sdr_rates(currencies)
 
         # fetching price data
-        prices = get_prices_data(self.exchanges, sdr_rates, currencies)
+        prices = get_prices_data(self.exchange_map, sdr_rates, currencies)
 
         if not prices:
             print("Updating failed!")
@@ -71,7 +70,8 @@ class Updater:
         }
 
         # printing logs
+        print("\n\n###### UPDATED PRICES #######")
         for price in self.data['prices']:
             print(f"{price.currency} : {price.price}")
 
-        print(f"Updated! at {self.data['created_at']}")
+        print(f"Updated at {self.data['created_at']}")

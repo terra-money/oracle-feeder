@@ -28,10 +28,20 @@
     ],
     "DENOM": "LUNA"
   },
-  "API_KEYS": {
-    "CURRENCYLAYER": "",
-    "ONEFORGE": "",
-    "FIXER": "",
-    "OANDA": ""
-  }
+  "FOREX": [
+    {
+      "NAME": "FIXER",
+      "INTERVAL": 600,
+      "API_KEY": ""
+    },
+    {
+      "NAME": "CURRENCYLAYER",
+      "INTERVAL": 600,
+      "API_KEY": ""
+    },
+    {
+      "NAME": "IMF",
+      "INTERVAL": 386400
+    }
+  ]
 }

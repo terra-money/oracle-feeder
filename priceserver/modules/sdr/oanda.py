@@ -8,7 +8,6 @@ from modules.sdr.utils import calc_sdr_rate
 from modules.settings import settings
 
 SDR_BUDGET = settings['SDR_BUDGET']
-API_KEY = settings['API_KEYS']['OANDA']
 ENTRY_POINT = "https://web-services.oanda.com/rates/api/v2/"
 
 """
@@ -43,22 +42,22 @@ VNCB – The State Bank of Vietnam rates
 """
 
 
-def get_sdr_rates(currency_list: List[str]) -> Dict[str, float]:
+def get_sdr_rates(currency_list: List[str], api_key: str) -> Dict[str, float]:
 
-    quotes = get_spot(currency_list)
+    quotes = get_spot(currency_list, api_key)
     currency_rates = refine_rates(quotes)
     sdr_rates = calc_sdr_rates(currency_rates)
 
     return sdr_rates
 
 
-def get_spot(currency_list: List[str]):
+def get_spot(currency_list: List[str], api_key: str):
     currency_set = set(list(SDR_BUDGET.keys()) + currency_list)
 
     params = {
         "data_set": "OANDA",
         "base": currency_set,
-        "api_key": API_KEY,
+        "api_key": api_key,
         "quote": currency_set
     }
 

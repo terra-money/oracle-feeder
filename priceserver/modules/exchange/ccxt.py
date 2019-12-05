@@ -2,7 +2,6 @@ from weightedstats import weighted_median
 from typing import Dict, List
 
 import ccxt
-import tqdm
 
 from modules.exchange import Price
 from modules.settings import settings
@@ -30,24 +29,23 @@ setattr(ccxt, "coinone", coinone)
 
 
 # noinspection PyBroadException
-def filter_exchanges(currencies, from_exchanges) -> Dict[str, List[ccxt.Exchange]]:
+def filter_exchanges(currencies, exchanges) -> Dict[str, List[ccxt.Exchange]]:
     """
     filtering exchanges, has fetch_ticker for luna/currency
     :return:
     filtered exchanges
     """
 
-    exchanges: Dict[str, List[ccxt.Exchange]] = {}
+    exchange_map: Dict[str, List[ccxt.Exchange]] = {}
 
     for currency in currencies:
         symbol = f"{DENOM}/{currency}"
-        exchanges[symbol] = []
+        exchange_map[symbol] = []
 
-    print("Checking available exchanges --")
+    print("#### CHECKING EXCHANGES ####")
 
-    exchange_tqdm = tqdm.tqdm(from_exchanges, "Checking available exchanges", disable=None)
-    for exchange_id in exchange_tqdm:
-        exchange_tqdm.set_description_str(f"Checking '{exchange_id}' ")
+    for exchange_id in exchanges:
+        print(f"- Checking '{exchange_id}' ")
 
         if exchange_id in EXCHANGE_BLACKLIST:
             continue
@@ -59,24 +57,22 @@ def filter_exchanges(currencies, from_exchanges) -> Dict[str, List[ccxt.Exchange
                 markets = list(markets.values())
 
             if len(markets) == 0 or type(markets) != list or type(markets[0]) != dict:
-                print(markets)
-                print("Internal Error: Markets type mismatched on ", exchange_id)
+                print(f"Internal Error: Markets '{markets}' type mismatched on '{exchange_id}'")
                 raise TypeError
 
             for market in markets:
                 if 'symbol' not in market:
-                    print(market)
-                    print("Internal Error: Market type mismatched on ", exchange_id)
+                    print(f"Internal Error: Market '{market}' type mismatched on '{exchange_id}''")
                     raise TypeError
 
                 symbol = market['symbol']
-                if symbol in exchanges and hasattr(exchange, 'fetch_ticker'):
-                    exchanges[symbol].append(exchange)
+                if symbol in exchange_map and hasattr(exchange, 'fetch_ticker'):
+                    exchange_map[symbol].append(exchange)
 
         except Exception:
             pass
 
-    return exchanges
+    return exchange_map
 
 
 def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, currencies) -> List[Price]:
@@ -113,28 +109,31 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
     success_count = 0
     failed_exchanges: List[str] = []
 
-    currency_tqdm = tqdm.tqdm(currencies, "Fetching", disable=None)
-    for currency in currency_tqdm:
+    print("\n\n###### FETCHING PRICES ######")
+    for currency in currencies:
         sdr_rate = sdr_rates.get(currency, 0)
         if not sdr_rate:
             continue
 
-        currency_tqdm.set_description_str(f"Currency '{currency}'")
+        print(f"\n- Currency '{currency}'")
 
         symbol = f"{DENOM}/{currency}"
         weights: List[float] = []
 
-        exchange_tqdm = tqdm.tqdm(exchanges[symbol], disable=None)
-        for exchange in exchange_tqdm:
-            exchange_tqdm.set_description_str(f"Updating from '{exchange.id}'")
+        for exchange in exchanges[symbol]:
+            print(f"Updating from '{exchange.id}'")
 
             # noinspection PyBroadException
             try:
+                # Load latest price
                 last = float(exchange.fetch_ticker(symbol)['last'])
-
                 sdr_prices.append(last * sdr_rate)
+
+                # Set weight for the fetched price (default weight is 1)
                 if exchange.id in WEIGHT:
                     weights.append(WEIGHT[exchange.id])
+                else:
+                    weights.append(1)
 
                 success_count += 1
 
@@ -152,7 +151,6 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
         sdr_price = weighted_median(sdr_prices, weights=weights)
 
     # result logging
-    print("")
-    print(f"Success: {success_count}, Fail: {len(failed_exchanges)} [{failed_exchanges}]")
+    print(f"\nSuccess: {success_count}, Fail: {len(failed_exchanges)} [{failed_exchanges}]")
 
     return sdr_price

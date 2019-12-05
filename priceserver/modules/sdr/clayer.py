@@ -4,14 +4,11 @@ API client for currency layer
 import requests
 
 from typing import Dict, List
-from modules.settings import settings
 
-CL_ACCESS_KEY = settings['API_KEYS']['CURRENCYLAYER']
-CL_ENDPOINT = "https://apilayer.net/api/live"
+ENDPOINT = "https://apilayer.net/api/live"
 
-
-def get_sdr_rates(currencies) -> Dict[str, float]:
-    res = get_spot(currencies)
+def get_sdr_rates(currencies: List[str], api_key: str) -> Dict[str, float]:
+    res = get_spot(currencies, api_key)
 
     if not res["success"]:
         raise RuntimeError
@@ -21,8 +18,8 @@ def get_sdr_rates(currencies) -> Dict[str, float]:
     return rates
 
 
-def get_spot(currencies: List[str]) -> Dict[str, any]:
-    url = f"{CL_ENDPOINT}?access_key={CL_ACCESS_KEY}&source=XDR&currencies={','.join(currencies)}"
+def get_spot(currencies: List[str], api_key: str) -> Dict[str, any]:
+    url = f"{ENDPOINT}?access_key={api_key}&source=XDR&currencies={','.join(currencies)}"
     return requests.get(url).json()
 
 
