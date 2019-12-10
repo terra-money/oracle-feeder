@@ -233,7 +233,7 @@ function filterPrices({ oracleWhitelist, denomArray, prices }: FilterPricesArgs)
     }
 
     if (denomArray.indexOf(currency.toLowerCase()) === -1) {
-      obj[index] = { currency, price: '0.000000000000000000' };
+      obj[index] = { currency, price: '-1.000000000000000000' };
     }
   });
 }
@@ -259,7 +259,7 @@ function fillAbstainPrices({ oracleWhitelist, prices }: FillAbstainPricesArgs) {
       return true;
     });
 
-    if (!found) prices.push({ currency: denom.slice(1).toUpperCase(), price: '0.000000000000000000' });
+    if (!found) prices.push({ currency: denom.slice(1).toUpperCase(), price: '-1.000000000000000000' });
   });
 }
 
