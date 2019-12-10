@@ -62,6 +62,8 @@ export async function vote(args: VoteArgs): Promise<void> {
         throw 'skip';
       });
 
+      console.info(`voter account: ${account}`);
+
       // Make not intended denoms prices to zero (abstain)
       // Remove denoms not in
       filterPrices({
