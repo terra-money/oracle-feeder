@@ -344,7 +344,7 @@ interface BroadcastArgs {
 
 async function broadcastMsgs({ accountNubmer, chainID, lcdAddress, ledgerApp, msgs, sequence, voter }: BroadcastArgs) {
   const gas = 50000 + msgs.length * 10000;
-  const fees = { amount: [{ amount: Math.ceil(gas * 0.035).toString(), denom: `ukrw` }], gas: gas.toString() };
+  const fees = { amount: [{ amount: Math.ceil(gas * 0.025).toString(), denom: `ukrw` }], gas: gas.toString() };
   const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
   const signature = await wallet.sign(ledgerApp, voter, tx, {
     chain_id: chainID,
