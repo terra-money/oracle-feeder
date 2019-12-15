@@ -43,8 +43,10 @@ def get_sdr_rates(currencies):
             
         except Exception as e:
             # Delete failed exchange rate
-            del forex['SDR_RATES']
-            del forex['LAST_UPDATED_TIME']
+            if 'SDR_RATES' in forex:
+                del forex['SDR_RATES']
+            if 'LAST_UPDATED_TIME' in forex:
+                del forex['LAST_UPDATED_TIME']
 
             print(f"> Error on currency rate API {forex['NAME']}. Fallback :", e)
 
