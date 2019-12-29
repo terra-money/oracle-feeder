@@ -62,6 +62,8 @@ export async function vote(args: VoteArgs): Promise<void> {
         throw 'skip';
       });
 
+      console.info(`voter account: ${JSON.stringify(account)}`);
+
       // Make not intended denoms prices to zero (abstain)
       // Remove denoms not in
       filterPrices({
@@ -231,7 +233,7 @@ function filterPrices({ oracleWhitelist, denomArray, prices }: FilterPricesArgs)
     }
 
     if (denomArray.indexOf(currency.toLowerCase()) === -1) {
-      obj[index] = { currency, price: '0.000000000000000000' };
+      obj[index] = { currency, price: '-1.000000000000000000' };
     }
   });
 }
@@ -257,7 +259,7 @@ function fillAbstainPrices({ oracleWhitelist, prices }: FillAbstainPricesArgs) {
       return true;
     });
 
-    if (!found) prices.push({ currency: denom.slice(1).toUpperCase(), price: '0.000000000000000000' });
+    if (!found) prices.push({ currency: denom.slice(1).toUpperCase(), price: '-1.000000000000000000' });
   });
 }
 
@@ -342,7 +344,7 @@ interface BroadcastArgs {
 
 async function broadcastMsgs({ accountNubmer, chainID, lcdAddress, ledgerApp, msgs, sequence, voter }: BroadcastArgs) {
   const gas = 50000 + msgs.length * 10000;
-  const fees = { amount: [{ amount: Math.ceil(gas * 0.015).toString(), denom: `ukrw` }], gas: gas.toString() };
+  const fees = { amount: [{ amount: Math.ceil(gas * 0.025).toString(), denom: `ukrw` }], gas: gas.toString() };
   const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
   const signature = await wallet.sign(ledgerApp, voter, tx, {
     chain_id: chainID,
