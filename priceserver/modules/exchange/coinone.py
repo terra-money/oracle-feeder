@@ -4,7 +4,7 @@ from modules.settings import settings
 from modules.moving_average import MovingAverage
 from time import time
 
-MOVING_AVG_SPAN = settings['UPDATER'].get("MOVING_AVG_SPAN", 30 * 60 * 1000)
+MOVING_AVG_SPAN = settings['UPDATER'].get("MOVING_AVG_SPAN", 3 * 60 * 1000)
 COINONE_SERVER = "https://api.coinone.co.kr"
 
 class coinone:
@@ -33,6 +33,8 @@ class coinone:
         for row in result['data']:
             if (time() * 1000 - int(row['DT'])) < MOVING_AVG_SPAN:
                 ma.append((float(row['Low']) + float(row['High'])) / 2)
+
+        print("coinone:", ma.get_price())
 
         return {
             "last": ma.get_price()

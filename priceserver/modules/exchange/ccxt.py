@@ -7,6 +7,7 @@ from modules.exchange import Price
 from modules.settings import settings
 from .coinone import coinone
 from .gopax import gopax
+from .bithumb import bithumb
 
 EXCHANGE = settings.get('EXCHANGE', {
     "BLACKLIST": [],
@@ -24,9 +25,9 @@ DENOM = settings['UPDATER']['DENOM']
 setattr(ccxt, "gopax", gopax)
 ccxt.exchanges.append("gopax")
 
-# replace coinone exchange with custom lite implementation to support LUNA/KRW pair
+# replace coinone and bithumb exchange with custom lite implementation to support LUNA/KRW pair
 setattr(ccxt, "coinone", coinone)
-
+setattr(ccxt, "bithumb", bithumb)
 
 # noinspection PyBroadException
 def filter_exchanges(currencies, exchanges) -> Dict[str, List[ccxt.Exchange]]:
