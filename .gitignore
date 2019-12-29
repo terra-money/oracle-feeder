@@ -29,8 +29,3 @@ __pycache__/
 
 # log
 yarn-error.log
-
-# lock files
-Gopkg.lock
-yarn.lock
-package-lock.json
