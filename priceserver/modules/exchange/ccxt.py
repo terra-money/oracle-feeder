@@ -106,11 +106,13 @@ def get_prices_data(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates, curren
 def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Dict[str, float],
                         currencies: List[str]) -> (List[float]):
     sdr_prices: List[float] = []
+    weights: List[float] = []
 
     success_count = 0
     failed_exchanges: List[str] = []
 
     print("\n\n###### FETCHING PRICES ######")
+
     for currency in currencies:
         sdr_rate = sdr_rates.get(currency, 0)
         if not sdr_rate:
@@ -119,7 +121,6 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
         print(f"\n- Currency '{currency}'")
 
         symbol = f"{DENOM}/{currency}"
-        weights: List[float] = []
 
         for exchange in exchanges[symbol]:
             print(f"Updating from '{exchange.id}'")
