@@ -4,56 +4,57 @@ from modules.settings import settings
 from modules.moving_average import MovingAverage
 from time import time
 
-MOVING_AVG_SPAN = settings['UPDATER'].get("MOVING_AVG_SPAN", 3 * 60 * 1000)
-API_URL = "https://api.bithumb.com/public"
+MOVING_AVG_SPAN = settings['UPDATER'].get('MOVING_AVG_SPAN', 3 * 60 * 1000)
+API_URL = 'https://api.bithumb.com/public'
+
+data = {
+  'coinType': 'C0534',
+  'crncCd': 'C0100',
+  'tickType': '01M',
+  'csrf_xcoin_name': '0aa337c91ce1a67daac2bf0adb60d3d4'
+}
+
+cookies = {
+  'csrf_xcoin_name': '0aa337c91ce1a67daac2bf0adb60d3d4'
+}
+
+headers = {
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+  'x-requested-with': 'XMLHttpRequest'
+}
 
 class bithumb:
-    id = "bithumb"
+    id = 'bithumb'
 
-    def __init__(self):
-        self.ma = MovingAverage()
-        
     def fetch_markets(self):
-        pairs = requests.get(API_URL + "/ticker/all_krw").json()["data"]
+        pairs = requests.get(API_URL + '/ticker/all_krw').json()['data']
         markets = []
 
         for key, _ in pairs.items():
             if key.isupper():
                 markets.append({
-                    "id": key.lower(),
-                    "symbol": f"{key}/KRW",
-                    "base": key.lower(),
-                    "quote": "KRW"
+                    'id': key.lower(),
+                    'symbol': f'{key}/KRW',
+                    'base': key.lower(),
+                    'quote': 'KRW'
                 })
 
         return markets
 
     def fetch_ticker(self, symbol: str):
-        #denom = symbol.split("/")[0]
-        result = requests.get(API_URL + f"/transaction_history/{symbol}_krw?count=100").json()
-        last_min = 0
-        price = None
+        #denom = symbol.split('/')[0]
+        result = requests.post(F'https://www.bithumb.com/trade_history/chart_data?_={int(time() * 1000)}', headers=headers, cookies=cookies, data=data).json()
 
-        if len(self.ma.prices) != 0:
-            last_min = self.ma.times[-1]
+        ma = MovingAverage()
 
-        for row in result["data"]:
-            row_min = int(datetime.strptime(row["transaction_date"], "%Y-%m-%d %H:%M:%S").timestamp() / 60)
+        if result['error'] == '0000':
+            for row in result['data']:
+                # the order is [time, open, close, high, low]
+                if time() * 1000 - row[0] < MOVING_AVG_SPAN:
+                    ma.append((float(row[3]) + float(row[2])) / 2)
 
-            if row_min > last_min:
-                print("bithumb:", row["transaction_date"], row["price"])
-                price = float(row["price"])
-                self.ma.append(price, row_min)
-                last_min = row_min
-
-        # Append latest price if there was no transaction
-        if price is None:
-            self.ma.append(self.ma.prices[-1])
-
-        # if MOVING_AVG_SPAN is 1800000 (3 mins) and PERIOD is 30 secs, slice list size to 60
-        self.ma.slice(int((MOVING_AVG_SPAN / 60000) * (60 / settings['UPDATER'].get("PERIOD"))))
-        print("bithumb:", self.ma.get_price())
+        print('bithumb:', ma.get_price())
 
         return {
-            "last": self.ma.get_price()
+            'last': ma.get_price()
         }

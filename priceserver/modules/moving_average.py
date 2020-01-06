@@ -20,7 +20,7 @@ class MovingAverage:
             raise ValueError
 
         return statistics.mean(self.prices)
-   
+
     # slice list to {size}
     # i.e. [1,2,3,4,5] with size 3 becomes [3,4,5]
     def slice(self, size):
