@@ -46,15 +46,16 @@ class bithumb:
         result = requests.post(F'https://www.bithumb.com/trade_history/chart_data?_={int(time() * 1000)}', headers=headers, cookies=cookies, data=data).json()
 
         ma = MovingAverage()
+        volume = 0
 
         if result['error'] == '0000':
             for row in result['data']:
-                # the order is [time, open, close, high, low]
+                # the order is [time, open, close, high, low, volume]
                 if time() * 1000 - row[0] < MOVING_AVG_SPAN:
+                    volume += float(row[5])
                     ma.append((float(row[3]) + float(row[2])) / 2)
 
-        print('bithumb:', ma.get_price())
-
         return {
-            'last': ma.get_price()
+            'last': ma.get_price(),
+            'volume': volume
         }

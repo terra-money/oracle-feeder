@@ -29,13 +29,14 @@ class coinone:
         #return requests.get(COINONE_SERVER + f"/ticker/?currency={denom}").json()
         result = requests.get('https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinoneluna&type=1m').json()
         ma = MovingAverage()
+        volume = 0
 
         for row in result['data']:
             if (time() * 1000 - int(row['DT'])) < MOVING_AVG_SPAN:
+                volume += float(row['Volume'])
                 ma.append((float(row['Low']) + float(row['High'])) / 2)
 
-        print("coinone:", ma.get_price())
-
         return {
-            "last": ma.get_price()
+            "last": ma.get_price(),
+            "volume": volume
         }

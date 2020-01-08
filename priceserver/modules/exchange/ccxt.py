@@ -127,15 +127,13 @@ def fetch_all_exchanges(exchanges: Dict[str, List[ccxt.Exchange]], sdr_rates: Di
 
             # noinspection PyBroadException
             try:
-                # Load latest price
-                last = float(exchange.fetch_ticker(symbol)['last'])
-                sdr_prices.append(last * sdr_rate)
+                # query exchange
+                result = exchange.fetch_ticker(symbol)
+                print(f"{exchange.id} {result}")
 
-                # Set weight for the fetched price (default weight is 1)
-                if exchange.id in WEIGHT:
-                    weights.append(WEIGHT[exchange.id])
-                else:
-                    weights.append(1)
+                sdr_prices.append(result['last'] * sdr_rate)
+                # Set volume as weight
+                weights.append(result['volume'])
 
                 success_count += 1
 
