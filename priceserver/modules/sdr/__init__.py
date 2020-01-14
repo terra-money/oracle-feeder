@@ -5,7 +5,6 @@ from statistics import median
 
 KEY_MAP = {
     "CURRENCYLAYER": "clayer",
-    "OANDA": "oanda",
     "FIXER": "fixer",
     "IMF": "imf"
 }

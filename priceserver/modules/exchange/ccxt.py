@@ -12,12 +12,10 @@ from .bithumb import bithumb
 EXCHANGE = settings.get('EXCHANGE', {
     "BLACKLIST": [],
     "WHITELIST": [],
-    "WEIGHT": {},
 })
 
 EXCHANGE_BLACKLIST = EXCHANGE.get('BLACKLIST', [])
 EXCHANGE_WHITELIST = EXCHANGE.get('WHITELIST', None)
-WEIGHT = EXCHANGE.get('WEIGHT', {})
 
 DENOM = settings['UPDATER']['DENOM']
 

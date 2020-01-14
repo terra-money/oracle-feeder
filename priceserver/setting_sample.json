@@ -1,11 +1,4 @@
 {
-  "SDR_BUDGET": {
-    "USD": 0.58252,
-    "EUR": 0.38671,
-    "CNY": 1.0174,
-    "JPY": 11.900,
-    "GBP": 0.085946
-  },
   "EXCHANGE": {
     "WHITELIST": [
       "bitbay", "bitlish", "bitmex", "bitsane", "cex", "coinbase",  "coinmarketcap", "dsx", "gdax", "liquid","okex",
@@ -13,18 +6,16 @@
     ],
     "BLACKLIST": [
       "anxpro", "coingi", "jubi", "coinegg", "theocean", "bitstamp1", "mixcoins"
-    ],
-    "WEIGHT": {
-      "coinone": 4,
-      "gopax": 1
-    }
+    ]
   },
   "UPDATER": {
     "PERIOD": 30,
     "MOVING_AVG_SPAN": 1800000,
     "CURRENCIES": [
       "USD",
-      "KRW"
+      "KRW",
+      "SDR",
+      "MNT"
     ],
     "DENOM": "LUNA"
   },
