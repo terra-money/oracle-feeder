@@ -11,11 +11,11 @@ data = {
   'coinType': 'C0534',
   'crncCd': 'C0100',
   'tickType': '01M',
-  'csrf_xcoin_name': '0aa337c91ce1a67daac2bf0adb60d3d4'
+  'csrf_xcoin_name': 'd2e131dccab300919c9fafcec567bb51'
 }
 
 cookies = {
-  'csrf_xcoin_name': '0aa337c91ce1a67daac2bf0adb60d3d4'
+  'csrf_xcoin_name': 'd2e131dccab300919c9fafcec567bb51'
 }
 
 headers = {
