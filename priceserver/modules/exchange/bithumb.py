@@ -53,7 +53,7 @@ class bithumb:
                 # the order is [time, open, close, high, low, volume]
                 if time() * 1000 - row[0] < MOVING_AVG_SPAN:
                     volume += float(row[5])
-                    ma.append((float(row[3]) + float(row[2])) / 2)
+                    ma.append((float(row[3]) + float(row[4])) / 2)
 
         return {
             'last': ma.get_price(),
