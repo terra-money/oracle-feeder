@@ -1,0 +1,42 @@
+{
+  "name": "terra-oracle-priceserver-ts",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node src/server.ts",
+    "lint": "tslint -p . -c tslint.json"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.5",
+    "config": "^3.3.0",
+    "got": "^10.6.0",
+    "koa": "^2.11.0",
+    "koa-router": "^8.0.8",
+    "moving-average": "^1.0.0",
+    "stats-median": "^1.0.1",
+    "ts-node": "^8.0.3",
+    "typescript": "^3.4.3",
+    "weighted-median": "^1.0.1"
+  },
+  "devDependencies": {
+    "husky": "^3",
+    "lint-staged": "^9",
+    "prettier": "^1.18.0",
+    "tslint": "^5.17.0",
+    "tslint-config-airbnb": "^5.11.1",
+    "tslint-config-prettier": "^1.18.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "./src/**/*.ts": [
+      "prettier --write",
+      "tslint -p .",
+      "git add"
+    ]
+  }
+}
