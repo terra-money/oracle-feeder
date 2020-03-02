@@ -36,4 +36,4 @@ typings/
 .env
 
 # config
-config/default
+config/default.js
