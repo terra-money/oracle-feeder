@@ -2,7 +2,7 @@ import * as Koa from 'koa';
 import * as Router from 'koa-router';
 import * as http from 'http';
 import * as config from 'config';
-import { initialize as initializeProviders } from './provider';
+import { initialize as initializeProviders, getLunaPrices } from './provider';
 
 async function createServer() {
   const app = new Koa();
@@ -11,6 +11,19 @@ async function createServer() {
   router.get('/health', ctx => {
     ctx.status = 200;
     ctx.body = 'OK';
+  });
+
+  router.get('/latest', ctx => {
+    const lunaPrices = getLunaPrices();
+    ctx.body = {
+      created_at: new Date().toISOString(),
+      prices: Object.keys(lunaPrices).map(quote => ({
+        currency: quote,
+        price: lunaPrices[quote].toFixed(18)
+      }))
+    };
+
+    ctx.status = 200;
   });
 
   app

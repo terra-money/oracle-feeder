@@ -10,6 +10,7 @@
   "dependencies": {
     "bluebird": "^3.5.5",
     "config": "^3.3.0",
+    "date-fns": "^2.10.0",
     "got": "^10.6.0",
     "koa": "^2.11.0",
     "koa-router": "^8.0.8",

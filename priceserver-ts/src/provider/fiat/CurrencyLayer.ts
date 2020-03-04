@@ -1,6 +1,4 @@
-import got from 'got';
-import * as config from 'config';
-import { Provider } from '../base/Provider';
+import { Quoter } from '../base';
 
 interface Response {
   success: boolean;
@@ -8,21 +6,18 @@ interface Response {
   error?: any;
 };
 
-export class CurrencyLayer extends Provider {
+export class CurrencyLayer extends Quoter {
   private async updateLastTrades(): Promise<void> {
     const now = Date.now();
 
     const searchParams = {
-      access_key: config.get(`provider.${this.name}.apiKey`),
-      source: this.base,
+      access_key: this.options.apiKey,
+      source: this.baseCurrency,
       currencies: this.quotes.map(quote => quote === 'SDR' ? 'XDR' : quote).join(',')
     };
-    const response: Response = await got
-      .get('https://apilayer.net/api/live', {
-        searchParams,
-        retry: 0,
-        timeout: config.get(`provider.${this.name}.timeout`, 10000)
-      })
+
+    const response: Response = await this.client
+      .get('https://apilayer.net/api/live', { searchParams })
       .json();
 
     if (!response.success) {

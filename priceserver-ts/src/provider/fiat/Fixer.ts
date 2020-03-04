@@ -1,6 +1,4 @@
-import got from 'got';
-import * as config from 'config';
-import { Provider } from '../base/Provider';
+import { Quoter } from '../base';
 
 interface Response {
   success: boolean;
@@ -8,21 +6,18 @@ interface Response {
   error?: any;
 };
 
-export class Fixer extends Provider {
+export class Fixer extends Quoter {
   private async updateLastTrades(): Promise<void> {
     const now = Date.now();
 
     const searchParams = {
-      access_key: config.get(`provider.${this.name}.apiKey`),
-      // base: this.base, // need 'PROFESSIONAL PLUS' subscription
+      access_key: this.options.apiKey,
+      // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription
       symbols: this.quotes.map(quote => quote === 'SDR' ? 'XDR' : quote).join(',') + ',KRW'
     };
-    const response: Response = await got
-      .get('http://data.fixer.io/api/latest', {
-        searchParams,
-        retry: 0,
-        timeout: config.get(`provider.${this.name}.timeout`, 10000)
-      })
+
+    const response: Response = await this.client
+      .get('http://data.fixer.io/api/latest', { searchParams })
       .json();
 
     if (!response.success) {

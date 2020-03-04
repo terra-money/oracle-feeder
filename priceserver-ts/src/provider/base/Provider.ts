@@ -1,44 +1,72 @@
-import * as config from 'config';
-import { LastTrades } from './types';
+import * as median from 'stats-median';
+import { Prices } from './types';
+import Quoter from './Quoter';
 
 export class Provider {
-  protected name: string; // lower class name (bithumb, coinone, currencylayer)
-  protected base: string; // base currency
-  protected quotes: string[] = [];
-  protected lastTrades: LastTrades = {};
-  private updatedAt: number;
-  private interval: number;
-  private enable: boolean;
+  protected quoters: Quoter[] = [];
+  protected prices: Prices = {};
+  protected baseCurrency: string;
 
-  constructor() {
-    this.name = this.constructor.name.toLowerCase();
+  constructor(baseCurrency: string) {
+    this.baseCurrency = baseCurrency;
   }
 
   public async initialize(): Promise<void> {
-    this.quotes = config.get(`provider.${this.name}.quotes`, []);
-    this.interval = config.get(`provider.${this.name}.interval`, 1000);
-    this.enable = config.get(`provider.${this.name}.enable`, false);
-    this.base = config.get(`provider.${this.name}.base`);
+    for (const quoter of this.quoters) {
+      await quoter.initialize();
+    }
   }
 
-  public async tick(): Promise<boolean> {
-    const now = Date.now();
-    if (!this.enable || now - this.updatedAt < this.interval) {
-      return false;
+  public async tick(now: number): Promise<boolean> {
+    // if some quoter updated
+    const responses = await Promise.all(
+      this.quoters.map(quoter => quoter.tick(now))
+    );
+    if (responses.some(response => response)) {
+      this.adjustPrices();
+      return true;
     }
 
-    await this.update();
-
-    this.updatedAt = now;
-    return true;
+    return false;
   }
 
-  public getLastTrades(): LastTrades {
-    return this.lastTrades;
+  public getLunaPrices(lunaPrices: Prices): Prices {
+    if (this.baseCurrency === 'LUNA') {
+      return this.prices;
+    }
+
+    // convert base currency to Luna and return
+    const prices: Prices = {};
+
+    if (lunaPrices[this.baseCurrency]) {
+      for (const quote of Object.keys(this.prices)) {
+        prices[quote] = this.prices[quote] * lunaPrices[this.baseCurrency];
+      }
+    }
+
+    return prices;
   }
 
-  protected async update(): Promise<void> {
-    throw new Error(`[${this.name}] update() must be implemented`);
+  // calculate median of prices collected by quoters
+  protected adjustPrices() {
+    const collectedPrices: { [quote: string]: number[]; } = {};
+
+    // collect prices ex) { KRW: [100, 101], USD: [200, 201] }
+    for (const quoter of this.quoters) {
+      const lastTrades = quoter.getLastTrades();
+
+      for (const quote of Object.keys(lastTrades)) {
+        collectedPrices[quote] = [
+          ...(collectedPrices[quote] || []),
+          lastTrades[quote].price
+        ];
+      }
+    }
+
+    // calculate median of prices
+    for (const quote of Object.keys(collectedPrices)) {
+      this.prices[quote] = median.calc(collectedPrices[quote]);
+    }
   }
 }
 

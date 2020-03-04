@@ -1,41 +1,48 @@
-import * as luna from './luna';
-import * as fiat from './fiat';
+import { Provider, Prices } from './base';
+import { format } from 'date-fns';
+import LunaProvider from './luna/LunaProvider';
+import FiatProvider from './fiat/FiatProvider';
 
-let lunaPrices: { [quote: string]: number } = {};
-let tickTimer;
+const providers: Provider[] = [
+  new LunaProvider('LUNA'), // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
+  new FiatProvider('KRW') // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
+];
+let lunaPrices: Prices = {};
+let tickTimer: NodeJS.Timer;
+let logedAt: number = 0;
 
 export async function initialize(): Promise<void> {
-  await luna.initialize();
-  await fiat.initialize();
+  for (const provider of providers) {
+    await provider.initialize();
+  }
 
   await tick();
 }
 
-async function tick(): Promise<void> {
-  const isUpdated: boolean[] = [
-    await luna.tick(), // update LUNA/KRW LUNA/...
-    await fiat.tick(), // update KRW/SDR, KRW/USD, KRW/MNT KRW/...
-  ];
+export function getLunaPrices() {
+  return lunaPrices;
+}
 
-  if (isUpdated.indexOf(true) > -1) {
-    calculateLunaPrices();
+async function tick(): Promise<void> {
+  // if some provider updated
+  const now = Date.now();
+  const responses = await Promise.all(
+    providers.map(provider => provider.tick(now))
+  );
+  if (responses.some(response => response)) {
+    // collect luna prices
+    lunaPrices = {};
+    for (const provider of providers) {
+      lunaPrices = Object.assign(lunaPrices, provider.getLunaPrices(lunaPrices));
+    }
+
+    if (now - logedAt > 10000) {
+      console.log(format(new Date(), 'yyyy-MM-dd HH:mm:ss'), lunaPrices);
+      logedAt = now;
+    }
   }
 
   // set timer for loop
   if (tickTimer) clearTimeout(tickTimer);
   tickTimer = setTimeout(() => tick(), 100);
-}
-
-function calculateLunaPrices() {
-  lunaPrices = luna.getLunaPrices();
-
-  if (lunaPrices['KRW']) {
-    lunaPrices = Object.assign(lunaPrices, fiat.getLunaPrices(lunaPrices['KRW']));
-  }
-
-  console.log(lunaPrices);
-}
-
-export function getLunaPrices() {
-  return lunaPrices;
 }

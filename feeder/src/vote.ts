@@ -343,7 +343,7 @@ interface BroadcastArgs {
 }
 
 async function broadcastMsgs({ accountNubmer, chainID, lcdAddress, ledgerApp, msgs, sequence, voter }: BroadcastArgs) {
-  const gas = 50000 + msgs.length * 10000;
+  const gas = 50000 + msgs.length * 12000;
   const fees = { amount: [{ amount: Math.ceil(gas * 0.025).toString(), denom: `ukrw` }], gas: gas.toString() };
   const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
   const signature = await wallet.sign(ledgerApp, voter, tx, {
@@ -387,7 +387,7 @@ async function checkTxResult({ data, lcdAddress }: CheckTxResultArgs): Promise<{
       console.info(`txhash: ${txhash}\t height: ${height}`);
     } else {
       success = false;
-      console.error(`Failed to find ${txhash} or failed ${txQueryData}`);
+      console.error(`Failed to find ${txhash} or failed`, txQueryData);
     }
   } else {
     success = false;

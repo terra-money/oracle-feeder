@@ -1,7 +1,5 @@
-import got from 'got';
 import * as MA from 'moving-average';
-import * as config from 'config';
-import { Provider, LastTrade } from '../base';
+import { Quoter, LastTrade } from '../base';
 
 const headers = {
   'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
@@ -23,21 +21,19 @@ interface Response {
   data?: any;
 };
 
-export class Bithumb extends Provider {
+export class Bithumb extends Quoter {
   private async fetchLastTrade(quote: string): Promise<LastTrade> {
     const now = Date.now();
     let volume = 0;
 
     // get latest candles
-    const response: Response = await got
+    const response: Response = await this.client
       .post(`https://www.bithumb.com/trade_history/chart_data?_=${now}`, {
         headers : {
           ...headers,
           cookie: `csrf_xcoin_name=${requestData[quote].csrf_xcoin_name}`
         },
-        form: requestData[quote],
-        retry: 0,
-        timeout: config.get(`provider.${this.name}.timeout`, 10000),
+        form: requestData[quote]
       })
       .json();
 
@@ -47,7 +43,6 @@ export class Bithumb extends Provider {
 
     // calcuate moving average
     const ma = MA(60 * 1000); // moving average(1m)
-    const movingAverageSpan = config.get(`provider.${this.name}.movingAverageSpan`, 3 * 60 * 1000);
 
     for (const row of response.data) {
       // the order is [time, open, close, high, low, volume]
@@ -57,7 +52,7 @@ export class Bithumb extends Provider {
       const vol = parseFloat(row[5]);
 
       // Use data only as much as moving average span
-      if (now - time < movingAverageSpan) {
+      if (now - time < this.options.movingAverageSpan) {
         ma.push(time, (high + low) / 2);
         volume += vol;
       }
