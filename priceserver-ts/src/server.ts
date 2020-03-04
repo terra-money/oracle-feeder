@@ -1,8 +1,22 @@
 import * as Koa from 'koa';
 import * as Router from 'koa-router';
 import * as http from 'http';
+import * as bluebird from 'bluebird';
+import * as sentry from '@sentry/node';
 import * as config from 'config';
 import { initialize as initializeProviders, getLunaPrices } from './provider';
+
+global.Promise = bluebird;
+sentry.init({ dsn: 'https://18d6520fae464a2687d2426f259dc74f@sentry.io/3641117' });
+
+process.on('unhandledRejection', error => {
+  console.error(error);
+
+  sentry.withScope(scope => {
+    scope.setLevel(sentry.Severity.Critical);
+    sentry.captureException(error);
+  });
+});
 
 async function createServer() {
   const app = new Koa();
@@ -40,8 +54,8 @@ async function createServer() {
 }
 
 async function main(): Promise<void> {
-  await initializeProviders();
   await createServer();
+  await initializeProviders();
 }
 
 main().catch(e => {

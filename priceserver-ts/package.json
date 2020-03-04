@@ -8,6 +8,7 @@
     "lint": "tslint -p . -c tslint.json"
   },
   "dependencies": {
+    "@sentry/node": "5.13.0",
     "bluebird": "^3.5.5",
     "config": "^3.3.0",
     "date-fns": "^2.10.0",
@@ -18,7 +19,8 @@
     "stats-median": "^1.0.1",
     "ts-node": "^8.0.3",
     "typescript": "^3.4.3",
-    "weighted-median": "^1.0.1"
+    "weighted-median": "^1.0.1",
+    "ws": "^7.2.1"
   },
   "devDependencies": {
     "husky": "^3",

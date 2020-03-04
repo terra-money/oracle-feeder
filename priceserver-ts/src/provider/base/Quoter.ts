@@ -24,8 +24,6 @@ export class Quoter {
 
   public async initialize(): Promise<void> {
     this.client = got.extend({
-      responseType: 'json',
-      resolveBodyOnly: true,
       retry: 0,
       timeout: this.options.timeout
     });

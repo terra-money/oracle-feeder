@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node';
 import { Quoter } from '../base';
 
 interface Response {
@@ -20,8 +21,8 @@ export class CurrencyLayer extends Quoter {
       .get('https://apilayer.net/api/live', { searchParams })
       .json();
 
-    if (!response.success) {
-      throw new Error(response.error);
+    if (!response || !response.success || !response.quotes) {
+      throw new Error(`wrong response, ${response}`);
     }
 
     // update last trades
@@ -40,7 +41,7 @@ export class CurrencyLayer extends Quoter {
 
     await this
       .updateLastTrades()
-      .catch(console.error);
+      .catch(sentry.captureException);
 
     return true;
   }

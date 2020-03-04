@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node';
 import * as MA from 'moving-average';
 import { Quoter, LastTrade } from '../base';
 
@@ -27,8 +28,8 @@ export class Coinone extends Quoter {
       .get(url[quote])
       .json();
 
-    if (!response.success || !Array.isArray(response.data)) {
-      throw new Error('request failed');
+    if (!response || !response.success || !Array.isArray(response.data)) {
+      throw new Error(`wrong response, ${response}`);
     }
 
     // calcuate moving average
@@ -47,8 +48,13 @@ export class Coinone extends Quoter {
       }
     }
 
+    const price = ma.movingAverage();
+    if (!price || !volume) {
+      throw new Error(`could not calculate moving average, price: ${price} volume ${volume}`);
+    }
+
     return {
-      price: ma.movingAverage(),
+      price,
       volume,
       updatedAt: now
     }
@@ -61,7 +67,7 @@ export class Coinone extends Quoter {
       await this
         .fetchLastTrade(quote)
         .then(lastTrade => { this.lastTrades[quote] = lastTrade; })
-        .catch(console.error);
+        .catch(sentry.captureException);
     }
 
     return true;

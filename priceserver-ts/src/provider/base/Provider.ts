@@ -18,10 +18,10 @@ export class Provider {
   }
 
   public async tick(now: number): Promise<boolean> {
-    // if some quoter updated
     const responses = await Promise.all(
       this.quoters.map(quoter => quoter.tick(now))
     );
+    // if some quoter updated
     if (responses.some(response => response)) {
       this.adjustPrices();
       return true;

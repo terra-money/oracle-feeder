@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node';
 import { Quoter } from '../base';
 
 interface Response {
@@ -20,8 +21,8 @@ export class Fixer extends Quoter {
       .get('http://data.fixer.io/api/latest', { searchParams })
       .json();
 
-    if (!response.success) {
-      throw new Error(response.error);
+    if (!response || !response.success || !response.rates) {
+      throw new Error(`wrong response, ${response}`);
     }
 
     if (!response.rates.KRW) {
@@ -50,7 +51,7 @@ export class Fixer extends Quoter {
 
     await this
       .updateLastTrades()
-      .catch(console.error);
+      .catch(sentry.captureException);
 
     return true;
   }

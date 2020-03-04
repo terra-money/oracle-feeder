@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node';
 import * as MA from 'moving-average';
 import { Quoter, LastTrade } from '../base';
 
@@ -37,7 +38,10 @@ export class Bithumb extends Quoter {
       })
       .json();
 
-    if (response.error !== '0000' || !Array.isArray(response.data)) {
+    if (!response || !Array.isArray(response.data)) {
+      throw new Error(`wrong response, ${response}`);
+    }
+    if (response.error !== '0000') {
       throw new Error(`[${response.error}] ${response.message}`);
     }
 
@@ -58,8 +62,13 @@ export class Bithumb extends Quoter {
       }
     }
 
+    const price = ma.movingAverage();
+    if (!price || !volume) {
+      throw new Error(`could not calculate moving average, price: ${price} volume ${volume}`);
+    }
+
     return {
-      price: ma.movingAverage(),
+      price,
       volume,
       updatedAt: now
     }
@@ -72,7 +81,7 @@ export class Bithumb extends Quoter {
       await this
         .fetchLastTrade(quote)
         .then(lastTrade => { this.lastTrades[quote] = lastTrade; })
-        .catch(console.error);
+        .catch(sentry.captureException);
     }
 
     return true;

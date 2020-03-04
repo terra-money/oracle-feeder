@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node';
 import * as config from 'config';
 import { Provider } from '../base';
 import * as weightedMedian from 'weighted-median';
