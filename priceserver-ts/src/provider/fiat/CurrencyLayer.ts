@@ -35,12 +35,14 @@ export class CurrencyLayer extends Quoter {
     }
   }
 
-  protected async update(): Promise<void> {
+  protected async update(): Promise<boolean> {
     this.lastTrades = {};
 
     await this
       .updateLastTrades()
       .catch(console.error);
+
+    return true;
   }
 }
 

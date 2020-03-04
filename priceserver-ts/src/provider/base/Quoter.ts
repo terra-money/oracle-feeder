@@ -36,17 +36,15 @@ export class Quoter {
       return false;
     }
 
-    await this.update();
     this.updatedAt = now;
-
-    return true;
+    return this.update();
   }
 
   public getLastTrades(): LastTrades {
     return this.lastTrades;
   }
 
-  protected async update(): Promise<void> {
+  protected async update(): Promise<boolean> {
     throw new Error(`[${this.constructor.name}] update() must be implemented`);
   }
 }

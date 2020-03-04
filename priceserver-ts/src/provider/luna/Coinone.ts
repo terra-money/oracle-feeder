@@ -54,7 +54,7 @@ export class Coinone extends Quoter {
     }
   }
 
-  protected async update(): Promise<void> {
+  protected async update(): Promise<boolean> {
     // update last trade of LUNA/quotes
     this.lastTrades = {};
     for (const quote of this.quotes) {
@@ -63,6 +63,8 @@ export class Coinone extends Quoter {
         .then(lastTrade => { this.lastTrades[quote] = lastTrade; })
         .catch(console.error);
     }
+
+    return true;
   }
 }
 
