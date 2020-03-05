@@ -1,18 +1,18 @@
 import got, { Got } from 'got';
-import { LastTrades } from './types';
+import { TradesByQuote } from './types';
 
 interface QuoterOptions {
   interval: number; // update interval
   timeout: number; // api call timeout
   apiKey?: string;
-  movingAverageSpan?: number;
+  pricePeriod?: number;
 }
 
 export class Quoter {
   protected options: QuoterOptions;
   protected baseCurrency: string; // base currency
   protected quotes: string[] = []; // quote currencies
-  protected lastTrades: LastTrades = {};
+  protected tradesByQuote: TradesByQuote = {}; // trade records by quote
   protected client: Got;
   private updatedAt: number;
 
@@ -38,8 +38,8 @@ export class Quoter {
     return this.update();
   }
 
-  public getLastTrades(): LastTrades {
-    return this.lastTrades;
+  public getTradesByQuote(): TradesByQuote {
+    return this.tradesByQuote;
   }
 
   protected async update(): Promise<boolean> {

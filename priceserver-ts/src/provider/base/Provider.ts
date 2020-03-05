@@ -1,10 +1,10 @@
-import * as median from 'stats-median';
-import { Prices } from './types';
+import { average } from 'lib/average';
+import { PriceByQuote, TradesByQuote } from './types';
 import Quoter from './Quoter';
 
 export class Provider {
   protected quoters: Quoter[] = [];
-  protected prices: Prices = {};
+  protected priceByQuote: PriceByQuote = {};
   protected baseCurrency: string;
 
   constructor(baseCurrency: string) {
@@ -18,9 +18,7 @@ export class Provider {
   }
 
   public async tick(now: number): Promise<boolean> {
-    const responses = await Promise.all(
-      this.quoters.map(quoter => quoter.tick(now))
-    );
+    const responses = await Promise.all(this.quoters.map(quoter => quoter.tick(now)));
     // if some quoter updated
     if (responses.some(response => response)) {
       this.adjustPrices();
@@ -30,42 +28,46 @@ export class Provider {
     return false;
   }
 
-  public getLunaPrices(lunaPrices: Prices): Prices {
+  public getLunaPrices(lunaPrices: PriceByQuote): PriceByQuote {
     if (this.baseCurrency === 'LUNA') {
-      return this.prices;
+      return this.priceByQuote;
     }
 
     // convert base currency to Luna and return
-    const prices: Prices = {};
+    const prices: PriceByQuote = {};
 
     if (lunaPrices[this.baseCurrency]) {
-      for (const quote of Object.keys(this.prices)) {
-        prices[quote] = this.prices[quote] * lunaPrices[this.baseCurrency];
+      for (const quote of Object.keys(this.priceByQuote)) {
+        prices[quote] = this.priceByQuote[quote] * lunaPrices[this.baseCurrency];
       }
     }
 
     return prices;
   }
 
-  // calculate median of prices collected by quoters
-  protected adjustPrices() {
-    const collectedPrices: { [quote: string]: number[]; } = {};
+  // collect latest trade records of quoters
+  protected collectTradesByQuote(): TradesByQuote {
+    const collectedTradesByQuote: TradesByQuote = {};
 
-    // collect prices ex) { KRW: [100, 101], USD: [200, 201] }
+    // collect last trades.
+    // ex) { KRW: [{ price: 100, volume: 10, timestamp: 111 }, ...], USD: [...] }
     for (const quoter of this.quoters) {
-      const lastTrades = quoter.getLastTrades();
+      const tradesByQuote = quoter.getTradesByQuote();
 
-      for (const quote of Object.keys(lastTrades)) {
-        collectedPrices[quote] = [
-          ...(collectedPrices[quote] || []),
-          lastTrades[quote].price
-        ];
+      for (const quote of Object.keys(tradesByQuote)) {
+        collectedTradesByQuote[quote] = [...(collectedTradesByQuote[quote] || []), ...tradesByQuote[quote]];
       }
     }
 
-    // calculate median of prices
-    for (const quote of Object.keys(collectedPrices)) {
-      this.prices[quote] = median.calc(collectedPrices[quote]);
+    return collectedTradesByQuote;
+  }
+
+  protected adjustPrices() {
+    const tradesByQuote: TradesByQuote = this.collectTradesByQuote();
+
+    // calculate average of prices
+    for (const quote of Object.keys(tradesByQuote)) {
+      this.priceByQuote[quote] = average(tradesByQuote[quote].map(trade => trade.price));
     }
   }
 }

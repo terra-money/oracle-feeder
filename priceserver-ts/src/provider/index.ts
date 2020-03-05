@@ -1,4 +1,4 @@
-import { Provider, Prices } from './base';
+import { Provider, PriceByQuote } from './base';
 import * as bluebird from 'bluebird';
 import { format } from 'date-fns';
 import * as sentry from '@sentry/node';
@@ -7,7 +7,7 @@ import FiatProvider from './fiat/FiatProvider';
 
 const providers: Provider[] = [
   new LunaProvider('LUNA'), // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
-  new FiatProvider('KRW'), // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
+  new FiatProvider('KRW') // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
 ];
 let loggedAt: number = 0;
 
@@ -21,7 +21,7 @@ export async function initialize(): Promise<void> {
 
 export function getLunaPrices() {
   // collect luna prices
-  let lunaPrices: Prices = {};
+  let lunaPrices: PriceByQuote = {};
   for (const provider of providers) {
     lunaPrices = Object.assign(lunaPrices, provider.getLunaPrices(lunaPrices));
   }
@@ -29,16 +29,12 @@ export function getLunaPrices() {
 }
 
 async function loop(): Promise<void> {
-  while(true) {
+  while (true) {
     const now = Date.now();
 
-    await Promise.all(providers.map(provider => provider.tick(now)))
-      .catch(error => {
-        console.error('###', error);
-        sentry.captureException(error);
-      });
+    await Promise.all(providers.map(provider => provider.tick(now))).catch(sentry.captureException);
 
-    if (now - loggedAt > 10000) {
+    if (now - loggedAt > 60 * 1000) {
       console.log(format(new Date(), 'yyyy-MM-dd HH:mm:ss'), getLunaPrices());
       loggedAt = now;
     }

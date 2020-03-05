@@ -6,5 +6,9 @@
     "sourceMap": true,
     "baseUrl": "src",
     "sourceRoot": "src",
+    "typeRoots": [
+      "./src/typings",
+      "./node_modules/@types"
+    ],
   }
 }

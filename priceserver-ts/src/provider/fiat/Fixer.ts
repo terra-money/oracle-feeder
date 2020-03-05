@@ -5,7 +5,7 @@ interface Response {
   success: boolean;
   rates: { [quote: string]: number };
   error?: any;
-};
+}
 
 export class Fixer extends Quoter {
   private async updateLastTrades(): Promise<void> {
@@ -14,12 +14,10 @@ export class Fixer extends Quoter {
     const searchParams = {
       access_key: this.options.apiKey,
       // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription
-      symbols: this.quotes.map(quote => quote === 'SDR' ? 'XDR' : quote).join(',') + ',KRW'
+      symbols: this.quotes.map(quote => (quote === 'SDR' ? 'XDR' : quote)).join(',') + ',KRW'
     };
 
-    const response: Response = await this.client
-      .get('http://data.fixer.io/api/latest', { searchParams })
-      .json();
+    const response: Response = await this.client.get('http://data.fixer.io/api/latest', { searchParams }).json();
 
     if (!response || !response.success || !response.rates) {
       throw new Error(`wrong response, ${response}`);
@@ -38,20 +36,20 @@ export class Fixer extends Quoter {
 
     // update last trades
     for (const quote of Object.keys(response.rates)) {
-      this.lastTrades[quote === 'XDR' ? 'SDR' : quote] = {
-        price: +response.rates[quote],
-        updatedAt: now,
-        volume: 0
-      };
+      this.tradesByQuote[quote === 'XDR' ? 'SDR' : quote] = [
+        {
+          price: +response.rates[quote],
+          volume: 0,
+          timestamp: now
+        }
+      ];
     }
   }
 
   protected async update(): Promise<boolean> {
-    this.lastTrades = {};
+    this.tradesByQuote = {};
 
-    await this
-      .updateLastTrades()
-      .catch(sentry.captureException);
+    await this.updateLastTrades().catch(sentry.captureException);
 
     return true;
   }

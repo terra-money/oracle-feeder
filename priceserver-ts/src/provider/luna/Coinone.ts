@@ -1,9 +1,8 @@
 import * as sentry from '@sentry/node';
-import * as MA from 'moving-average';
-import { Quoter, LastTrade } from '../base';
+import { Quoter, Trades } from '../base';
 
 const url = {
-  'KRW': 'https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinoneluna&type=1m'
+  KRW: 'https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinoneluna&type=1m'
 };
 
 interface Response {
@@ -16,57 +15,52 @@ interface Response {
     Close: string;
     Volume: string;
   }[];
-};
+}
 
 export class Coinone extends Quoter {
-  private async fetchLastTrade(quote: string): Promise<LastTrade> {
+  private async fetchLatestTrade(quote: string): Promise<Trades> {
     const now = Date.now();
-    let volume = 0;
 
     // get latest candles
-    const response: Response = await this.client
-      .get(url[quote])
-      .json();
+    const response: Response = await this.client.get(url[quote]).json();
 
     if (!response || !response.success || !Array.isArray(response.data)) {
       throw new Error(`wrong response, ${response}`);
     }
 
-    // calcuate moving average
-    const ma = MA(60 * 1000); // moving average(1m)
+    const trades: Trades = [];
 
     for (const row of response.data) {
-      const time = +row.DT;
+      const timestamp = +row.DT;
       const high = parseFloat(row.High);
       const low = parseFloat(row.Low);
-      const vol = parseFloat(row.Volume);
+      const volume = parseFloat(row.Volume);
 
-      // Use data only as much as moving average span
-      if (now - time < this.options.movingAverageSpan) {
-        ma.push(time, (high + low) / 2);
-        volume += vol;
+      // Use data only as much as price period
+      if (now - timestamp < this.options.pricePeriod) {
+        trades.push({
+          price: (high + low) / 2,
+          volume,
+          timestamp
+        });
       }
     }
 
-    const price = ma.movingAverage();
-    if (!price || !volume) {
-      throw new Error(`could not calculate moving average, price: ${price} volume ${volume}`);
+    if (trades.length < 1) {
+      throw new Error('there is no trade record');
     }
 
-    return {
-      price,
-      volume,
-      updatedAt: now
-    }
+    return trades;
   }
 
   protected async update(): Promise<boolean> {
     // update last trade of LUNA/quotes
-    this.lastTrades = {};
+    this.tradesByQuote = {};
     for (const quote of this.quotes) {
-      await this
-        .fetchLastTrade(quote)
-        .then(lastTrade => { this.lastTrades[quote] = lastTrade; })
+      await this.fetchLatestTrade(quote)
+        .then(trades => {
+          this.tradesByQuote[quote] = trades;
+        })
         .catch(sentry.captureException);
     }
 

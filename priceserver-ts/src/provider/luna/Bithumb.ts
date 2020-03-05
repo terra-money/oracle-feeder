@@ -1,14 +1,15 @@
 import * as sentry from '@sentry/node';
-import * as MA from 'moving-average';
-import { Quoter, LastTrade } from '../base';
+import { Quoter, Trades } from '../base';
 
 const headers = {
-  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+  'user-agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
   'x-requested-with': 'XMLHttpRequest'
 };
 
 const requestData = {
-  'KRW': { // LUNA/KRW
+  KRW: {
+    // LUNA/KRW
     coinType: 'C0534',
     crncCd: 'C0100',
     tickType: '01M',
@@ -20,17 +21,16 @@ interface Response {
   error: string;
   message?: string;
   data?: any;
-};
+}
 
 export class Bithumb extends Quoter {
-  private async fetchLastTrade(quote: string): Promise<LastTrade> {
+  private async fetchLatestTrade(quote: string): Promise<Trades> {
     const now = Date.now();
-    let volume = 0;
 
     // get latest candles
     const response: Response = await this.client
       .post(`https://www.bithumb.com/trade_history/chart_data?_=${now}`, {
-        headers : {
+        headers: {
           ...headers,
           cookie: `csrf_xcoin_name=${requestData[quote].csrf_xcoin_name}`
         },
@@ -45,42 +45,40 @@ export class Bithumb extends Quoter {
       throw new Error(`[${response.error}] ${response.message}`);
     }
 
-    // calcuate moving average
-    const ma = MA(60 * 1000); // moving average(1m)
+    const trades: Trades = [];
 
     for (const row of response.data) {
       // the order is [time, open, close, high, low, volume]
-      const time = +row[0];
+      const timestamp = +row[0];
       const high = parseFloat(row[3]);
       const low = parseFloat(row[4]);
-      const vol = parseFloat(row[5]);
+      const volume = parseFloat(row[5]);
 
-      // Use data only as much as moving average span
-      if (now - time < this.options.movingAverageSpan) {
-        ma.push(time, (high + low) / 2);
-        volume += vol;
+      // Use data only as much as price period
+      if (now - timestamp < this.options.pricePeriod) {
+        trades.push({
+          price: (high + low) / 2,
+          volume,
+          timestamp
+        });
       }
     }
 
-    const price = ma.movingAverage();
-    if (!price || !volume) {
-      throw new Error(`could not calculate moving average, price: ${price} volume ${volume}`);
+    if (trades.length < 1) {
+      throw new Error('there is no trade record');
     }
 
-    return {
-      price,
-      volume,
-      updatedAt: now
-    }
+    return trades;
   }
 
   protected async update(): Promise<boolean> {
-    // update last trade of LUNA/quotes
-    this.lastTrades = {};
+    // update last trades of LUNA/quote
+    this.tradesByQuote = {};
     for (const quote of this.quotes) {
-      await this
-        .fetchLastTrade(quote)
-        .then(lastTrade => { this.lastTrades[quote] = lastTrade; })
+      await this.fetchLatestTrade(quote)
+        .then(trades => {
+          this.tradesByQuote[quote] = trades;
+        })
         .catch(sentry.captureException);
     }
 

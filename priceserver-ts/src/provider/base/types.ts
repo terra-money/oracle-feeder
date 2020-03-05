@@ -1,13 +1,15 @@
-export interface LastTrade {
-  updatedAt: number;
+export interface Trade {
+  timestamp: number;
   price: number;
   volume: number;
 }
 
-export interface LastTrades {
-  [quote: string]: LastTrade;
+export type Trades = Trade[];
+
+export interface TradesByQuote {
+  [quote: string]: Trades;
 }
 
-export interface Prices {
+export interface PriceByQuote {
   [quote: string]: number;
 }
