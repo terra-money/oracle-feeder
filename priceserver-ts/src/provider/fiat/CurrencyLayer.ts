@@ -1,4 +1,6 @@
-import * as sentry from '@sentry/node';
+import nodeFetch from 'node-fetch';
+import { errorHandling } from 'lib/error';
+import { toQueryString } from 'lib/fetch';
 import { Quoter } from '../base';
 
 interface Response {
@@ -8,16 +10,16 @@ interface Response {
 }
 
 export class CurrencyLayer extends Quoter {
-  private async updateLastTrades(): Promise<void> {
-    const now = Date.now();
-
-    const searchParams = {
+  private async updatePrices(): Promise<void> {
+    const params = {
       access_key: this.options.apiKey,
       source: this.baseCurrency,
       currencies: this.quotes.map(quote => (quote === 'SDR' ? 'XDR' : quote)).join(',')
     };
 
-    const response: Response = await this.client.get('https://apilayer.net/api/live', { searchParams }).json();
+    const response: Response = await nodeFetch(`https://apilayer.net/api/live?${toQueryString(params)}`, {
+      timeout: this.options.timeout
+    }).then(res => res.json());
 
     if (!response || !response.success || !response.quotes) {
       throw new Error(`wrong response, ${response}`);
@@ -26,20 +28,12 @@ export class CurrencyLayer extends Quoter {
     // update last trades
     for (const symbol of Object.keys(response.quotes)) {
       const quote = symbol.replace('KRW', '');
-      this.tradesByQuote[quote === 'XDR' ? 'SDR' : quote] = [
-        {
-          price: +response.quotes[symbol],
-          volume: 0,
-          timestamp: now
-        }
-      ];
+      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = +response.quotes[symbol];
     }
   }
 
   protected async update(): Promise<boolean> {
-    this.tradesByQuote = {};
-
-    await this.updateLastTrades().catch(sentry.captureException);
+    await this.updatePrices().catch(errorHandling);
 
     return true;
   }

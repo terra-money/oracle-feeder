@@ -1,4 +1,6 @@
-import * as sentry from '@sentry/node';
+import nodeFetch from 'node-fetch';
+import { errorHandling } from 'lib/error';
+import { toQueryString } from 'lib/fetch';
 import { Quoter } from '../base';
 
 interface Response {
@@ -9,15 +11,15 @@ interface Response {
 
 export class Fixer extends Quoter {
   private async updateLastTrades(): Promise<void> {
-    const now = Date.now();
-
-    const searchParams = {
+    const params = {
       access_key: this.options.apiKey,
       // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription
       symbols: this.quotes.map(quote => (quote === 'SDR' ? 'XDR' : quote)).join(',') + ',KRW'
     };
 
-    const response: Response = await this.client.get('http://data.fixer.io/api/latest', { searchParams }).json();
+    const response: Response = await nodeFetch(`http://data.fixer.io/api/latest?${toQueryString(params)}`, {
+      timeout: this.options.timeout
+    }).then(res => res.json());
 
     if (!response || !response.success || !response.rates) {
       throw new Error(`wrong response, ${response}`);
@@ -36,20 +38,12 @@ export class Fixer extends Quoter {
 
     // update last trades
     for (const quote of Object.keys(response.rates)) {
-      this.tradesByQuote[quote === 'XDR' ? 'SDR' : quote] = [
-        {
-          price: +response.rates[quote],
-          volume: 0,
-          timestamp: now
-        }
-      ];
+      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = +response.rates[quote];
     }
   }
 
   protected async update(): Promise<boolean> {
-    this.tradesByQuote = {};
-
-    await this.updateLastTrades().catch(sentry.captureException);
+    await this.updateLastTrades().catch(errorHandling);
 
     return true;
   }

@@ -37,3 +37,6 @@ typings/
 
 # config
 config/default.js
+
+# report
+report/

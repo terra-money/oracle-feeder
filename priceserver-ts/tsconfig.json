@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",
+    "allowJs": false,
     "outDir": "dist",
     "sourceMap": true,
     "baseUrl": "src",

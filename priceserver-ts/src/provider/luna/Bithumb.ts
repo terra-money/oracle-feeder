@@ -1,5 +1,8 @@
-import * as sentry from '@sentry/node';
-import { Quoter, Trades } from '../base';
+import nodeFetch from 'node-fetch';
+import { errorHandling } from 'lib/error';
+import { toFormData } from 'lib/fetch';
+import * as logger from 'lib/logger';
+import { WebSocketQuoter, Trades } from '../base';
 
 const headers = {
   'user-agent':
@@ -17,72 +20,150 @@ const requestData = {
   }
 };
 
-interface Response {
+interface CandlestickResponse {
   error: string;
   message?: string;
   data?: any;
 }
 
-export class Bithumb extends Quoter {
-  private async fetchLatestTrade(quote: string): Promise<Trades> {
-    const now = Date.now();
+interface TransactionResponse {
+  content: {
+    list: {
+      symbol: string;
+      contPrice: string; // price
+      contQty: string; // volume
+      contDtm: string; // transaction time
+    }[];
+  };
+}
 
+export class Bithumb extends WebSocketQuoter {
+  private isUpdated: boolean = false;
+
+  public async initialize(): Promise<void> {
+    for (const quote of this.quotes) {
+      this.tradesByQuote[quote] = [];
+
+      // update last trades and price of LUNA/quote
+      await this.fetchLatestTrades(quote)
+        .then(trades => {
+          this.tradesByQuote[quote] = trades;
+          if (trades.length) {
+            this.priceByQuote[quote] = trades[trades.length - 1].price;
+          }
+        })
+        .catch(errorHandling);
+    }
+
+    this.connect('wss://pubwss.bithumb.com/pub/ws');
+    return;
+  }
+
+  protected onConnect() {
+    logger.info(`${this.constructor.name}: WebSocket connected`);
+
+    const symbols = this.quotes.map(quote => `"${this.baseCurrency}_${quote}"`).join(',');
+
+    // subscribe transaction
+    this.ws.send(`{"type":"transaction", "symbols":[${symbols}]}`);
+  }
+
+  protected onData(raw) {
+    let data;
+    try {
+      data = JSON.parse(raw);
+
+      if (data.status === '0000') {
+        logger.info(`${this.constructor.name}: ${data.resmsg}`);
+        return;
+      }
+    } catch (error) {
+      logger.error(error);
+      return;
+    }
+
+    try {
+      switch (data.type) {
+        case 'transaction':
+          this.onTransaction(data);
+          break;
+
+        default:
+          logger.warn(`${this.constructor.name}: receive unknown type data`, data);
+          break;
+      }
+    } catch (error) {
+      errorHandling(error);
+    }
+  }
+
+  private onTransaction(data: TransactionResponse) {
+    for (const row of data.content.list) {
+      const quote = row.symbol.split('_')[1];
+
+      if (this.quotes.indexOf(quote) < 0 || row.contQty === '0') {
+        logger.info(quote, row.contPrice, row.contQty);
+        continue;
+      }
+
+      const timestamp = Math.floor(new Date(row.contDtm).getTime() / 60000) * 60000;
+      const price = parseFloat(row.contPrice);
+      const volume = parseFloat(row.contQty);
+      const currentTrade = this.tradesByQuote[quote].find(trade => trade.timestamp === timestamp);
+
+      if (currentTrade) {
+        currentTrade.price = price;
+        currentTrade.volume += volume;
+      } else {
+        this.tradesByQuote[quote].push({ price, volume, timestamp });
+      }
+
+      this.priceByQuote[quote] = price;
+
+      // console.log('last', format(timestamp, 'MM-dd HH:mm:ss'), price, volume);
+    }
+
+    this.isUpdated = true;
+  }
+
+  private async fetchLatestTrades(quote: string): Promise<Trades> {
     // get latest candles
-    const response: Response = await this.client
-      .post(`https://www.bithumb.com/trade_history/chart_data?_=${now}`, {
-        headers: {
-          ...headers,
-          cookie: `csrf_xcoin_name=${requestData[quote].csrf_xcoin_name}`
-        },
-        form: requestData[quote]
-      })
-      .json();
+    const response: CandlestickResponse = await nodeFetch(
+      `https://www.bithumb.com/trade_history/chart_data?_=${Date.now()}`,
+      {
+        method: 'POST',
+        headers: Object.assign(headers, { cookie: `csrf_xcoin_name=${requestData[quote].csrf_xcoin_name}` }),
+        body: toFormData(requestData[quote]),
+        timeout: this.options.timeout
+      }
+    ).then(res => res.json());
 
-    if (!response || !Array.isArray(response.data)) {
+    if (!response || response.error !== '0000' || !Array.isArray(response.data) || response.data.length < 1) {
       throw new Error(`wrong response, ${response}`);
     }
-    if (response.error !== '0000') {
-      throw new Error(`[${response.error}] ${response.message}`);
-    }
 
-    const trades: Trades = [];
-
-    for (const row of response.data) {
+    return response.data.map(row => ({
       // the order is [time, open, close, high, low, volume]
-      const timestamp = +row[0];
-      const high = parseFloat(row[3]);
-      const low = parseFloat(row[4]);
-      const volume = parseFloat(row[5]);
-
-      // Use data only as much as price period
-      if (now - timestamp < this.options.pricePeriod) {
-        trades.push({
-          price: (high + low) / 2,
-          volume,
-          timestamp
-        });
-      }
-    }
-
-    if (trades.length < 1) {
-      throw new Error('there is no trade record');
-    }
-
-    return trades;
+      price: parseFloat(row[2]),
+      volume: parseFloat(row[5]),
+      timestamp: +row[0]
+    }));
   }
 
   protected async update(): Promise<boolean> {
-    // update last trades of LUNA/quote
-    this.tradesByQuote = {};
+    // remove trades that are past 5 minutes
     for (const quote of this.quotes) {
-      await this.fetchLatestTrade(quote)
-        .then(trades => {
-          this.tradesByQuote[quote] = trades;
-        })
-        .catch(sentry.captureException);
+      this.tradesByQuote[quote] = this.tradesByQuote[quote].filter(
+        trade => Date.now() - trade.timestamp < 5 * 60 * 1000
+      );
     }
 
-    return true;
+    if (this.isUpdated) {
+      this.isUpdated = false;
+      return true;
+    }
+
+    return false;
   }
 }
 

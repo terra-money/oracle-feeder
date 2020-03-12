@@ -4,13 +4,15 @@ import * as http from 'http';
 import * as bluebird from 'bluebird';
 import * as sentry from '@sentry/node';
 import * as config from 'config';
+import { errorHandling } from 'lib/error';
+import * as logger from 'lib/logger';
 import { initialize as initializeProviders, getLunaPrices } from './provider';
 
 global.Promise = bluebird;
-sentry.init({ dsn: 'https://18d6520fae464a2687d2426f259dc74f@sentry.io/3641117' });
+config.sentry?.enable && sentry.init({ dsn: config.sentry.dsn });
 
 process.on('unhandledRejection', error => {
-  console.error(error);
+  logger.error(error);
 
   sentry.withScope(scope => {
     scope.setLevel(sentry.Severity.Critical);
@@ -40,14 +42,12 @@ async function createServer() {
     ctx.status = 200;
   });
 
-  app
-    .use(router.routes())
-    .use(router.allowedMethods());
+  app.use(router.routes()).use(router.allowedMethods());
 
   const server = http.createServer(app.callback());
 
   server.listen(config.port, () => {
-    console.log(`price server is listening on port ${config.port}`);
+    logger.info(`price server is listening on port ${config.port}`);
   });
 
   return server;
@@ -58,6 +58,4 @@ async function main(): Promise<void> {
   await initializeProviders();
 }
 
-main().catch(e => {
-  console.error(e);
-});
+main().catch(errorHandling);

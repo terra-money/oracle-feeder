@@ -1,11 +1,15 @@
 module.exports = {
   port: 8532,
+  sentry: { // https://sentry.io/ - error reporting service
+    enable: false,
+    dsn: ''
+  },
   provider: {
     bithumb: {
       enable: true,
       base: 'LUNA',
       quotes: ['KRW'], // available quote list
-      interval: 1000, // update interval
+      interval: 100, // update interval
     },
     coinone: {
       enable: true,

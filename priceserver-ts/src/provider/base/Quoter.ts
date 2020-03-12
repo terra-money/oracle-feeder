@@ -1,19 +1,17 @@
-import got, { Got } from 'got';
-import { TradesByQuote } from './types';
+import { TradesByQuote, Trades, PriceByQuote } from './types';
 
 interface QuoterOptions {
   interval: number; // update interval
   timeout: number; // api call timeout
   apiKey?: string;
-  pricePeriod?: number;
 }
 
 export class Quoter {
   protected options: QuoterOptions;
   protected baseCurrency: string; // base currency
   protected quotes: string[] = []; // quote currencies
-  protected tradesByQuote: TradesByQuote = {}; // trade records by quote
-  protected client: Got;
+  protected tradesByQuote: TradesByQuote = {};
+  protected priceByQuote: PriceByQuote = {};
   private updatedAt: number;
 
   constructor(baseCurrency: string, quotes: string[], options: QuoterOptions) {
@@ -23,10 +21,7 @@ export class Quoter {
   }
 
   public async initialize(): Promise<void> {
-    this.client = got.extend({
-      retry: 0,
-      timeout: this.options.timeout
-    });
+    return;
   }
 
   public async tick(now: number): Promise<boolean> {
@@ -38,12 +33,20 @@ export class Quoter {
     return this.update();
   }
 
-  public getTradesByQuote(): TradesByQuote {
-    return this.tradesByQuote;
+  public getQuotes(): string[] {
+    return this.quotes;
+  }
+
+  public getTrades(quote: string): Trades {
+    return this.tradesByQuote[quote];
+  }
+
+  public getPrice(quote: string): number {
+    return this.priceByQuote[quote];
   }
 
   protected async update(): Promise<boolean> {
-    throw new Error(`[${this.constructor.name}] update() must be implemented`);
+    return false;
   }
 }
 

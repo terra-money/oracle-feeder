@@ -1,7 +1,8 @@
 import { Provider, PriceByQuote } from './base';
 import * as bluebird from 'bluebird';
-import { format } from 'date-fns';
-import * as sentry from '@sentry/node';
+import { format, getMinutes } from 'date-fns';
+import { errorHandling } from 'lib/error';
+import * as logger from 'lib/logger';
 import LunaProvider from './luna/LunaProvider';
 import FiatProvider from './fiat/FiatProvider';
 
@@ -20,11 +21,13 @@ export async function initialize(): Promise<void> {
 }
 
 export function getLunaPrices() {
-  // collect luna prices
   let lunaPrices: PriceByQuote = {};
+
+  // collect luna prices
   for (const provider of providers) {
     lunaPrices = Object.assign(lunaPrices, provider.getLunaPrices(lunaPrices));
   }
+
   return lunaPrices;
 }
 
@@ -32,13 +35,13 @@ async function loop(): Promise<void> {
   while (true) {
     const now = Date.now();
 
-    await Promise.all(providers.map(provider => provider.tick(now))).catch(sentry.captureException);
+    await Promise.all(providers.map(provider => provider.tick(now))).catch(errorHandling);
 
-    if (now - loggedAt > 60 * 1000) {
-      console.log(format(new Date(), 'yyyy-MM-dd HH:mm:ss'), getLunaPrices());
+    if (getMinutes(now) !== getMinutes(loggedAt)) {
+      logger.info(format(new Date(), 'yyyy-MM-dd HH:mm:ss'), getLunaPrices());
       loggedAt = now;
     }
 
-    await bluebird.delay(100);
+    await bluebird.delay(10);
   }
 }
