@@ -55,7 +55,9 @@ export class Bithumb extends WebSocketQuoter {
         .catch(errorHandling);
     }
 
+    // connect to bithumb websocket server
     this.connect('wss://pubwss.bithumb.com/pub/ws');
+
     return;
   }
 
@@ -78,12 +80,12 @@ export class Bithumb extends WebSocketQuoter {
         return;
       }
     } catch (error) {
-      logger.error(error);
+      logger.error(`${this.constructor.name}: JSON parse error ${raw}`);
       return;
     }
 
     try {
-      switch (data.type) {
+      switch (data?.type) {
         case 'transaction':
           this.onTransaction(data);
           break;
@@ -102,7 +104,6 @@ export class Bithumb extends WebSocketQuoter {
       const quote = row.symbol.split('_')[1];
 
       if (this.quotes.indexOf(quote) < 0 || row.contQty === '0') {
-        logger.info(quote, row.contPrice, row.contQty);
         continue;
       }
 
@@ -119,8 +120,6 @@ export class Bithumb extends WebSocketQuoter {
       }
 
       this.priceByQuote[quote] = price;
-
-      // console.log('last', format(timestamp, 'MM-dd HH:mm:ss'), price, volume);
     }
 
     this.isUpdated = true;
@@ -151,14 +150,14 @@ export class Bithumb extends WebSocketQuoter {
   }
 
   protected async update(): Promise<boolean> {
-    // remove trades that are past 5 minutes
-    for (const quote of this.quotes) {
-      this.tradesByQuote[quote] = this.tradesByQuote[quote].filter(
-        trade => Date.now() - trade.timestamp < 5 * 60 * 1000
-      );
-    }
-
     if (this.isUpdated) {
+      // remove trades that are past 5 minutes
+      for (const quote of this.quotes) {
+        this.tradesByQuote[quote] = this.tradesByQuote[quote].filter(
+          trade => Date.now() - trade.timestamp < 5 * 60 * 1000
+        );
+      }
+
       this.isUpdated = false;
       return true;
     }

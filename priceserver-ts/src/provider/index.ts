@@ -20,7 +20,7 @@ export async function initialize(): Promise<void> {
   await loop();
 }
 
-export function getLunaPrices() {
+export function getLunaPrices(): PriceByQuote {
   let lunaPrices: PriceByQuote = {};
 
   // collect luna prices

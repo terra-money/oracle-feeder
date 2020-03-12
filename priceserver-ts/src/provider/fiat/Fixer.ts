@@ -10,7 +10,7 @@ interface Response {
 }
 
 export class Fixer extends Quoter {
-  private async updateLastTrades(): Promise<void> {
+  private async updatePrices(): Promise<void> {
     const params = {
       access_key: this.options.apiKey,
       // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription
@@ -43,7 +43,7 @@ export class Fixer extends Quoter {
   }
 
   protected async update(): Promise<boolean> {
-    await this.updateLastTrades().catch(errorHandling);
+    await this.updatePrices().catch(errorHandling);
 
     return true;
   }
