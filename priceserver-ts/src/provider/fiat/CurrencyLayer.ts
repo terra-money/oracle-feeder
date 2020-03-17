@@ -1,5 +1,5 @@
 import nodeFetch from 'node-fetch';
-import { errorHandling } from 'lib/error';
+import { errorHandler } from 'lib/error';
 import { toQueryString } from 'lib/fetch';
 import { Quoter } from '../base';
 
@@ -33,7 +33,7 @@ export class CurrencyLayer extends Quoter {
   }
 
   protected async update(): Promise<boolean> {
-    await this.updatePrices().catch(errorHandling);
+    await this.updatePrices().catch(errorHandler);
 
     return true;
   }

@@ -2,7 +2,7 @@ import * as config from 'config';
 import { uniq, concat } from 'lodash';
 import { format, addMinutes, isSameMinute, isSameDay } from 'date-fns';
 import { createReporter } from 'lib/reporter';
-import { average } from 'lib/average';
+import { average } from 'lib/statistics';
 import * as logger from 'lib/logger';
 import { PriceByQuote, Trades } from './types';
 import Quoter from './Quoter';
@@ -94,28 +94,25 @@ export class Provider {
           [
             'time',
             ...this.quotes.map(quote => `${this.baseCurrency}/${quote}`),
-            ...concat(...this.quoters.map(quoter => concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`)))),
-            ...concat(...this.quoters.map(quoter => concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}\nvolume`)))),
+            ...concat(...this.quoters.map(quoter => concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`))))
           ]
         );
       }
 
-      const timestamp = Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000;
-      const report = { time: format(timestamp, 'MM-dd HH:mm') };
+      const report = {
+        time: format(Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000, 'MM-dd HH:mm')
+      };
 
+      // report adjust price
       for (const quote of this.quotes) {
         report[`${this.baseCurrency}/${quote}`] = this.priceByQuote[quote]?.toFixed(8);
       }
 
+      // report quoter's price
       for (const quoter of this.quoters) {
         for (const quote of quoter.getQuotes()) {
           const key = `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`;
-          // last price
           report[key] = quoter.getPrice(quote)?.toFixed(8);
-
-          // last volume
-          const trade = quoter.getTrades(quote)?.find(trade => trade.timestamp === timestamp);
-          report[`${key}\nvolume`] = trade?.volume || 0;
         }
       }
 
@@ -123,6 +120,7 @@ export class Provider {
     } catch (error) {
       logger.error(error);
     }
+
     this.reportedAt = now;
   }
 }

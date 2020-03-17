@@ -1,6 +1,5 @@
 import * as config from 'config';
-import { average } from 'lib/average';
-import { tvwap } from 'lib/tvwap';
+import { average, tvwap } from 'lib/statistics';
 import { Provider } from '../base';
 import Bithumb from './Bithumb';
 import Coinone from './Coinone';

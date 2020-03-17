@@ -4,7 +4,7 @@ import * as http from 'http';
 import * as bluebird from 'bluebird';
 import * as sentry from '@sentry/node';
 import * as config from 'config';
-import { errorHandling } from 'lib/error';
+import { errorHandler } from 'lib/error';
 import * as logger from 'lib/logger';
 import { initialize as initializeProviders, getLunaPrices } from './provider';
 
@@ -58,4 +58,4 @@ async function main(): Promise<void> {
   await initializeProviders();
 }
 
-main().catch(errorHandling);
+main().catch(errorHandler);

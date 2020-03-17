@@ -1,5 +1,5 @@
 import nodeFetch from 'node-fetch';
-import { errorHandling } from 'lib/error';
+import { errorHandler } from 'lib/error';
 import { toFormData } from 'lib/fetch';
 import * as logger from 'lib/logger';
 import { WebSocketQuoter, Trades } from '../base';
@@ -52,7 +52,7 @@ export class Bithumb extends WebSocketQuoter {
             this.priceByQuote[quote] = trades[trades.length - 1].price;
           }
         })
-        .catch(errorHandling);
+        .catch(errorHandler);
     }
 
     // connect to bithumb websocket server
@@ -95,7 +95,7 @@ export class Bithumb extends WebSocketQuoter {
           break;
       }
     } catch (error) {
-      errorHandling(error);
+      errorHandler(error);
     }
   }
 

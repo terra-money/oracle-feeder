@@ -1,5 +1,5 @@
 import nodeFetch from 'node-fetch';
-import { errorHandling } from 'lib/error';
+import { errorHandler } from 'lib/error';
 import { Quoter, Trades } from '../base';
 
 const candlestickUrl = {
@@ -49,7 +49,7 @@ export class Coinone extends Quoter {
             this.priceByQuote[quote] = trades[trades.length - 1].price;
           }
         })
-        .catch(errorHandling);
+        .catch(errorHandler);
     }
 
     return true;

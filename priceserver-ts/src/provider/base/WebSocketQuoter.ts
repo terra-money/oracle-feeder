@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import { errorHandling } from 'lib/error';
+import { errorHandler } from 'lib/error';
 import * as logger from 'lib/logger';
 import Quoter from './Quoter';
 
@@ -48,7 +48,7 @@ export class WebSocketQuoter extends Quoter {
   }
 
   protected onError(error) {
-    errorHandling(error);
+    errorHandler(error);
   }
 
   protected onData(raw) {}
