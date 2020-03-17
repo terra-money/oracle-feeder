@@ -1,5 +1,9 @@
+import * as config from 'config';
 import { uniq, concat } from 'lodash';
+import { format, addMinutes, isSameMinute, isSameDay } from 'date-fns';
+import { createReporter } from 'lib/reporter';
 import { average } from 'lib/average';
+import * as logger from 'lib/logger';
 import { PriceByQuote, Trades } from './types';
 import Quoter from './Quoter';
 
@@ -8,6 +12,8 @@ export class Provider {
   protected quotes: string[] = []; // quote currencies
   protected priceByQuote: PriceByQuote = {};
   protected baseCurrency: string;
+  private reporter;
+  private reportedAt: number = 0;
 
   constructor(baseCurrency: string) {
     this.baseCurrency = baseCurrency;
@@ -27,6 +33,11 @@ export class Provider {
     if (responses.some(response => response)) {
       this.adjustPrices();
       return true;
+    }
+
+    // report the prices
+    if (config.report) {
+      this.report(now);
     }
 
     return false;
@@ -69,6 +80,50 @@ export class Provider {
         this.priceByQuote[quote] = average(prices);
       }
     }
+  }
+
+  private report(now: number) {
+    if (isSameMinute(now, this.reportedAt)) {
+      return;
+    }
+
+    try {
+      if (!this.reporter || !isSameDay(now, this.reportedAt)) {
+        this.reporter = createReporter(
+          `report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`,
+          [
+            'time',
+            ...this.quotes.map(quote => `${this.baseCurrency}/${quote}`),
+            ...concat(...this.quoters.map(quoter => concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`)))),
+            ...concat(...this.quoters.map(quoter => concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}\nvolume`)))),
+          ]
+        );
+      }
+
+      const timestamp = Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000;
+      const report = { time: format(timestamp, 'MM-dd HH:mm') };
+
+      for (const quote of this.quotes) {
+        report[`${this.baseCurrency}/${quote}`] = this.priceByQuote[quote]?.toFixed(8);
+      }
+
+      for (const quoter of this.quoters) {
+        for (const quote of quoter.getQuotes()) {
+          const key = `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`;
+          // last price
+          report[key] = quoter.getPrice(quote)?.toFixed(8);
+
+          // last volume
+          const trade = quoter.getTrades(quote)?.find(trade => trade.timestamp === timestamp);
+          report[`${key}\nvolume`] = trade?.volume || 0;
+        }
+      }
+
+      this.reporter.writeRecords([report]);
+    } catch (error) {
+      logger.error(error);
+    }
+    this.reportedAt = now;
   }
 }
 

@@ -1,6 +1,6 @@
 import { Provider, PriceByQuote } from './base';
 import * as bluebird from 'bluebird';
-import { format, getMinutes } from 'date-fns';
+import { format, isSameMinute } from 'date-fns';
 import { errorHandling } from 'lib/error';
 import * as logger from 'lib/logger';
 import LunaProvider from './luna/LunaProvider';
@@ -13,9 +13,7 @@ const providers: Provider[] = [
 let loggedAt: number = 0;
 
 export async function initialize(): Promise<void> {
-  for (const provider of providers) {
-    await provider.initialize();
-  }
+  await Promise.all(providers.map(provider => provider.initialize()));
 
   await loop();
 }
@@ -37,8 +35,9 @@ async function loop(): Promise<void> {
 
     await Promise.all(providers.map(provider => provider.tick(now))).catch(errorHandling);
 
-    if (getMinutes(now) !== getMinutes(loggedAt)) {
+    if (!isSameMinute(now, loggedAt)) {
       logger.info(format(new Date(), 'yyyy-MM-dd HH:mm:ss'), getLunaPrices());
+
       loggedAt = now;
     }
 

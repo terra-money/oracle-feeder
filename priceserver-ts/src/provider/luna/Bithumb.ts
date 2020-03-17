@@ -112,6 +112,7 @@ export class Bithumb extends WebSocketQuoter {
       const volume = parseFloat(row.contQty);
       const currentTrade = this.tradesByQuote[quote].find(trade => trade.timestamp === timestamp);
 
+      // make 1m candle stick
       if (currentTrade) {
         currentTrade.price = price;
         currentTrade.volume += volume;
@@ -119,6 +120,7 @@ export class Bithumb extends WebSocketQuoter {
         this.tradesByQuote[quote].push({ price, volume, timestamp });
       }
 
+      // set last price
       this.priceByQuote[quote] = price;
     }
 
