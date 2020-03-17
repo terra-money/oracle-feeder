@@ -1,7 +1,10 @@
+import { BigNumber } from 'bignumber.js';
+
+
 export interface Trade {
   timestamp: number;
-  price: number;
-  volume: number;
+  price: BigNumber;
+  volume: BigNumber;
 }
 
 export type Trades = Trade[];
@@ -11,5 +14,5 @@ export interface TradesByQuote {
 }
 
 export interface PriceByQuote {
-  [quote: string]: number;
+  [quote: string]: BigNumber;
 }

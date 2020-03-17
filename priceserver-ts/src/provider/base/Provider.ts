@@ -1,3 +1,4 @@
+import { BigNumber } from 'bignumber.js';
 import * as config from 'config';
 import { uniq, concat } from 'lodash';
 import { format, addMinutes, isSameMinute, isSameDay } from 'date-fns';
@@ -53,7 +54,7 @@ export class Provider {
 
     if (lunaPrices[this.baseCurrency]) {
       for (const quote of Object.keys(this.priceByQuote)) {
-        prices[quote] = this.priceByQuote[quote] * lunaPrices[this.baseCurrency];
+        prices[quote] = this.priceByQuote[quote].multipliedBy(lunaPrices[this.baseCurrency]);
       }
     }
 
@@ -65,8 +66,8 @@ export class Provider {
     return concat(...this.quoters.map(quoter => quoter.getTrades(quote) || []));
   }
 
-  protected collectPrice(quote: string): number[] {
-    return this.quoters.map(quoter => quoter.getPrice(quote)).filter(price => typeof price === 'number');
+  protected collectPrice(quote: string): BigNumber[] {
+    return this.quoters.map(quoter => quoter.getPrice(quote)).filter(price => price);
   }
 
   protected adjustPrices() {
@@ -74,7 +75,7 @@ export class Provider {
     for (const quote of this.quotes) {
       delete this.priceByQuote[quote];
 
-      const prices: number[] = this.collectPrice(quote);
+      const prices: BigNumber[] = this.collectPrice(quote);
 
       if (prices.length > 0) {
         this.priceByQuote[quote] = average(prices);

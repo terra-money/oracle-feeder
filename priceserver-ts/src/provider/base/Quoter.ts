@@ -1,3 +1,4 @@
+import { BigNumber } from 'bignumber.js';
 import { TradesByQuote, Trades, PriceByQuote } from './types';
 
 interface QuoterOptions {
@@ -41,7 +42,7 @@ export class Quoter {
     return this.tradesByQuote[quote];
   }
 
-  public getPrice(quote: string): number {
+  public getPrice(quote: string): BigNumber {
     return this.priceByQuote[quote];
   }
 

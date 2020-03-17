@@ -1,6 +1,7 @@
 import nodeFetch from 'node-fetch';
 import { errorHandler } from 'lib/error';
 import { toQueryString } from 'lib/fetch';
+import { num } from 'lib/num';
 import { Quoter } from '../base';
 
 interface Response {
@@ -28,7 +29,7 @@ export class CurrencyLayer extends Quoter {
     // update last trades
     for (const symbol of Object.keys(response.quotes)) {
       const quote = symbol.replace('KRW', '');
-      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = +response.quotes[symbol];
+      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = num(response.quotes[symbol]);
     }
   }
 

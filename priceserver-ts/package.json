@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@sentry/node": "5.13.0",
+    "bignumber.js": "^9.0.0",
     "bluebird": "^3.5.5",
     "config": "^3.3.0",
     "csv-writer": "^1.6.0",

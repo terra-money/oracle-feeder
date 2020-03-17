@@ -2,6 +2,7 @@ import nodeFetch from 'node-fetch';
 import { errorHandler } from 'lib/error';
 import { toFormData } from 'lib/fetch';
 import * as logger from 'lib/logger';
+import { num } from 'lib/num';
 import { WebSocketQuoter, Trades } from '../base';
 
 const headers = {
@@ -108,14 +109,14 @@ export class Bithumb extends WebSocketQuoter {
       }
 
       const timestamp = Math.floor(new Date(row.contDtm).getTime() / 60000) * 60000;
-      const price = parseFloat(row.contPrice);
-      const volume = parseFloat(row.contQty);
+      const price = num(row.contPrice);
+      const volume = num(row.contQty);
       const currentTrade = this.tradesByQuote[quote].find(trade => trade.timestamp === timestamp);
 
       // make 1m candle stick
       if (currentTrade) {
         currentTrade.price = price;
-        currentTrade.volume += volume;
+        currentTrade.volume.plus(volume);
       } else {
         this.tradesByQuote[quote].push({ price, volume, timestamp });
       }
@@ -145,8 +146,8 @@ export class Bithumb extends WebSocketQuoter {
 
     return response.data.map(row => ({
       // the order is [time, open, close, high, low, volume]
-      price: parseFloat(row[2]),
-      volume: parseFloat(row[5]),
+      price: num(row[2]),
+      volume: num(row[5]),
       timestamp: +row[0]
     }));
   }

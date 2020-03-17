@@ -1,6 +1,7 @@
 import nodeFetch from 'node-fetch';
 import { errorHandler } from 'lib/error';
 import { toQueryString } from 'lib/fetch';
+import { num } from 'lib/num';
 import { Quoter } from '../base';
 
 interface Response {
@@ -38,7 +39,7 @@ export class Fixer extends Quoter {
 
     // update last trades
     for (const quote of Object.keys(response.rates)) {
-      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = +response.rates[quote];
+      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = num(response.rates[quote]);
     }
   }
 

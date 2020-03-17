@@ -1,5 +1,6 @@
 import nodeFetch from 'node-fetch';
 import { errorHandler } from 'lib/error';
+import { num } from 'lib/num';
 import { Quoter, Trades } from '../base';
 
 const candlestickUrl = {
@@ -33,8 +34,8 @@ export class Coinone extends Quoter {
     return response.data
       .filter(row => parseFloat(row.Volume) > 0)
       .map(row => ({
-        price: parseFloat(row.Close),
-        volume: parseFloat(row.Volume),
+        price: num(row.Close),
+        volume: num(row.Volume),
         timestamp: +row.DT
       }));
   }
