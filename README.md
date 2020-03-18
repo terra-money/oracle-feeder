@@ -1,5 +1,8 @@
 # Oracle Feeder
-[Guide for oracle feeder](feeder/README.md)
+[Guide](feeder/README.md)
 
-# Price Server
-[Guide for price server](priceserver/README.md)
+# Price Server (TypeScript)
+[Guide](priceserver-ts/README.md)
+
+# Price Server (Python)
+[Guide](priceserver-python/README.md)
