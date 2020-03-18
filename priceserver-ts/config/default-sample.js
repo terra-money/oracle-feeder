@@ -24,6 +24,13 @@ module.exports = {
       interval: 60 * 1000,
       apiKey: '', // necessary
     },
+    alphavantage: {
+      enable: true,
+      base: 'KRW',
+      quotes: ['SDR', 'USD', 'MNT'],
+      interval: 60 * 1000,
+      apiKey: '' // necessary
+    },
     fixer: {
       enable: false,
       base: 'KRW',
