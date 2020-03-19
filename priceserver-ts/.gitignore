@@ -39,4 +39,5 @@ typings/
 config/default.js
 
 # report
-report/
+report/*
+!report/.gitkeep
