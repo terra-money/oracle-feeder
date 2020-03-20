@@ -8,7 +8,7 @@ import { Quoter } from '../base';
 interface Response {
   'Realtime Currency Exchange Rate': {
     '5. Exchange Rate': string;
-  }
+  };
 }
 
 export class AlphaVantage extends Quoter {
@@ -20,12 +20,12 @@ export class AlphaVantage extends Quoter {
       apikey: this.options.apiKey
     };
 
-    const response: Response = await nodeFetch(
-      `https://www.alphavantage.co/query?${toQueryString(params)}`,
-      { timeout: this.options.timeout }
-    ).then(res => res.json());
+    const response: Response = await nodeFetch(`https://www.alphavantage.co/query?${toQueryString(params)}`, {
+      timeout: this.options.timeout
+    }).then(res => res.json());
 
-    if (!response ||
+    if (
+      !response ||
       !response['Realtime Currency Exchange Rate'] ||
       !response['Realtime Currency Exchange Rate']['5. Exchange Rate']
     ) {
@@ -33,7 +33,10 @@ export class AlphaVantage extends Quoter {
       throw new Error(`wrong response, ${response}`);
     }
 
-    this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = num(response['Realtime Currency Exchange Rate']['5. Exchange Rate']);
+    this.setPrice(
+      quote === 'XDR' ? 'SDR' : quote,
+      num(response['Realtime Currency Exchange Rate']['5. Exchange Rate'])
+    );
   }
 
   protected async update(): Promise<boolean> {

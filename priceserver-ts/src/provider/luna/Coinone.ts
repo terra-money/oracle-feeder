@@ -45,10 +45,12 @@ export class Coinone extends Quoter {
       // update last trades of LUNA/quote
       await this.fetchLatestTrades(quote)
         .then(trades => {
-          if (trades.length > 0) {
-            this.tradesByQuote[quote] = trades;
-            this.priceByQuote[quote] = trades[trades.length - 1].price;
+          if (!trades.length) {
+            return;
           }
+
+          this.setTrades(quote, trades);
+          this.setPrice(quote, trades[trades.length - 1].price);
         })
         .catch(errorHandler);
     }

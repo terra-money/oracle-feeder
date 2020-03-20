@@ -39,7 +39,7 @@ export class Fixer extends Quoter {
 
     // update last trades
     for (const quote of Object.keys(response.rates)) {
-      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = num(response.rates[quote]);
+      this.setPrice(quote === 'XDR' ? 'SDR' : quote, num(response.rates[quote]));
     }
   }
 

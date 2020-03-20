@@ -29,7 +29,7 @@ export class CurrencyLayer extends Quoter {
     // update last trades
     for (const symbol of Object.keys(response.quotes)) {
       const quote = symbol.replace('KRW', '');
-      this.priceByQuote[quote === 'XDR' ? 'SDR' : quote] = num(response.quotes[symbol]);
+      this.setPrice(quote === 'XDR' ? 'SDR' : quote, num(response.quotes[symbol]));
     }
   }
 

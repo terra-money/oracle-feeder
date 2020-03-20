@@ -43,15 +43,17 @@ export class Bithumb extends WebSocketQuoter {
 
   public async initialize(): Promise<void> {
     for (const quote of this.quotes) {
-      this.tradesByQuote[quote] = [];
+      this.setTrades(quote, []);
 
       // update last trades and price of LUNA/quote
       await this.fetchLatestTrades(quote)
         .then(trades => {
-          this.tradesByQuote[quote] = trades;
-          if (trades.length) {
-            this.priceByQuote[quote] = trades[trades.length - 1].price;
+          if (!trades.length) {
+            return;
           }
+
+          this.setTrades(quote, trades);
+          this.setPrice(quote, trades[trades.length - 1].price);
         })
         .catch(errorHandler);
     }
@@ -63,40 +65,27 @@ export class Bithumb extends WebSocketQuoter {
   }
 
   protected onConnect() {
-    logger.info(`${this.constructor.name}: WebSocket connected`);
-
-    const symbols = this.quotes.map(quote => `"${this.baseCurrency}_${quote}"`).join(',');
+    super.onConnect();
 
     // subscribe transaction
+    const symbols = this.quotes.map(quote => `"${this.baseCurrency}_${quote}"`).join(',');
     this.ws.send(`{"type":"transaction", "symbols":[${symbols}]}`);
   }
 
-  protected onData(raw) {
-    let data;
-    try {
-      data = JSON.parse(raw);
-
-      if (data.status === '0000') {
-        logger.info(`${this.constructor.name}: ${data.resmsg}`);
-        return;
-      }
-    } catch (error) {
-      logger.error(`${this.constructor.name}: JSON parse error ${raw}`);
+  protected onData(data: any) {
+    if (data?.status === '0000') {
+      logger.info(`${this.constructor.name}: ${data.resmsg}`);
       return;
     }
 
-    try {
-      switch (data?.type) {
-        case 'transaction':
-          this.onTransaction(data);
-          break;
+    switch (data?.type) {
+      case 'transaction':
+        this.onTransaction(data);
+        break;
 
-        default:
-          logger.warn(`${this.constructor.name}: receive unknown type data`, data);
-          break;
-      }
-    } catch (error) {
-      errorHandler(error);
+      default:
+        logger.warn(`${this.constructor.name}: receive unknown type data`, data);
+        break;
     }
   }
 
@@ -111,18 +100,20 @@ export class Bithumb extends WebSocketQuoter {
       const timestamp = Math.floor(new Date(row.contDtm).getTime() / 60000) * 60000;
       const price = num(row.contPrice);
       const volume = num(row.contQty);
-      const currentTrade = this.tradesByQuote[quote].find(trade => trade.timestamp === timestamp);
+
+      const trades = this.getTrades(quote) || [];
+      const currentTrade = trades.find(trade => trade.timestamp === timestamp);
 
       // make 1m candle stick
       if (currentTrade) {
         currentTrade.price = price;
         currentTrade.volume.plus(volume);
       } else {
-        this.tradesByQuote[quote].push({ price, volume, timestamp });
+        trades.push({ price, volume, timestamp });
       }
 
-      // set last price
-      this.priceByQuote[quote] = price;
+      this.setTrades(quote, trades);
+      this.setPrice(quote, price);
     }
 
     this.isUpdated = true;
@@ -154,13 +145,6 @@ export class Bithumb extends WebSocketQuoter {
 
   protected async update(): Promise<boolean> {
     if (this.isUpdated) {
-      // remove trades that are past 5 minutes
-      for (const quote of this.quotes) {
-        this.tradesByQuote[quote] = this.tradesByQuote[quote].filter(
-          trade => Date.now() - trade.timestamp < 5 * 60 * 1000
-        );
-      }
-
       this.isUpdated = false;
       return true;
     }
