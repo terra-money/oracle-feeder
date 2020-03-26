@@ -132,7 +132,7 @@ export class Bithumb extends WebSocketQuoter {
     ).then(res => res.json());
 
     if (!response || response.error !== '0000' || !Array.isArray(response.data) || response.data.length < 1) {
-      throw new Error(`wrong response, ${response}`);
+      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
     }
 
     return response.data.map(row => ({

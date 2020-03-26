@@ -23,7 +23,7 @@ export class Fixer extends Quoter {
     }).then(res => res.json());
 
     if (!response || !response.success || !response.rates) {
-      throw new Error(`wrong response, ${response}`);
+      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
     }
 
     if (!response.rates.KRW) {

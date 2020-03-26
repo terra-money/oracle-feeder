@@ -28,7 +28,7 @@ export class Coinone extends Quoter {
     }).then(res => res.json());
 
     if (!response || !response.success || !Array.isArray(response.data) || response.data.length < 1) {
-      throw new Error(`wrong response, ${response}`);
+      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
     }
 
     return response.data

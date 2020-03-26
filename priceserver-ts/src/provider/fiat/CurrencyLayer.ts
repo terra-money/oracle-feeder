@@ -23,7 +23,7 @@ export class CurrencyLayer extends Quoter {
     }).then(res => res.json());
 
     if (!response || !response.success || !response.quotes) {
-      throw new Error(`wrong response, ${response}`);
+      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
     }
 
     // update last trades

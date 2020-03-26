@@ -30,7 +30,7 @@ export class AlphaVantage extends Quoter {
       !response['Realtime Currency Exchange Rate']['5. Exchange Rate']
     ) {
       logger.error(response);
-      throw new Error(`wrong response, ${response}`);
+      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
     }
 
     this.setPrice(

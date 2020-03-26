@@ -1,7 +1,7 @@
 import { Provider, PriceByQuote } from './base';
 import * as config from 'config';
 import * as bluebird from 'bluebird';
-import { reduce, concat } from 'lodash';
+import { reduce } from 'lodash';
 import { format, isSameDay, isSameMinute, addMinutes } from 'date-fns';
 import { errorHandler } from 'lib/error';
 import * as logger from 'lib/logger';
@@ -65,16 +65,18 @@ function report(now: number) {
     }
 
     if (!reporter || !isSameDay(now, reportedAt)) {
-      reporter = createReporter(
-        `report/LunaPrices_${format(now, 'MM-dd_HHmm')}.csv`,
-        ['time', ...Object.keys(lunaPrices).map(quote => quote)]
-      );
+      reporter = createReporter(`report/LunaPrices_${format(now, 'MM-dd_HHmm')}.csv`, [
+        'time',
+        ...Object.keys(lunaPrices).map(quote => quote)
+      ]);
     }
 
-    reporter.writeRecords([{
-      time: format(Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000, 'MM-dd HH:mm'),
-      ...lunaPrices
-    }]);
+    reporter.writeRecords([
+      {
+        time: format(Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000, 'MM-dd HH:mm'),
+        ...lunaPrices
+      }
+    ]);
   } catch (error) {
     logger.error(error);
   }
