@@ -51,7 +51,10 @@ export class WebSocketQuoter extends Quoter {
   }
 
   protected onError(error) {
-    errorHandler({ message: `${this.constructor.name}: socket error`, error });
+    if (error?.message) {
+      error.message += ` (${this.constructor.name} websocket)`;
+    }
+    errorHandler(error);
   }
 
   protected onData(data: object) {}

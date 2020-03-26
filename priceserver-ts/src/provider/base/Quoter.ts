@@ -17,7 +17,7 @@ export class Quoter {
   private priceByQuote: PriceByQuote = {};
 
   private updatedAt: number; // for interval update
-  private isAlive: boolean;
+  private isAlive: boolean = true;
   private alivedAt: number;
 
   constructor(baseCurrency: string, quotes: string[], options: QuoterOptions) {
@@ -35,10 +35,10 @@ export class Quoter {
       return false;
     }
 
-    await this.update();
     this.checkAlive();
-
     this.updatedAt = now;
+
+    return this.update();
   }
 
   public getQuotes(): string[] {
