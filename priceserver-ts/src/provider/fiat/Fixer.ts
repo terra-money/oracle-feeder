@@ -1,4 +1,5 @@
 import nodeFetch from 'node-fetch';
+import * as logger from 'lib/logger';
 import { errorHandler } from 'lib/error';
 import { toQueryString } from 'lib/fetch';
 import { num } from 'lib/num';
@@ -23,7 +24,8 @@ export class Fixer extends Quoter {
     }).then(res => res.json());
 
     if (!response || !response.success || !response.rates) {
-      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty');
+      throw 'skip';
     }
 
     if (!response.rates.KRW) {

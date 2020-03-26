@@ -1,6 +1,7 @@
 import nodeFetch from 'node-fetch';
 import { errorHandler } from 'lib/error';
 import { num } from 'lib/num';
+import * as logger from 'lib/logger';
 import { Quoter, Trades } from '../base';
 
 const candlestickUrl = {
@@ -28,7 +29,8 @@ export class Coinone extends Quoter {
     }).then(res => res.json());
 
     if (!response || !response.success || !Array.isArray(response.data) || response.data.length < 1) {
-      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty');
+      throw 'skip';
     }
 
     return response.data

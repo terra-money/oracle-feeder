@@ -1,6 +1,6 @@
 import nodeFetch from 'node-fetch';
-import { errorHandler } from 'lib/error';
 import { toFormData } from 'lib/fetch';
+import { errorHandler } from 'lib/error';
 import * as logger from 'lib/logger';
 import { num } from 'lib/num';
 import { WebSocketQuoter, Trades } from '../base';
@@ -132,7 +132,8 @@ export class Bithumb extends WebSocketQuoter {
     ).then(res => res.json());
 
     if (!response || response.error !== '0000' || !Array.isArray(response.data) || response.data.length < 1) {
-      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty');
+      throw 'skip';
     }
 
     return response.data.map(row => ({

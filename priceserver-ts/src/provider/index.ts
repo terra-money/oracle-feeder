@@ -8,6 +8,7 @@ import * as logger from 'lib/logger';
 import { createReporter } from 'lib/reporter';
 import LunaProvider from './luna/LunaProvider';
 import FiatProvider from './fiat/FiatProvider';
+import { sendSlack } from 'lib/slack';
 
 const providers: Provider[] = [
   new LunaProvider('LUNA'), // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
@@ -17,6 +18,7 @@ let reporter;
 let reportedAt: number = 0;
 
 export async function initialize(): Promise<void> {
+  await sendSlack('Bithumb is not responding for 1 minute.');
   await Promise.all(providers.map(provider => provider.initialize()));
 
   await loop();

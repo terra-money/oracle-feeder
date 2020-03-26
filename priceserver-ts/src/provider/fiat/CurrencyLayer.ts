@@ -2,6 +2,7 @@ import nodeFetch from 'node-fetch';
 import { errorHandler } from 'lib/error';
 import { toQueryString } from 'lib/fetch';
 import { num } from 'lib/num';
+import * as logger from 'lib/logger';
 import { Quoter } from '../base';
 
 interface Response {
@@ -23,7 +24,8 @@ export class CurrencyLayer extends Quoter {
     }).then(res => res.json());
 
     if (!response || !response.success || !response.quotes) {
-      throw new Error(`wrong response, ${response && JSON.stringify(response)}`);
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty');
+      throw 'skip';
     }
 
     // update last trades

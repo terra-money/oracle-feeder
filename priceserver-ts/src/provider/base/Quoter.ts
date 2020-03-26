@@ -1,5 +1,6 @@
 import { BigNumber } from 'bignumber.js';
 import { TradesByQuote, Trades, PriceByQuote } from './types';
+import { sendSlack } from 'lib/slack';
 
 interface QuoterOptions {
   interval: number; // update interval
@@ -11,10 +12,13 @@ export class Quoter {
   protected options: QuoterOptions;
   protected baseCurrency: string; // base currency
   protected quotes: string[] = []; // quote currencies
+
   private tradesByQuote: TradesByQuote = {};
   private priceByQuote: PriceByQuote = {};
-  protected alivedAt: number;
+
   private updatedAt: number; // for interval update
+  private isAlive: boolean;
+  private alivedAt: number;
 
   constructor(baseCurrency: string, quotes: string[], options: QuoterOptions) {
     this.baseCurrency = baseCurrency;
@@ -31,9 +35,10 @@ export class Quoter {
       return false;
     }
 
-    this.updatedAt = now;
+    await this.update();
+    this.checkAlive();
 
-    return this.update();
+    this.updatedAt = now;
   }
 
   public getQuotes(): string[] {
@@ -48,12 +53,8 @@ export class Quoter {
   }
 
   public getTrades(quote: string): Trades {
-    // unresponsed more than 1 minute, not used
-    if (Date.now() - this.alivedAt > 60 * 1000) {
-      return [];
-    }
-
-    return this.tradesByQuote[quote];
+    // unresponsed more than 1 minute, return []
+    return this.isAlive ? this.tradesByQuote[quote] : [];
   }
 
   protected setPrice(quote: string, price: BigNumber) {
@@ -63,12 +64,8 @@ export class Quoter {
   }
 
   public getPrice(quote: string): BigNumber {
-    // unresponsed more than 1 minute, not used
-    if (Date.now() - this.alivedAt > 60 * 1000) {
-      return undefined;
-    }
-
-    return this.priceByQuote[quote];
+    // unresponsed more than 1 minute, return undefined
+    return this.isAlive ? this.priceByQuote[quote] : undefined;
   }
 
   protected async update(): Promise<boolean> {
@@ -77,6 +74,19 @@ export class Quoter {
 
   protected alive() {
     this.alivedAt = Date.now();
+
+    if (!this.isAlive) {
+      const downtime = (((Date.now() - this.alivedAt) / 60) * 1000).toFixed(1);
+      sendSlack(`${this.constructor.name} is alive! (downtime - ${downtime}minutes)`).catch();
+      this.isAlive = true;
+    }
+  }
+
+  private checkAlive() {
+    if (this.isAlive && Date.now() - this.alivedAt > 60 * 1000) {
+      sendSlack(`${this.constructor.name} is down`).catch();
+      this.isAlive = false;
+    }
   }
 }
 

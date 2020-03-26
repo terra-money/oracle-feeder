@@ -4,6 +4,11 @@ module.exports = {
     enable: false,
     dsn: ''
   },
+  slack: { // for incident alarm (e.g. exchange shutdown)
+    enable: false,
+    channel: '#bot-test',
+    url: ''
+  },
   provider: {
     bithumb: {
       enable: true,
