@@ -1,95 +1,95 @@
-import { BigNumber } from 'bignumber.js';
-import { TradesByQuote, Trades, PriceByQuote } from './types';
-import { sendSlack } from 'lib/slack';
+import { BigNumber } from 'bignumber.js'
+import { TradesByQuote, Trades, PriceByQuote } from './types'
+import { sendSlack } from 'lib/slack'
 
 interface QuoterOptions {
-  interval: number; // update interval
-  timeout: number; // api call timeout
-  apiKey?: string;
+  interval: number // update interval
+  timeout: number // api call timeout
+  apiKey?: string
 }
 
 export class Quoter {
-  protected options: QuoterOptions;
-  protected baseCurrency: string; // base currency
-  protected quotes: string[] = []; // quote currencies
+  protected options: QuoterOptions
+  protected baseCurrency: string // base currency
+  protected quotes: string[] = [] // quote currencies
 
-  private tradesByQuote: TradesByQuote = {};
-  private priceByQuote: PriceByQuote = {};
+  private tradesByQuote: TradesByQuote = {}
+  private priceByQuote: PriceByQuote = {}
 
-  private updatedAt: number; // for interval update
-  private isAlive: boolean = true;
-  private alivedAt: number;
+  private updatedAt: number // for interval update
+  private isAlive: boolean = true
+  private alivedAt: number
 
   constructor(baseCurrency: string, quotes: string[], options: QuoterOptions) {
-    this.baseCurrency = baseCurrency;
-    this.quotes = quotes;
-    this.options = options;
+    this.baseCurrency = baseCurrency
+    this.quotes = quotes
+    this.options = options
   }
 
   public async initialize(): Promise<void> {
-    return;
+    return
   }
 
   public async tick(now: number): Promise<boolean> {
     if (now - this.updatedAt < this.options.interval) {
-      return false;
+      return false
     }
 
-    const isUpdated = await this.update();
-    this.updatedAt = now;
+    const isUpdated = await this.update()
+    this.updatedAt = now
 
-    this.checkAlive();
+    this.checkAlive()
 
-    return isUpdated;
+    return isUpdated
   }
 
   public getQuotes(): string[] {
-    return this.quotes;
+    return this.quotes
   }
 
   protected setTrades(quote: string, trades: Trades) {
     // trades filtering that are past 60 minutes
-    this.tradesByQuote[quote] = trades.filter(trade => Date.now() - trade.timestamp < 60 * 60 * 1000);
+    this.tradesByQuote[quote] = trades.filter(trade => Date.now() - trade.timestamp < 60 * 60 * 1000)
 
-    this.alive();
+    this.alive()
   }
 
   public getTrades(quote: string): Trades {
     // unresponsed more than 1 minute, return []
-    return this.isAlive ? this.tradesByQuote[quote] : [];
+    return this.isAlive ? this.tradesByQuote[quote] : []
   }
 
   protected setPrice(quote: string, price: BigNumber) {
-    this.priceByQuote[quote] = price;
+    this.priceByQuote[quote] = price
 
-    this.alive();
+    this.alive()
   }
 
   public getPrice(quote: string): BigNumber {
     // unresponsed more than 1 minute, return undefined
-    return this.isAlive ? this.priceByQuote[quote] : undefined;
+    return this.isAlive ? this.priceByQuote[quote] : undefined
   }
 
   protected async update(): Promise<boolean> {
-    return false;
+    return false
   }
 
   protected alive() {
-    this.alivedAt = Date.now();
+    this.alivedAt = Date.now()
 
     if (!this.isAlive) {
-      const downtime = ((Date.now() - this.alivedAt) / 60 / 1000).toFixed(1);
-      sendSlack(`${this.constructor.name} is now alive. (downtime ${downtime} minutes)`).catch();
-      this.isAlive = true;
+      const downtime = ((Date.now() - this.alivedAt) / 60 / 1000).toFixed(1)
+      sendSlack(`${this.constructor.name} is now alive. (downtime ${downtime} minutes)`).catch()
+      this.isAlive = true
     }
   }
 
   private checkAlive() {
     if (this.isAlive && Date.now() - this.alivedAt > 60 * 1000) {
-      sendSlack(`${this.constructor.name} is no response!`).catch();
-      this.isAlive = false;
+      sendSlack(`${this.constructor.name} is no response!`).catch()
+      this.isAlive = false
     }
   }
 }
 
-export default Quoter;
+export default Quoter

@@ -1,9 +1,9 @@
-import nodeFetch from 'node-fetch';
-import * as config from 'config';
+import nodeFetch from 'node-fetch'
+import * as config from 'config'
 
 export function sendSlack(message: string) {
   if (!config?.slack?.enable || !config?.slack?.url) {
-    return;
+    return
   }
 
   return nodeFetch(config.get('slack.url'), {
@@ -14,5 +14,5 @@ export function sendSlack(message: string) {
       username: 'Oracle PriceServer',
       text: message
     })
-  });
+  })
 }

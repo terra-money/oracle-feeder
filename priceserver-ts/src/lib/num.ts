@@ -1,5 +1,5 @@
-import { BigNumber } from 'bignumber.js';
+import { BigNumber } from 'bignumber.js'
 
 export function num(number: number | string) {
-  return new BigNumber(number);
+  return new BigNumber(number)
 }
