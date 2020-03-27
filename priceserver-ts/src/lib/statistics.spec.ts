@@ -10,11 +10,12 @@ describe('average', () => {
 
 describe('volume weighted average price', () => {
   test('should return weighted average price', () => {
-    expect(vwap([
-      { price: num(1), volume: num(1) },
-      { price: num(2), volume: num(1) },
-      { price: num(3), volume: num(1) }
-    ]))
-      .toStrictEqual(num(2));
+    expect(
+      vwap([
+        { price: num(1), volume: num(1) },
+        { price: num(2), volume: num(1) },
+        { price: num(3), volume: num(1) }
+      ])
+    ).toStrictEqual(num(2));
   });
 });

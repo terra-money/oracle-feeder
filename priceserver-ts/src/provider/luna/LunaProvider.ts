@@ -4,7 +4,6 @@ import { average, tvwap } from 'lib/statistics';
 import { Provider } from '../base';
 import Bithumb from './Bithumb';
 import Coinone from './Coinone';
-import { num } from 'lib/num';
 
 const PRICE_PERIOD = 3 * 60 * 1000; // 3 minutes
 

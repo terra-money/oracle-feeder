@@ -90,14 +90,15 @@ export class Provider {
 
     try {
       if (!this.reporter || !isSameDay(now, this.reportedAt)) {
-        this.reporter = createReporter(
-          `report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`,
-          [
-            'time',
-            ...this.quotes.map(quote => `${this.baseCurrency}/${quote}`),
-            ...concat(...this.quoters.map(quoter => concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`))))
-          ]
-        );
+        this.reporter = createReporter(`report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`, [
+          'time',
+          ...this.quotes.map(quote => `${this.baseCurrency}/${quote}`),
+          ...concat(
+            ...this.quoters.map(quoter =>
+              concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`))
+            )
+          )
+        ]);
       }
 
       const report = {

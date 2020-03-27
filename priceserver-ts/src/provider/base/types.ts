@@ -1,6 +1,5 @@
 import { BigNumber } from 'bignumber.js';
 
-
 export interface Trade {
   timestamp: number;
   price: BigNumber;

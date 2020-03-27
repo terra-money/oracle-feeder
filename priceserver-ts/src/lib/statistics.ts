@@ -23,7 +23,7 @@ export function vwap(array: { price: BigNumber; volume: BigNumber }[]): BigNumbe
   }
 
   // sum(volume * price) / (total volume)
-  // return array.reduce((s, x) => s + x.volume * x.price, 0) / array.reduce((s, x) => s + x.volume, 0) || 0;
+  // return array.reduce((s, x) => s + x.volume * x.price, 0) / array.reduce((s, x) => s + x.volume, 0) || 0
   const sum = array.reduce((s, x) => s.plus(x.volume.multipliedBy(x.price)), num(0));
   const totalVolume = array.reduce((s, x) => s.plus(x.volume), num(0));
   return sum.dividedBy(totalVolume) || num(0);
@@ -44,7 +44,9 @@ export function tvwap(
   const sortedArray = array.sort((a, b) => a.timestamp - b.timestamp);
   const now = num(Date.now());
   const period = now.minus(num(array[0].timestamp));
-  const weightUnit = num(1).minus(minimumTimeWeight).dividedBy(period);
+  const weightUnit = num(1)
+    .minus(minimumTimeWeight)
+    .dividedBy(period);
 
   const tvwapTrades = sortedArray.map(trade => ({
     price: trade.price,
