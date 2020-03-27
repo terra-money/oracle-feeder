@@ -16,7 +16,7 @@ export class Quoter {
   private tradesByQuote: TradesByQuote = {}
   private priceByQuote: PriceByQuote = {}
 
-  private updatedAt: number // for interval update
+  private tickedAt: number
   private isAlive: boolean = true
   private alivedAt: number
 
@@ -31,12 +31,12 @@ export class Quoter {
   }
 
   public async tick(now: number): Promise<boolean> {
-    if (now - this.updatedAt < this.options.interval) {
+    if (now - this.tickedAt < this.options.interval) {
       return false
     }
+    this.tickedAt = now
 
     const isUpdated = await this.update()
-    this.updatedAt = now
 
     this.checkAlive()
 
@@ -47,16 +47,18 @@ export class Quoter {
     return this.quotes
   }
 
-  protected setTrades(quote: string, trades: Trades) {
-    // trades filtering that are past 60 minutes
-    this.tradesByQuote[quote] = trades.filter(trade => Date.now() - trade.timestamp < 60 * 60 * 1000)
-
-    this.alive()
+  public getPrice(quote: string): BigNumber {
+    // unresponsed more than 1 minute, return undefined
+    return this.isAlive ? this.priceByQuote[quote] : undefined
   }
 
   public getTrades(quote: string): Trades {
     // unresponsed more than 1 minute, return []
     return this.isAlive ? this.tradesByQuote[quote] : []
+  }
+
+  protected async update(): Promise<boolean> {
+    return false
   }
 
   protected setPrice(quote: string, price: BigNumber) {
@@ -65,13 +67,11 @@ export class Quoter {
     this.alive()
   }
 
-  public getPrice(quote: string): BigNumber {
-    // unresponsed more than 1 minute, return undefined
-    return this.isAlive ? this.priceByQuote[quote] : undefined
-  }
+  protected setTrades(quote: string, trades: Trades) {
+    // trades filtering that are past 60 minutes
+    this.tradesByQuote[quote] = trades.filter(trade => Date.now() - trade.timestamp < 60 * 60 * 1000)
 
-  protected async update(): Promise<boolean> {
-    return false
+    this.alive()
   }
 
   protected alive() {
