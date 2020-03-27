@@ -35,10 +35,12 @@ export class Quoter {
       return false;
     }
 
-    this.checkAlive();
+    const isUpdated = await this.update();
     this.updatedAt = now;
 
-    return this.update();
+    this.checkAlive();
+
+    return isUpdated;
   }
 
   public getQuotes(): string[] {
@@ -76,15 +78,15 @@ export class Quoter {
     this.alivedAt = Date.now();
 
     if (!this.isAlive) {
-      const downtime = (((Date.now() - this.alivedAt) / 60) * 1000).toFixed(1);
-      sendSlack(`${this.constructor.name} is alive! (downtime - ${downtime}minutes)`).catch();
+      const downtime = ((Date.now() - this.alivedAt) / 60 / 1000).toFixed(1);
+      sendSlack(`${this.constructor.name} is now alive. (downtime ${downtime} minutes)`).catch();
       this.isAlive = true;
     }
   }
 
   private checkAlive() {
     if (this.isAlive && Date.now() - this.alivedAt > 60 * 1000) {
-      sendSlack(`${this.constructor.name} is down`).catch();
+      sendSlack(`${this.constructor.name} is no response!`).catch();
       this.isAlive = false;
     }
   }
