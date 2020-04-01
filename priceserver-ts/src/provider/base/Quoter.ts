@@ -48,12 +48,10 @@ export class Quoter {
   }
 
   public getPrice(quote: string): BigNumber {
-    // unresponsed more than 1 minute, return undefined
     return this.isAlive ? this.priceByQuote[quote] : undefined
   }
 
   public getTrades(quote: string): Trades {
-    // unresponsed more than 1 minute, return []
     return this.isAlive ? this.tradesByQuote[quote] : []
   }
 
@@ -85,7 +83,8 @@ export class Quoter {
   }
 
   private checkAlive() {
-    if (this.isAlive && Date.now() - this.alivedAt > 60 * 1000) {
+    // no responsed more than 3 minutes, it is down
+    if (this.isAlive && Date.now() - this.alivedAt > 3 * 60 * 1000) {
       sendSlack(`${this.constructor.name} is no response!`).catch()
       this.isAlive = false
     }
