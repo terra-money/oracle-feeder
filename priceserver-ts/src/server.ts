@@ -2,23 +2,13 @@ import * as Koa from 'koa'
 import * as Router from 'koa-router'
 import * as http from 'http'
 import * as bluebird from 'bluebird'
-import * as sentry from '@sentry/node'
 import * as config from 'config'
-import { errorHandler } from 'lib/error'
+import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { initialize as initializeProviders, getLunaPrices } from './provider'
 
+bluebird.config({ longStackTraces: true })
 global.Promise = bluebird
-config.sentry?.enable && sentry.init({ dsn: config.sentry.dsn })
-
-process.on('unhandledRejection', error => {
-  logger.error(error)
-
-  sentry.withScope(scope => {
-    scope.setLevel(sentry.Severity.Critical)
-    sentry.captureException(error)
-  })
-})
 
 async function createServer() {
   const app = new Koa()
@@ -54,8 +44,12 @@ async function createServer() {
 }
 
 async function main(): Promise<void> {
+  initErrorHandler(config.sentry)
+
   await createServer()
   await initializeProviders()
 }
 
-main().catch(errorHandler)
+if (require.main === module) {
+  main().catch(errorHandler)
+}
