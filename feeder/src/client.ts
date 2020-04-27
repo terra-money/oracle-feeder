@@ -16,7 +16,12 @@ const secTimeout = 45;
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
-  timeout: 15000,
+  timeout: 30000,
+  headers: {
+    post: {
+      'Content-Type': 'application/json',
+    },
+  },
 });
 
 export async function queryAccount(lcdAddress: string, address: string) {
