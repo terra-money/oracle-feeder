@@ -8,10 +8,7 @@ import { StdTx, Coin } from './msg';
 const ENDPOINT_TX_BROADCAST = `/txs`;
 const ENDPOINT_QUERY_LATEST_BLOCK = `/blocks/latest`;
 const ENDPOINT_QUERY_ACCOUNT = `/auth/accounts/%s`;
-const ENDPOINT_QUERY_TX = `/txs/%s`;
 const ENDPOINT_TX_ESTIMATE_FEE = `/txs/estimate_fee`;
-
-const secTimeout = 45;
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
