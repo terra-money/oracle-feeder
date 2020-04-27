@@ -21,7 +21,7 @@ function prepareSignBytes(jsonTx) {
   const sorted = {};
   Object.keys(jsonTx)
     .sort()
-    .forEach(key => {
+    .forEach((key) => {
       if (jsonTx[key] === undefined || jsonTx[key] === null) return;
 
       sorted[key] = prepareSignBytes(jsonTx[key]);
@@ -46,7 +46,7 @@ function createSignMessage(jsonTx, { sequence, account_number, chain_id }) {
   // sign bytes need amount to be an array
   const fee = {
     amount: jsonTx.fee.amount || [],
-    gas: jsonTx.fee.gas
+    gas: jsonTx.fee.gas,
   };
 
   return JSON.stringify(
@@ -56,7 +56,7 @@ function createSignMessage(jsonTx, { sequence, account_number, chain_id }) {
       msgs: jsonTx.msg, // weird msg vs. msgs
       sequence,
       account_number,
-      chain_id
+      chain_id,
     })
   );
 }
@@ -75,8 +75,8 @@ function createSignature(signature, sequence, accountNumber, publicKey) {
     sequence,
     pub_key: {
       type: `tendermint/PubKeySecp256k1`, // TODO: allow other keytypes
-      value: publicKey.toString(`base64`)
-    }
+      value: publicKey.toString(`base64`),
+    },
   };
 }
 
@@ -104,7 +104,12 @@ export async function sign(
     const signature = signatureByteArray[`signature`];
     const signatureBuffer = secp256k1.signatureImport(signature);
 
-    return createSignature(signatureBuffer, baseRequest.sequence, baseRequest.account_number, voter.publicKey);
+    return createSignature(
+      signatureBuffer,
+      baseRequest.sequence,
+      baseRequest.account_number,
+      voter.publicKey
+    );
   }
 
   // Use private key for signing
@@ -113,20 +118,4 @@ export async function sign(
   const signatureBuffer = signWithPrivateKey(signMessage, voter.privateKey);
   const pubKeyBuffer = Buffer.from(voter.publicKey, `hex`);
   return createSignature(signatureBuffer, sequence, account_number, pubKeyBuffer);
-}
-
-// adds the signature object to the tx
-export function createSignedTx(tx, signature) {
-  return Object.assign({}, tx, {
-    signatures: [signature]
-  });
-}
-
-// the broadcast body consists of the signed tx and a return type
-// returnType can be block (inclusion in block), async (right away), sync (after checkTx has passed)
-export function createBroadcastBody(signedTx, modeType = `block`) {
-  return JSON.stringify({
-    tx: signedTx,
-    mode: modeType
-  });
 }

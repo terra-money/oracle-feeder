@@ -58,3 +58,4 @@ typings/
 .env
 
 voter.json
+dist/

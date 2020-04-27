@@ -25,12 +25,12 @@ async function getAccountFromLedger(ledger) {
     publicKey: pubKey.compressed_pk,
     terraAddress: address,
     terraValAddress: keyUtils.terraAddressToValidatorAddress(address),
-    wallet: ''
+    wallet: '',
   };
 }
 
 module.exports = {
   getLedgerNode,
   getLedgerApp,
-  getAccountFromLedger
+  getAccountFromLedger,
 };

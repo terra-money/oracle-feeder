@@ -1,5 +1,46 @@
 import * as sha256 from 'crypto-js/sha256';
 
+export interface Amount {
+  denom: string;
+  amount: string;
+}
+
+export interface Fee {
+  gas: string;
+  amount: Amount[];
+}
+
+export interface Signature {
+  signature: string;
+  account_number: string;
+  sequence: string;
+  pub_key: {
+    type: string;
+    value: string;
+  };
+}
+
+export interface StdTx {
+  fee: Fee;
+  memo: string;
+  msg: object[];
+  signatures: Signature[];
+}
+
+export interface Coin {
+  denom: string;
+  amount: string;
+}
+
+export function generateStdTx(msgs: object[], fee: Fee, memo: string = ''): StdTx {
+  return {
+    fee,
+    memo,
+    msg: msgs,
+    signatures: [],
+  };
+}
+
 function normalizeDecimal(decimalNumber: string) {
   const num = decimalNumber.split('.');
   let result = decimalNumber;
@@ -23,18 +64,6 @@ export function generateVoteHash(salt: string, price: string, denom: string, vot
   return hash.slice(0, 40);
 }
 
-export function generateStdTx(msgs: object[], fee: object, memo: string) {
-  return {
-    type: 'auth/StdTx',
-    value: {
-      fee,
-      memo,
-      msg: msgs,
-      signatures: null
-    }
-  };
-}
-
 export function generatePrevoteMsg(hash: string, denom: string, feeder: string, validator: string) {
   return {
     type: 'oracle/MsgExchangeRatePrevote',
@@ -42,12 +71,18 @@ export function generatePrevoteMsg(hash: string, denom: string, feeder: string, 
       hash,
       denom,
       feeder,
-      validator
-    }
+      validator,
+    },
   };
 }
 
-export function generateVoteMsg(price: string, salt: string, denom: string, feeder: string, validator: string) {
+export function generateVoteMsg(
+  price: string,
+  salt: string,
+  denom: string,
+  feeder: string,
+  validator: string
+) {
   return {
     type: 'oracle/MsgExchangeRateVote',
     value: {
@@ -55,7 +90,7 @@ export function generateVoteMsg(price: string, salt: string, denom: string, feed
       salt,
       denom,
       feeder,
-      validator
-    }
+      validator,
+    },
   };
 }

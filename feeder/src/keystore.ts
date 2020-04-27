@@ -6,9 +6,9 @@ const KEY_SIZE = 256;
 const ITERATIONS = 100;
 const DEFAULT_KEY_NAME = `voter`;
 
-export function loadKeys(keystore) {
+export function loadKeys(path: string) {
   try {
-    return JSON.parse(fs.readFileSync(keystore, `utf8`) || `[]`);
+    return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`);
   } catch (e) {
     console.error('loadKeys', e.message);
     return [];
@@ -22,19 +22,19 @@ function decrypt(transitmessage, pass) {
 
   const key = CryptoJS.PBKDF2(pass, salt, {
     keySize: KEY_SIZE / 32,
-    iterations: ITERATIONS
+    iterations: ITERATIONS,
   });
 
   return CryptoJS.AES.decrypt(encrypted, key, {
     iv,
     padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC
+    mode: CryptoJS.mode.CBC,
   }).toString(CryptoJS.enc.Utf8);
 }
 
-export function getKey(keystore, password) {
-  const keys = loadKeys(keystore);
-  const key = keys.find(key => key.name === DEFAULT_KEY_NAME);
+export function getKey(path: string, password: string): keyUtils.Key {
+  const keys = loadKeys(path);
+  const key = keys.find((key) => key.name === DEFAULT_KEY_NAME);
 
   if (!key) {
     throw new Error('Cannot find key');
@@ -54,7 +54,7 @@ function encrypt(plainText, pass) {
 
   const key = CryptoJS.PBKDF2(pass, salt, {
     keySize: KEY_SIZE / 32,
-    iterations: ITERATIONS
+    iterations: ITERATIONS,
   });
 
   const iv = CryptoJS.lib.WordArray.random(128 / 8);
@@ -62,7 +62,7 @@ function encrypt(plainText, pass) {
   const encrypted = CryptoJS.AES.encrypt(plainText, key, {
     iv,
     padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC
+    mode: CryptoJS.mode.CBC,
   });
 
   // salt, iv will be hex 32 in length
@@ -70,11 +70,11 @@ function encrypt(plainText, pass) {
   return salt.toString() + iv.toString() + encrypted.toString();
 }
 
-export async function importKey(keystore, password, seed) {
-  const wallet = await keyUtils.generateFromMnemonic(seed);
-  const keys = [];
+export async function importKey(path: string, password: string, mnemonic: string) {
+  const wallet = await keyUtils.generateFromMnemonic(mnemonic);
+  const keys = loadKeys(path);
 
-  if (keys.find(key => key.name === DEFAULT_KEY_NAME)) {
+  if (keys.find((key) => key.name === DEFAULT_KEY_NAME)) {
     throw new Error(`Key with that name already exists`);
   }
 
@@ -83,8 +83,8 @@ export async function importKey(keystore, password, seed) {
   keys.push({
     name: DEFAULT_KEY_NAME,
     address: wallet.terraAddress,
-    ciphertext
+    ciphertext,
   });
 
-  fs.writeFileSync(keystore, JSON.stringify(keys));
+  fs.writeFileSync(path, JSON.stringify(keys));
 }

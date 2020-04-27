@@ -7,6 +7,13 @@ import * as bech32 from 'bech32';
 
 import * as secp256k1 from 'secp256k1';
 
+export interface Key {
+  privateKey: string;
+  publicKey: string;
+  terraAddress: string;
+  terraValAddress: string;
+}
+
 const hdPathAtom = `m/44'/330'/0'/0/0`; // key controlling ATOM allocation
 
 function bech32ify(address, prefix) {
@@ -29,7 +36,7 @@ function deriveKeypair(masterKey) {
 
   return {
     privateKey,
-    publicKey
+    publicKey,
   };
 }
 
@@ -41,7 +48,7 @@ export function createTerraAddress(publicKey) {
   return bech32ify(address, `terra`);
 }
 
-export async function generateFromMnemonic(mnemonic) {
+export async function generateFromMnemonic(mnemonic): Promise<Key> {
   const masterKey = await deriveMasterKey(mnemonic);
   const { privateKey, publicKey } = deriveKeypair(masterKey);
   const terraAddress = createTerraAddress(publicKey);
@@ -50,7 +57,7 @@ export async function generateFromMnemonic(mnemonic) {
     privateKey: privateKey.toString(`hex`),
     publicKey: publicKey.toString(`hex`),
     terraAddress,
-    terraValAddress: terraAddressToValidatorAddress(terraAddress)
+    terraValAddress: terraAddressToValidatorAddress(terraAddress),
   };
 }
 

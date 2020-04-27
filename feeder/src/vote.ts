@@ -1,11 +1,18 @@
 import * as Bluebird from 'bluebird';
 import * as CryptoJS from 'crypto-js';
+import { Key } from './keyUtils';
 import * as ks from './keystore';
 import * as msg from './msg';
 import * as promptly from 'promptly';
 import * as wallet from './wallet';
-import { queryAccount, queryLatestBlock, queryOracleParams, waitTx, broadcast, getPrices } from './rpcs';
-import { stringify } from 'querystring';
+import {
+  queryAccount,
+  queryLatestBlock,
+  queryOracleParams,
+  estimateTax,
+  broadcast,
+  getPrices,
+} from './client';
 
 interface VoteArgs {
   ledgerMode: boolean;
@@ -15,19 +22,17 @@ interface VoteArgs {
   source: [string];
   password: string;
   denoms: string;
-  keystore: string;
+  keyPath: string;
 }
 
 // yarn start vote command
 export async function vote(args: VoteArgs): Promise<void> {
   const { lcdAddress, denoms } = args;
-  const { ledgerApp, voter } = await loadKeybase({
-    ...args
-  });
+  const { ledgerApp, voter } = await initKey(args.ledgerMode, args.keyPath, args.password);
 
   const valAddrs = args.validator || [voter.terraValAddress];
   const voterAddr = voter.terraAddress;
-  const denomArray = denoms.split(',').map(s => s.toLowerCase());
+  const denomArray = denoms.split(',').map((s) => s.toLowerCase());
   const prevotePrices = {};
   const prevoteSalts = {};
   let lastSuccessVotePeriod = 0;
@@ -36,8 +41,13 @@ export async function vote(args: VoteArgs): Promise<void> {
     const startTime = Date.now();
 
     try {
-      const { oracleVotePeriod, oracleWhitelist, currentVotePeriod, indexInVotePeriod } = await loadOracleParams({
-        lcdAddress
+      const {
+        oracleVotePeriod,
+        oracleWhitelist,
+        currentVotePeriod,
+        indexInVotePeriod,
+      } = await loadOracleParams({
+        lcdAddress,
       });
 
       // Skip until new voting period
@@ -49,15 +59,9 @@ export async function vote(args: VoteArgs): Promise<void> {
         throw 'skip';
       }
 
-      const prices = await getPrices(args.source).catch(err => {
-        console.error(err.message);
+      const prices = await getPrices(args.source);
 
-        // Return empty array in case priceserver down
-        const empty: { currency: string; price: string }[] = [];
-        return empty;
-      });
-
-      const account = await queryAccount({ lcdAddress, voter }).catch(err => {
+      const account = await queryAccount(lcdAddress, voter.terraAddress).catch((err) => {
         console.error(err.message);
         throw 'skip';
       });
@@ -69,17 +73,17 @@ export async function vote(args: VoteArgs): Promise<void> {
       filterPrices({
         oracleWhitelist,
         denomArray,
-        prices
+        prices,
       });
 
       // Fill '0' price for not fetched currencies (abstain)
       fillAbstainPrices({
         oracleWhitelist,
-        prices
+        prices,
       });
 
       // Build Exchage Rate Vote Msgs
-      const voteMsgs = [];
+      const voteMsgs: object[] = [];
       if (lastSuccessVotePeriod && currentVotePeriod - lastSuccessVotePeriod === 1) {
         voteMsgs.push(
           ...buildVoteMsgs({
@@ -87,7 +91,7 @@ export async function vote(args: VoteArgs): Promise<void> {
             valAddrs,
             voterAddr,
             prevotePrices,
-            prevoteSalts
+            prevoteSalts,
           })
         );
       }
@@ -96,30 +100,27 @@ export async function vote(args: VoteArgs): Promise<void> {
       const { prevoteMsgs, priceUpdateMap, priceUpdateSaltMap } = buildPrevoteMsgs({
         prices,
         valAddrs,
-        voterAddr
+        voterAddr,
       });
 
       const msgs = [...voteMsgs, ...prevoteMsgs];
 
       if (msgs.length) {
         // Broadcast msgs
-        const data = await broadcastMsgs({
+        const height = await broadcastMsgs({
           accountNubmer: account.account_number,
           chainID: args.chainID,
           lcdAddress,
           ledgerApp,
           msgs,
           sequence: account.sequence,
-          voter
+          voter,
+        }).catch((err) => {
+          console.log(err.message);
+          return -1;
         });
 
-        // Check broadcast result
-        const { success, height } = await checkTxResult({
-          data,
-          lcdAddress
-        });
-
-        if (success) {
+        if (height > 0) {
           // Replace prevote Prices & Salts
           Object.assign(prevotePrices, priceUpdateMap);
           Object.assign(prevoteSalts, priceUpdateSaltMap);
@@ -144,14 +145,14 @@ interface LoadOracleParamsArgs {
   lcdAddress: string;
 }
 async function loadOracleParams({
-  lcdAddress
+  lcdAddress,
 }: LoadOracleParamsArgs): Promise<{
   oracleVotePeriod: number;
   oracleWhitelist: [string];
   currentVotePeriod: number;
   indexInVotePeriod: number;
 }> {
-  const oracleParams = await queryOracleParams({ lcdAddress }).catch(err => {
+  const oracleParams = await queryOracleParams({ lcdAddress }).catch((err) => {
     console.error(err.message);
     throw 'skip';
   });
@@ -159,7 +160,7 @@ async function loadOracleParams({
   const oracleVotePeriod = parseInt(oracleParams.vote_period, 10);
   const oracleWhitelist: [string] = oracleParams.whitelist;
 
-  const latestBlock = await queryLatestBlock({ lcdAddress }).catch(err => {
+  const latestBlock = await queryLatestBlock({ lcdAddress }).catch((err) => {
     console.error(err.message);
     throw 'skip';
   });
@@ -171,22 +172,16 @@ async function loadOracleParams({
   return { oracleVotePeriod, oracleWhitelist, currentVotePeriod, indexInVotePeriod };
 }
 
-interface LoadKeybaseArgs {
-  ledgerMode: boolean;
-  password: string;
-  keystore: string;
-}
-
-async function loadKeybase({
-  ledgerMode,
-  password,
-  keystore
-}: LoadKeybaseArgs): Promise<{ ledgerApp: any; voter: any }> {
-  let voter: any;
-  let ledgerApp: any;
+async function initKey(
+  ledgerMode: boolean,
+  keyPath: string,
+  password?: string
+): Promise<{ ledgerApp?: object; voter: Key }> {
+  let ledgerApp;
+  let voter;
 
   if (ledgerMode) {
-    console.info(`initializing ledger`);
+    console.info(`Initializing ledger`);
     const ledger = require('./ledger');
 
     const ledgerNode = await ledger.getLedgerNode();
@@ -195,11 +190,10 @@ async function loadKeybase({
 
     if (voter === null) {
       console.error(`Ledger is not connected or locked`);
+
       if (ledgerNode !== null) {
         ledgerNode.close_async();
       }
-
-      return null;
     }
 
     process.on('SIGINT', () => {
@@ -209,9 +203,15 @@ async function loadKeybase({
 
       process.exit();
     });
-  } else {
+  }
+
+  if (!voter) {
     console.info(`getting key from keystore`);
-    voter = ks.getKey(keystore, password || (await promptly.password(`Enter a passphrase:`, { replace: `*` })));
+
+    voter = ks.getKey(
+      keyPath,
+      password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
+    );
   }
 
   return { ledgerApp, voter };
@@ -247,7 +247,7 @@ interface FillAbstainPricesArgs {
 }
 
 function fillAbstainPrices({ oracleWhitelist, prices }: FillAbstainPricesArgs) {
-  oracleWhitelist.forEach(denom => {
+  oracleWhitelist.forEach((denom) => {
     let found = false;
 
     prices.every(({ currency }) => {
@@ -259,7 +259,9 @@ function fillAbstainPrices({ oracleWhitelist, prices }: FillAbstainPricesArgs) {
       return true;
     });
 
-    if (!found) prices.push({ currency: denom.slice(1).toUpperCase(), price: '-1.000000000000000000' });
+    if (!found) {
+      prices.push({ currency: denom.slice(1).toUpperCase(), price: '-1.000000000000000000' });
+    }
   });
 }
 
@@ -274,16 +276,30 @@ interface BuildVoteMsgsArgs {
   prevoteSalts: {};
 }
 
-function buildVoteMsgs({ prices, valAddrs, voterAddr, prevotePrices, prevoteSalts }: BuildVoteMsgsArgs): any[] {
-  const voteMsgs: any[] = [];
+function buildVoteMsgs({
+  prices,
+  valAddrs,
+  voterAddr,
+  prevotePrices,
+  prevoteSalts,
+}: BuildVoteMsgsArgs): object[] {
+  const voteMsgs: object[] = [];
 
   prices.forEach(({ currency }) => {
     const denom = `u${currency.toLowerCase()}`;
 
     console.info(`vote! ${denom} ${prevotePrices[currency].toString()} ${valAddrs}`);
 
-    valAddrs.forEach(valAddr => {
-      voteMsgs.push(msg.generateVoteMsg(prevotePrices[currency], prevoteSalts[currency], denom, voterAddr, valAddr));
+    valAddrs.forEach((valAddr) => {
+      voteMsgs.push(
+        msg.generateVoteMsg(
+          prevotePrices[currency],
+          prevoteSalts[currency],
+          denom,
+          voterAddr,
+          valAddr
+        )
+      );
     });
   });
 
@@ -302,7 +318,7 @@ interface BuildPrevoteMsgsArgs {
 function buildPrevoteMsgs({
   prices,
   valAddrs,
-  voterAddr
+  voterAddr,
 }: BuildPrevoteMsgsArgs): {
   prevoteMsgs: any[];
   priceUpdateSaltMap: {};
@@ -320,7 +336,7 @@ function buildPrevoteMsgs({
     const denom = `u${currency.toLowerCase()}`;
     console.info(`prevote! ${denom} ${price} ${valAddrs}`);
 
-    valAddrs.forEach(valAddr => {
+    valAddrs.forEach((valAddr) => {
       const hash = msg.generateVoteHash(priceUpdateSaltMap[currency], price, denom, valAddr);
 
       prevoteMsgs.push(msg.generatePrevoteMsg(hash, denom, voterAddr, valAddr));
@@ -342,58 +358,35 @@ interface BroadcastArgs {
   voter: any;
 }
 
-async function broadcastMsgs({ accountNubmer, chainID, lcdAddress, ledgerApp, msgs, sequence, voter }: BroadcastArgs) {
-  const gas = 50000 + msgs.length * 12000;
-  const fees = { amount: [{ amount: Math.ceil(gas * 0.025).toString(), denom: `ukrw` }], gas: gas.toString() };
-  const { value: tx } = msg.generateStdTx(msgs, fees, `Voting from terra feeder`);
+async function broadcastMsgs({
+  accountNubmer,
+  chainID,
+  lcdAddress,
+  ledgerApp,
+  msgs,
+  sequence,
+  voter,
+}: BroadcastArgs): Promise<number> {
+  const tx = msg.generateStdTx(
+    msgs,
+    {
+      gas: '0',
+      amount: [{ denom: 'ukrw', amount: '1' }],
+    },
+    `Voting from terra feeder`
+  );
+  const est = await estimateTax(lcdAddress, tx);
+
+  tx.fee.amount = est.fees;
+  tx.fee.gas = est.gas;
+
   const signature = await wallet.sign(ledgerApp, voter, tx, {
     chain_id: chainID,
     account_number: accountNubmer,
-    sequence
-  });
-  const signedTx = wallet.createSignedTx(tx, signature);
-  const broadcastReq = wallet.createBroadcastBody(signedTx, `sync`);
-
-  const data = await broadcast({
-    lcdAddress,
-    broadcastReq
-  }).catch(err => {
-    if (err && err.isAxiosError) {
-      console.error('===TX', 'axio error', err.message, err.response.data);
-    } else if (err && err.response && err.response.data) {
-      console.error('===TX', err.response.data);
-    } else {
-      console.error('===TX', err);
-    }
+    sequence,
   });
 
-  return data;
-}
+  tx.signatures.push(signature);
 
-interface CheckTxResultArgs {
-  data: any;
-  lcdAddress: string;
-}
-async function checkTxResult({ data, lcdAddress }: CheckTxResultArgs): Promise<{ success: boolean; height: number }> {
-  let success = false;
-  let height = 0;
-  if (data && !data.code) {
-    const txhash = data.txhash;
-    const txQueryData = await waitTx({ lcdAddress, txhash });
-    if (txQueryData && !txQueryData.code) {
-      success = true;
-      height = Number(txQueryData.height);
-
-      console.info(`txhash: ${txhash}\t height: ${height}`);
-    } else {
-      success = false;
-      console.error(`Failed to find ${txhash} or failed`, txQueryData);
-    }
-  } else {
-    success = false;
-    if (data) console.error(`Failed to broadcast ${data.raw_log}`);
-    else console.error(`Failed to broadcast`);
-  }
-
-  return { success, height };
+  return broadcast(lcdAddress, tx, 'sync');
 }
