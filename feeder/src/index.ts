@@ -59,7 +59,7 @@ function registerCommands(parser: ArgumentParser): void {
     defaultValue: `all`,
   });
 
-  voteCommand.addArgument([`-k`, `--keypath`], {
+  voteCommand.addArgument([`-k`, `--key-path`, `--keystore`], {
     action: `store`,
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
