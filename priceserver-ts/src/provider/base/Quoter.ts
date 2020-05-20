@@ -74,7 +74,7 @@ export class Quoter {
 
   protected alive() {
     if (!this.isAlive) {
-      const downtime = ((Date.now() - this.alivedAt) / 60 / 1000).toFixed(1)
+      const downtime = ((Date.now() - this.alivedAt - this.options.interval) / 60 / 1000).toFixed(1)
       sendSlack(`${this.constructor.name} is now alive. (downtime ${downtime} minutes)`).catch()
       this.isAlive = true
     }
