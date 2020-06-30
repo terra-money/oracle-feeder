@@ -31,7 +31,7 @@ export async function queryAccount(lcdAddress: string, address: string) {
 
   const { account_number, sequence } = res.data.result.value;
 
-  if (typeof account_number !== 'string' || typeof sequence !== 'string') {
+  if (typeof account_number !== 'number' || typeof sequence !== 'number') {
     throw new Error('Failed to fetch account number and sequence');
   }
 
@@ -65,10 +65,10 @@ export async function estimateTax(
   lcdAddress: string,
   tx: StdTx
 ): Promise<{
-  fees: Coin[];
+  amount: Coin[];
   gas: string;
 }> {
-  const { data } = await ax.post(
+  const { data: { result } } = await ax.post(
     lcdAddress + ENDPOINT_TX_ESTIMATE_FEE,
     JSON.stringify({
       tx,
@@ -77,7 +77,10 @@ export async function estimateTax(
     })
   );
 
-  return data.result;
+  return {
+    amount: result.fees,
+    gas: result.gas
+  };
 }
 
 export async function broadcast(lcdAddress: string, tx: StdTx, mode: string) {
@@ -109,7 +112,7 @@ export async function broadcast(lcdAddress: string, tx: StdTx, mode: string) {
     const height: string = await ax
       .get(`${lcdAddress}/txs/${data.txhash}`)
       .then(({ data: tx }) => {
-        if (tx.code || (tx.logs && !tx.logs[0].success)) {
+        if (tx.code) {
           throw new Error(`successful tx with error: ${tx.raw_log}, hash: ${data.txhash}`);
         }
 

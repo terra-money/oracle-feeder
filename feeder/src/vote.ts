@@ -108,12 +108,12 @@ export async function vote(args: VoteArgs): Promise<void> {
       if (msgs.length) {
         // Broadcast msgs
         const height = await broadcastMsgs({
-          accountNubmer: account.account_number,
           chainID: args.chainID,
           lcdAddress,
           ledgerApp,
           msgs,
-          sequence: account.sequence,
+          accountNubmer: account.account_number.toString(),
+          sequence: account.sequence.toString(),
           voter,
         }).catch((err) => {
           console.log(err.message);
@@ -144,6 +144,7 @@ export async function vote(args: VoteArgs): Promise<void> {
 interface LoadOracleParamsArgs {
   lcdAddress: string;
 }
+
 async function loadOracleParams({
   lcdAddress,
 }: LoadOracleParamsArgs): Promise<{
@@ -158,7 +159,7 @@ async function loadOracleParams({
   });
 
   const oracleVotePeriod = parseInt(oracleParams.vote_period, 10);
-  const oracleWhitelist: [string] = oracleParams.whitelist;
+  const oracleWhitelist: [string] = oracleParams.whitelist.map(e => e.name);
 
   const latestBlock = await queryLatestBlock({ lcdAddress }).catch((err) => {
     console.error(err.message);
@@ -359,11 +360,11 @@ interface BroadcastArgs {
 }
 
 async function broadcastMsgs({
-  accountNubmer,
   chainID,
   lcdAddress,
   ledgerApp,
   msgs,
+  accountNubmer,
   sequence,
   voter,
 }: BroadcastArgs): Promise<number> {
@@ -375,10 +376,8 @@ async function broadcastMsgs({
     },
     `Voting from terra feeder`
   );
-  const est = await estimateTax(lcdAddress, tx);
 
-  tx.fee.amount = est.fees;
-  tx.fee.gas = est.gas;
+  tx.fee = await estimateTax(lcdAddress, tx);
 
   const signature = await wallet.sign(ledgerApp, voter, tx, {
     chain_id: chainID,
@@ -387,6 +386,5 @@ async function broadcastMsgs({
   });
 
   tx.signatures.push(signature);
-
   return broadcast(lcdAddress, tx, 'sync');
 }
