@@ -133,7 +133,7 @@ export class Bithumb extends WebSocketQuoter {
 
     if (!response || response.error !== '0000' || !Array.isArray(response.data) || response.data.length < 1) {
       logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
-      throw 'skip'
+      throw new Error('Invalid response from Bithumb')
     }
 
     return response.data.map(row => ({

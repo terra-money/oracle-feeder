@@ -25,7 +25,7 @@ export class CurrencyLayer extends Quoter {
 
     if (!response || !response.success || !response.quotes) {
       logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
-      throw 'skip'
+      throw new Error('Invalid response from CurrencyLayer')
     }
 
     // update last trades

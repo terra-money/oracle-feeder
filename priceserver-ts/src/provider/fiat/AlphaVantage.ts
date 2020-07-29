@@ -30,7 +30,7 @@ export class AlphaVantage extends Quoter {
       !response['Realtime Currency Exchange Rate']['5. Exchange Rate']
     ) {
       logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
-      throw 'skip'
+      throw new Error('Invalid response from AlphaVantage')
     }
 
     this.setPrice(quote === 'XDR' ? 'SDR' : quote, num(response['Realtime Currency Exchange Rate']['5. Exchange Rate']))

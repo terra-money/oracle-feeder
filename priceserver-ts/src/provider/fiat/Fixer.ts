@@ -25,7 +25,7 @@ export class Fixer extends Quoter {
 
     if (!response || !response.success || !response.rates) {
       logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
-      throw 'skip'
+      throw new Error('Invalid response from Fixer')
     }
 
     if (!response.rates.KRW) {
