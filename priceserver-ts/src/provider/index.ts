@@ -5,9 +5,11 @@ import { report } from './reporter'
 import LunaProvider from './luna/LunaProvider'
 import FiatProvider from './fiat/FiatProvider'
 
+export const fiatProvider = new FiatProvider('KRW')
+
 const providers: Provider[] = [
   new LunaProvider('LUNA'), // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
-  new FiatProvider('KRW') // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
+  fiatProvider // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
 ]
 
 export async function initialize(): Promise<void> {

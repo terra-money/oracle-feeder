@@ -4,6 +4,7 @@ import { average, tvwap } from 'lib/statistics'
 import { Provider } from '../base'
 import Bithumb from './Bithumb'
 import Coinone from './Coinone'
+import Huobi from './Huobi'
 
 const PRICE_PERIOD = 3 * 60 * 1000 // 3 minutes
 
@@ -29,6 +30,17 @@ class LunaProvider extends Provider {
 
       this.quoters.push(
         new Coinone(baseCurrency, opts.quotes, {
+          interval: opts.interval || 1000,
+          timeout: opts.timeout || 10000
+        })
+      )
+    }
+
+    if (config.get('provider.huobi.enable')) {
+      const opts = config.get('provider.huobi')
+
+      this.quoters.push(
+        new Huobi(baseCurrency, opts.quotes, {
           interval: opts.interval || 1000,
           timeout: opts.timeout || 10000
         })

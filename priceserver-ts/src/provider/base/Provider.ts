@@ -44,6 +44,10 @@ export class Provider {
     return false
   }
 
+  public getPriceBy(quote: string): BigNumber {
+    return this.priceByQuote[quote]
+  }
+
   public getLunaPrices(lunaPrices: PriceByQuote): PriceByQuote {
     if (this.baseCurrency === 'LUNA') {
       return this.priceByQuote

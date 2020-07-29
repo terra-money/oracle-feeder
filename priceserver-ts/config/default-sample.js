@@ -22,6 +22,12 @@ module.exports = {
       quotes: ['KRW'],
       interval: 1000,
     },
+    huobi: {
+      enable: true,
+      base: 'LUNA',
+      quotes: ['KRW'],
+      interval: 1000
+    },
     currencylayer: {
       enable: true,
       base: 'KRW',
