@@ -37,6 +37,7 @@ export class Huobi extends Quoter {
         volume: num(row.amount),
         timestamp: row.id * 1000
       }))
+      .sort((a, b) => a.timestamp - b.timestamp)
   }
 
   protected async update(): Promise<boolean> {
@@ -49,7 +50,7 @@ export class Huobi extends Quoter {
           }
 
           this.setTrades(quote, trades)
-          this.setPrice(quote, trades[0].price)
+          this.setPrice(quote, trades[trades.length - 1].price)
         })
         .catch(errorHandler)
     }
