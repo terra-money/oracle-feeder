@@ -49,7 +49,7 @@ export class Huobi extends Quoter {
           }
 
           this.setTrades(quote, trades)
-          this.setPrice(quote, trades[trades.length - 1].price)
+          this.setPrice(quote, trades[0].price)
         })
         .catch(errorHandler)
     }
