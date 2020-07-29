@@ -14,7 +14,8 @@ export class Huobi extends Quoter {
       size: 200
     }
 
-    // get latest candles
+    // Get candles from Huobi
+    // reference: https://huobiapi.github.io/docs/spot/v1/en/#get-klines-candles
     const response = await nodeFetch(`https://api.huobi.pro/market/history/kline?${toQueryString(params)}`).then(res =>
       res.json()
     )
