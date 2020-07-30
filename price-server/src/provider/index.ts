@@ -8,8 +8,8 @@ import FiatProvider from './fiat/FiatProvider'
 export const fiatProvider = new FiatProvider('KRW')
 
 const providers: Provider[] = [
-  fiatProvider, // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
-  new LunaProvider('LUNA') // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
+  new LunaProvider('LUNA'), // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
+  fiatProvider // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
 ]
 
 export async function initialize(): Promise<void> {
