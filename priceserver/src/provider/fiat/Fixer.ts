@@ -8,7 +8,7 @@ import { Quoter } from '../base'
 interface Response {
   success: boolean
   rates: { [quote: string]: number }
-  error?: any
+  error?: string | Record<string, unknown>
 }
 
 export class Fixer extends Quoter {

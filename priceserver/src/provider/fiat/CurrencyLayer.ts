@@ -8,7 +8,7 @@ import { Quoter } from '../base'
 interface Response {
   success: boolean
   quotes: { [symbol: string]: number }
-  error?: any
+  error?: Record<string, unknown> | string
 }
 
 export class CurrencyLayer extends Quoter {

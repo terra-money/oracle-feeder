@@ -14,7 +14,7 @@ export class Provider {
   protected priceByQuote: PriceByQuote = {}
   protected baseCurrency: string
   private reporter
-  private reportedAt: number = 0
+  private reportedAt = 0
 
   constructor(baseCurrency: string) {
     this.baseCurrency = baseCurrency
@@ -74,7 +74,7 @@ export class Provider {
     return this.quoters.map(quoter => quoter.getPrice(quote)).filter(price => price)
   }
 
-  protected adjustPrices() {
+  protected adjustPrices(): void {
     // calculate average of prices
     for (const quote of this.quotes) {
       delete this.priceByQuote[quote]

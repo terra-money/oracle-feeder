@@ -1,4 +1,4 @@
-import { average, vwap, tvwap } from './statistics'
+import { average, vwap } from './statistics'
 import { num } from './num'
 
 describe('average', () => {

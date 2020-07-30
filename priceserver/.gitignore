@@ -41,3 +41,5 @@ config/default.js
 # report
 report/*
 !report/.gitkeep
+
+dist/

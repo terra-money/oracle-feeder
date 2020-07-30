@@ -8,7 +8,7 @@ interface Options {
   }
 }
 
-export function init(opts: Options = {}) {
+export function init(opts: Options = {}): void {
   opts?.sentry?.enable && sentry.init({ dsn: opts.sentry.dsn })
 
   process.on('unhandledRejection', error => {
@@ -21,8 +21,8 @@ export function init(opts: Options = {}) {
   })
 }
 
-export function errorHandler(error: any) {
-  if (error === 'skip') {
+export function errorHandler(error: Error): void {
+  if (error.message.includes('Invalid response')) {
     return
   }
 

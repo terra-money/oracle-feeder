@@ -1,10 +1,12 @@
 module.exports = {
   port: 8532,
-  sentry: { // https://sentry.io/ - error reporting service
+  sentry: {
+    // https://sentry.io/ - error reporting service
     enable: false,
     dsn: ''
   },
-  slack: { // for incident alarm (e.g. exchange shutdown)
+  slack: {
+    // for incident alarm (e.g. exchange shutdown)
     enable: false,
     channel: '#bot-test',
     url: ''
@@ -14,13 +16,13 @@ module.exports = {
       enable: true,
       base: 'LUNA',
       quotes: ['KRW'], // available quote list
-      interval: 100, // update interval
+      interval: 100 // update interval
     },
     coinone: {
       enable: true,
       base: 'LUNA',
       quotes: ['KRW'],
-      interval: 1000,
+      interval: 1000
     },
     huobi: {
       enable: true,
@@ -33,7 +35,7 @@ module.exports = {
       base: 'KRW',
       quotes: ['SDR', 'USD', 'MNT'],
       interval: 60 * 1000,
-      apiKey: '', // necessary
+      apiKey: '' // necessary
     },
     alphavantage: {
       enable: true,
@@ -47,7 +49,7 @@ module.exports = {
       base: 'KRW',
       quotes: ['SDR', 'USD', 'MNT'],
       interval: 60 * 60 * 1000, // 1 hours (free api support only hourly update)
-      apiKey: '', // necessary
+      apiKey: '' // necessary
     }
   }
 }

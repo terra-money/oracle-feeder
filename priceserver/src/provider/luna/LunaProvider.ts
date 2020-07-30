@@ -48,7 +48,7 @@ class LunaProvider extends Provider {
     }
   }
 
-  protected adjustPrices() {
+  protected adjustPrices(): void {
     const now = Date.now()
 
     for (const quote of this.quotes) {

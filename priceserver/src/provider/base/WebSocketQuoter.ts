@@ -6,9 +6,9 @@ import Quoter from './Quoter'
 export class WebSocketQuoter extends Quoter {
   protected ws: WebSocket
   protected wsUrl: string
-  private sendedPingAt: number = 0
+  private sendedPingAt = 0
 
-  public connect(wsUrl: string) {
+  public connect(wsUrl: string): void {
     this.disconnect()
 
     this.ws = new WebSocket(wsUrl)
@@ -22,7 +22,7 @@ export class WebSocketQuoter extends Quoter {
     this.ws.on('pong', () => this.alive())
   }
 
-  public disconnect() {
+  public disconnect(): void {
     this.ws && this.ws.terminate()
   }
 
@@ -37,24 +37,27 @@ export class WebSocketQuoter extends Quoter {
     return super.tick(now)
   }
 
-  protected onConnect() {
+  protected onConnect(): void {
     logger.info(`${this.constructor.name}: websocket connected to ${this.wsUrl}`)
 
     this.alive()
   }
 
-  protected onDisconnect(code: number, reason: string) {
+  protected onDisconnect(code: number, reason: string): void {
     logger.info(`${this.constructor.name}: websocket disconnected (${code}: ${reason})`)
 
     // if disconnected, try connect again
     setTimeout(() => this.connect(this.wsUrl), 1000)
   }
 
-  protected onError(error) {
+  protected onError(error: Error): void {
     logger.error(`${this.constructor.name} websocket: `, error)
   }
 
-  protected onData(data: object) {}
+  protected onData(data: Record<string, unknown>): void {
+    data
+    return
+  }
 
   private onRawData(raw) {
     let data

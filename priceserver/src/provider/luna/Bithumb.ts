@@ -24,7 +24,7 @@ const requestData = {
 interface CandlestickResponse {
   error: string
   message?: string
-  data?: any
+  data?: Record<string, unknown>
 }
 
 interface TransactionResponse {
@@ -39,7 +39,7 @@ interface TransactionResponse {
 }
 
 export class Bithumb extends WebSocketQuoter {
-  private isUpdated: boolean = false
+  private isUpdated = false
 
   public async initialize(): Promise<void> {
     for (const quote of this.quotes) {
@@ -64,7 +64,7 @@ export class Bithumb extends WebSocketQuoter {
     return
   }
 
-  protected onConnect() {
+  protected onConnect(): void {
     super.onConnect()
 
     // subscribe transaction
@@ -72,7 +72,7 @@ export class Bithumb extends WebSocketQuoter {
     this.ws.send(`{"type":"transaction", "symbols":[${symbols}]}`)
   }
 
-  protected onData(data: any) {
+  protected onData(data: Record<string, unknown>): void {
     if (data?.status === '0000') {
       logger.info(`${this.constructor.name}: ${data.resmsg}`)
       return
@@ -80,7 +80,7 @@ export class Bithumb extends WebSocketQuoter {
 
     switch (data?.type) {
       case 'transaction':
-        this.onTransaction(data)
+        this.onTransaction((data as unknown) as TransactionResponse)
         break
 
       default:

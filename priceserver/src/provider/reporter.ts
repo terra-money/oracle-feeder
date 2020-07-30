@@ -6,9 +6,9 @@ import { createReporter } from 'lib/reporter'
 import { getLunaPrices } from './'
 
 let reporter
-let reportedAt: number = 0
+let reportedAt = 0
 
-export function report(now: number) {
+export function report(now: number): void {
   if (isSameMinute(now, reportedAt)) {
     return
   }

@@ -14,6 +14,8 @@ export class Huobi extends Quoter {
       size: 200
     }
 
+    quote // to avoid lint
+
     // Get candles from Huobi
     // reference: https://huobiapi.github.io/docs/spot/v1/en/#get-klines-candles
     const response = await nodeFetch(`https://api.huobi.pro/market/history/kline?${toQueryString(params)}`).then(res =>
@@ -22,7 +24,7 @@ export class Huobi extends Quoter {
 
     if (!response || response.status !== 'ok' || !Array.isArray(response.data) || response.data.length < 1) {
       logger.error(`${this.constructor.name}: invalid api response:`, response ? JSON.stringify(response) : 'empty')
-      throw new Error('invalid response')
+      throw new Error('invalid response from Huobi')
     }
 
     const rate = fiatProvider.getPriceBy('USD')

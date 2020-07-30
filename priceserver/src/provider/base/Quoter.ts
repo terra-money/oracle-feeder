@@ -17,7 +17,7 @@ export class Quoter {
   private priceByQuote: PriceByQuote = {}
 
   private tickedAt: number
-  private isAlive: boolean = true
+  private isAlive = true
   private alivedAt: number
 
   constructor(baseCurrency: string, quotes: string[], options: QuoterOptions) {
@@ -59,20 +59,20 @@ export class Quoter {
     return false
   }
 
-  protected setPrice(quote: string, price: BigNumber) {
+  protected setPrice(quote: string, price: BigNumber): void {
     this.priceByQuote[quote] = price
 
     this.alive()
   }
 
-  protected setTrades(quote: string, trades: Trades) {
+  protected setTrades(quote: string, trades: Trades): void {
     // trades filtering that are past 60 minutes
     this.tradesByQuote[quote] = trades.filter(trade => Date.now() - trade.timestamp < 60 * 60 * 1000)
 
     this.alive()
   }
 
-  protected alive() {
+  protected alive(): void {
     if (!this.isAlive) {
       const downtime = ((Date.now() - this.alivedAt - this.options.interval) / 60 / 1000).toFixed(1)
       sendSlack(`${this.constructor.name} is now alive. (downtime ${downtime} minutes)`).catch()
@@ -82,7 +82,7 @@ export class Quoter {
     this.alivedAt = Date.now()
   }
 
-  private checkAlive() {
+  private checkAlive(): void {
     // no responsed more than 3 minutes, it is down
     if (this.isAlive && Date.now() - this.alivedAt > 3 * 60 * 1000) {
       sendSlack(`${this.constructor.name} is no response!`).catch()
