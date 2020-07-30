@@ -2,7 +2,7 @@
   "name": "terra-oracle-priceserver-ts",
   "version": "0.1.0",
   "main": "src/index.ts",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/server.ts",
     "test": "jest",

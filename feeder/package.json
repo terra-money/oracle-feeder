@@ -2,7 +2,7 @@
   "name": "terra-oracle-voter",
   "version": "0.2.0",
   "main": "src/index.ts",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "start": "ts-node src/index.ts",
     "lint": "tslint -p . -c tslint.json"
