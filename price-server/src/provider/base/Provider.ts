@@ -29,11 +29,12 @@ export class Provider {
 
   public async tick(now: number): Promise<boolean> {
     const responses = await Promise.all(this.quoters.map(quoter => quoter.tick(now)))
+    let isUpdated = false
 
     // if some quoter updated
     if (responses.some(response => response)) {
       this.adjustPrices()
-      return true
+      isUpdated = true
     }
 
     // report the prices
@@ -41,7 +42,7 @@ export class Provider {
       this.report(now)
     }
 
-    return false
+    return isUpdated
   }
 
   public getPriceBy(quote: string): BigNumber {
