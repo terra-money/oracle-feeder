@@ -1,5 +1,5 @@
+import * as crypto from 'crypto';
 import * as Bluebird from 'bluebird';
-import * as CryptoJS from 'crypto-js';
 import { Key } from './keyUtils';
 import * as ks from './keystore';
 import * as msg from './msg';
@@ -329,8 +329,10 @@ function buildPrevoteMsgs({
   const priceUpdateSaltMap = {};
 
   prices.forEach(({ currency, price }) => {
-    priceUpdateSaltMap[currency] = CryptoJS.SHA256((Math.random() * 1000).toString())
-      .toString()
+    priceUpdateSaltMap[currency] = crypto
+      .createHash('sha256')
+      .update((Math.random() * 1000).toString())
+      .digest('hex')
       .substring(0, 4);
 
     const denom = `u${currency.toLowerCase()}`;

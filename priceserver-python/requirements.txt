@@ -1,6 +1,0 @@
-ccxt
-flask
-requests
-tqdm
-pytz
-weightedstats
