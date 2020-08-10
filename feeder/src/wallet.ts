@@ -1,4 +1,4 @@
-import * as sha256 from 'crypto-js/sha256';
+import * as crypto from 'crypto';
 import * as secp256k1 from 'secp256k1';
 
 const HD_PATH = [44, 330, 0, 0, 0];
@@ -63,7 +63,7 @@ function createSignMessage(jsonTx, { sequence, account_number, chain_id }) {
 
 // produces the signature for a message (returns Buffer)
 function signWithPrivateKey(signMessage, privateKey) {
-  const signHash = Buffer.from(sha256(signMessage).toString(), `hex`);
+  const signHash = crypto.createHash('sha256').update(signMessage).digest();
   const { signature } = secp256k1.sign(signHash, Buffer.from(privateKey, `hex`));
   return signature;
 }

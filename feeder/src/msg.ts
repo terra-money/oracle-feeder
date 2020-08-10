@@ -1,4 +1,4 @@
-import * as sha256 from 'crypto-js/sha256';
+import * as crypto from 'crypto';
 
 export interface Amount {
   denom: string;
@@ -59,7 +59,7 @@ function normalizeDecimal(decimalNumber: string) {
 
 export function generateVoteHash(salt: string, price: string, denom: string, voter: string) {
   const proof = salt + ':' + normalizeDecimal(price) + ':' + denom + ':' + voter;
-  const hash = sha256(proof).toString();
+  const hash = crypto.createHash('sha256').update(proof).digest('hex');
 
   return hash.slice(0, 40);
 }
