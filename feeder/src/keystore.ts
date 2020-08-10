@@ -1,4 +1,5 @@
 import * as fs from 'fs'
+import * as crypto from 'crypto'
 import * as CryptoJS from 'crypto-js'
 import * as keyUtils from './keyUtils'
 
@@ -6,13 +7,25 @@ const KEY_SIZE = 256
 const ITERATIONS = 100
 const DEFAULT_KEY_NAME = `voter`
 
-export function loadKeys(path: string) {
-  try {
-    return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`)
-  } catch (e) {
-    console.error('loadKeys', e.message)
-    return []
-  }
+interface Key {
+  name: string
+  address: string
+  ciphertext: string
+}
+
+function encrypt(plainText, pass): string {
+  const salt = crypto.randomBytes(16)
+  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
+  const iv = crypto.randomBytes(16)
+
+  const cipher = crypto.createCipheriv('AES-256-CBC', key, iv)
+  cipher.setAutoPadding(true)
+  cipher.update(plainText)
+  const encryptedText = cipher.final().toString('base64')
+
+  // salt, iv will be hex 32 in length
+  // append them to the ciphertext for use  in decryption
+  return salt.toString('hex') + iv.toString('hex') + encryptedText
 }
 
 function decrypt(transitmessage, pass) {
@@ -32,45 +45,7 @@ function decrypt(transitmessage, pass) {
   }).toString(CryptoJS.enc.Utf8)
 }
 
-export function getKey(path: string, password: string): keyUtils.Key {
-  const keys = loadKeys(path)
-  const key = keys.find((key) => key.name === DEFAULT_KEY_NAME)
-
-  if (!key) {
-    throw new Error('Cannot find key')
-  }
-
-  try {
-    const plainText = decrypt(key.ciphertext, password)
-    return JSON.parse(plainText)
-  } catch (err) {
-    throw new Error('Incorrect password')
-  }
-}
-
-// TODO needs proof reading
-function encrypt(plainText, pass) {
-  const salt = CryptoJS.lib.WordArray.random(128 / 8)
-
-  const key = CryptoJS.PBKDF2(pass, salt, {
-    keySize: KEY_SIZE / 32,
-    iterations: ITERATIONS,
-  })
-
-  const iv = CryptoJS.lib.WordArray.random(128 / 8)
-
-  const encrypted = CryptoJS.AES.encrypt(plainText, key, {
-    iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  })
-
-  // salt, iv will be hex 32 in length
-  // append them to the ciphertext for use  in decryption
-  return salt.toString() + iv.toString() + encrypted.toString()
-}
-
-export async function importKey(path: string, password: string, mnemonic: string) {
+export async function importKey(path: string, password: string, mnemonic: string): Promise<void> {
   const wallet = await keyUtils.generateFromMnemonic(mnemonic)
   const keys = loadKeys(path)
 
@@ -88,3 +63,30 @@ export async function importKey(path: string, password: string, mnemonic: string
 
   fs.writeFileSync(path, JSON.stringify(keys))
 }
+
+export function loadKeys(path: string): Key[] {
+  try {
+    return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`)
+  } catch (e) {
+    console.error('loadKeys', e.message)
+    return []
+  }
+}
+
+export function getKey(path: string, password: string): keyUtils.Key {
+  const keys = loadKeys(path)
+  const key = keys.find((key) => key.name === DEFAULT_KEY_NAME)
+
+  if (!key) {
+    throw new Error('Cannot find key')
+  }
+
+  try {
+    const plainText = decrypt(key.ciphertext, password)
+    return JSON.parse(plainText)
+  } catch (err) {
+    throw new Error('Incorrect password')
+  }
+}
+
+console.log(encrypt(JSON.stringify({ abcd: '1234' }), '12345678'))

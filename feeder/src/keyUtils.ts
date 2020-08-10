@@ -1,5 +1,5 @@
-import * as ripemd160 from 'crypto-js/ripemd160'
-import * as CryptoJS from 'crypto-js'
+import * as crypto from 'crypto'
+import * as ripemd160 from 'ripemd160'
 
 import * as bip32 from 'bip32'
 import * as bip39 from 'bip39'
@@ -21,7 +21,7 @@ function bech32ify(address, prefix) {
   return bech32.encode(prefix, words)
 }
 
-async function deriveMasterKey(mnemonic) {
+async function deriveMasterKey(mnemonic): Promise<bip32.BIP32Interface> {
   // throws if mnemonic is invalid
   bip39.validateMnemonic(mnemonic)
 
@@ -29,10 +29,20 @@ async function deriveMasterKey(mnemonic) {
   return bip32.fromSeed(seed)
 }
 
-function deriveKeypair(masterKey) {
+function deriveKeypair(
+  masterKey: bip32.BIP32Interface
+): {
+  privateKey: Buffer
+  publicKey: Buffer
+} {
   const terraHD = masterKey.derivePath(hdPathAtom)
-  const privateKey = terraHD.privateKey
-  const publicKey = secp256k1.publicKeyCreate(privateKey, true)
+  const privateKey: Buffer | undefined = terraHD.privateKey
+
+  if (!privateKey) {
+    throw new Error('cannot derive key without private key')
+  }
+
+  const publicKey: Buffer = secp256k1.publicKeyCreate(privateKey, true)
 
   return {
     privateKey,
@@ -41,14 +51,18 @@ function deriveKeypair(masterKey) {
 }
 
 // NOTE: this only works with a compressed public key (33 bytes)
-export function createTerraAddress(publicKey) {
-  const message = CryptoJS.enc.Hex.parse(publicKey.toString(`hex`))
-  const hash = ripemd160(CryptoJS.SHA256(message)).toString()
-  const address = Buffer.from(hash, `hex`)
-  return bech32ify(address, `terra`)
+export function createTerraAddress(publicKey: Buffer): string {
+  const shaHash = crypto.createHash('sha256').update(publicKey).digest()
+  const ripemd160Hash = new ripemd160().update(shaHash).digest()
+  return bech32ify(ripemd160Hash, `terra`)
 }
 
-export async function generateFromMnemonic(mnemonic): Promise<Key> {
+export function terraAddressToValidatorAddress(terraAddress: string): string {
+  const { words } = bech32.decode(terraAddress)
+  return bech32.encode(`terravaloper`, words)
+}
+
+export async function generateFromMnemonic(mnemonic: string): Promise<Key> {
   const masterKey = await deriveMasterKey(mnemonic)
   const { privateKey, publicKey } = deriveKeypair(masterKey)
   const terraAddress = createTerraAddress(publicKey)
@@ -59,9 +73,4 @@ export async function generateFromMnemonic(mnemonic): Promise<Key> {
     terraAddress,
     terraValAddress: terraAddressToValidatorAddress(terraAddress),
   }
-}
-
-export function terraAddressToValidatorAddress(terraAddress) {
-  const { words } = bech32.decode(terraAddress)
-  return bech32.encode(`terravaloper`, words)
 }
