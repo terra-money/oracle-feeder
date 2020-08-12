@@ -8,7 +8,7 @@ import { WebSocketQuoter, Trades } from '../base'
 const headers = {
   'user-agent':
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-  'x-requested-with': 'XMLHttpRequest'
+  'x-requested-with': 'XMLHttpRequest',
 }
 
 const requestData = {
@@ -17,8 +17,8 @@ const requestData = {
     coinType: 'C0534',
     crncCd: 'C0100',
     tickType: '01M',
-    csrf_xcoin_name: 'd2e131dccab300919c9fafcec567bb51'
-  }
+    csrf_xcoin_name: 'd2e131dccab300919c9fafcec567bb51',
+  },
 }
 
 interface CandlestickResponse {
@@ -47,7 +47,7 @@ export class Bithumb extends WebSocketQuoter {
 
       // update last trades and price of LUNA/quote
       await this.fetchLatestTrades(quote)
-        .then(trades => {
+        .then((trades) => {
           if (!trades.length) {
             return
           }
@@ -68,7 +68,7 @@ export class Bithumb extends WebSocketQuoter {
     super.onConnect()
 
     // subscribe transaction
-    const symbols = this.quotes.map(quote => `"${this.baseCurrency}_${quote}"`).join(',')
+    const symbols = this.quotes.map((quote) => `"${this.baseCurrency}_${quote}"`).join(',')
     this.ws.send(`{"type":"transaction", "symbols":[${symbols}]}`)
   }
 
@@ -102,7 +102,7 @@ export class Bithumb extends WebSocketQuoter {
       const volume = num(row.contQty)
 
       const trades = this.getTrades(quote) || []
-      const currentTrade = trades.find(trade => trade.timestamp === timestamp)
+      const currentTrade = trades.find((trade) => trade.timestamp === timestamp)
 
       // make 1m candle stick
       if (currentTrade) {
@@ -125,22 +125,32 @@ export class Bithumb extends WebSocketQuoter {
       `https://www.bithumb.com/trade_history/chart_data?_=${Date.now()}`,
       {
         method: 'POST',
-        headers: Object.assign(headers, { cookie: `csrf_xcoin_name=${requestData[quote].csrf_xcoin_name}` }),
+        headers: Object.assign(headers, {
+          cookie: `csrf_xcoin_name=${requestData[quote].csrf_xcoin_name}`,
+        }),
         body: toFormData(requestData[quote]),
-        timeout: this.options.timeout
+        timeout: this.options.timeout,
       }
-    ).then(res => res.json())
+    ).then((res) => res.json())
 
-    if (!response || response.error !== '0000' || !Array.isArray(response.data) || response.data.length < 1) {
-      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
+    if (
+      !response ||
+      response.error !== '0000' ||
+      !Array.isArray(response.data) ||
+      response.data.length < 1
+    ) {
+      logger.error(
+        `${this.constructor.name}: wrong api response`,
+        response ? JSON.stringify(response) : 'empty'
+      )
       throw new Error('Invalid response from Bithumb')
     }
 
-    return response.data.map(row => ({
+    return response.data.map((row) => ({
       // the order is [time, open, close, high, low, volume]
       price: num(row[2]),
       volume: num(row[5]),
-      timestamp: +row[0]
+      timestamp: +row[0],
     }))
   }
 

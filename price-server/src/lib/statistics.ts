@@ -44,16 +44,14 @@ export function tvwap(
   const sortedArray = array.sort((a, b) => a.timestamp - b.timestamp)
   const now = num(Date.now())
   const period = now.minus(num(array[0].timestamp))
-  const weightUnit = num(1)
-    .minus(minimumTimeWeight)
-    .dividedBy(period)
+  const weightUnit = num(1).minus(minimumTimeWeight).dividedBy(period)
 
-  const tvwapTrades = sortedArray.map(trade => ({
+  const tvwapTrades = sortedArray.map((trade) => ({
     price: trade.price,
     // volume: trade.volume * (((1 - minimumTimeWeight) / period) * (period - (now - trade.timestamp)) + minimumTimeWeight)
     volume: trade.volume.multipliedBy(
       weightUnit.multipliedBy(period.minus(now.minus(num(trade.timestamp))).plus(minimumTimeWeight))
-    )
+    ),
   }))
 
   return vwap(tvwapTrades)

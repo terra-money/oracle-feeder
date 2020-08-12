@@ -10,6 +10,6 @@ export function toFormData(object: Record<string, unknown>): FormData {
 
 export function toQueryString(object: Record<string, unknown>): string {
   return Object.keys(object)
-    .map(key => `${key}=${object[key]}`)
+    .map((key) => `${key}=${object[key]}`)
     .join('&')
 }

@@ -37,12 +37,12 @@ function deriveKeypair(
 } {
   const terraHD = masterKey.derivePath(hdPathAtom)
   const privateKey: Buffer | undefined = terraHD.privateKey
-
+  console.log(privateKey)
   if (!privateKey) {
     throw new Error('cannot derive key without private key')
   }
 
-  const publicKey: Buffer = secp256k1.publicKeyCreate(privateKey, true)
+  const publicKey: Buffer = Buffer.from(secp256k1.publicKeyCreate(privateKey, true))
 
   return {
     privateKey,

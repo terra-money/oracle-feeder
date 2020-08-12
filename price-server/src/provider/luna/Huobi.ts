@@ -11,19 +11,27 @@ export class Huobi extends Quoter {
     const params = {
       symbol: 'lunausdt',
       period: '1min',
-      size: 200
+      size: 200,
     }
 
     quote // to avoid lint
 
     // Get candles from Huobi
     // reference: https://huobiapi.github.io/docs/spot/v1/en/#get-klines-candles
-    const response = await nodeFetch(`https://api.huobi.pro/market/history/kline?${toQueryString(params)}`).then(res =>
-      res.json()
-    )
+    const response = await nodeFetch(
+      `https://api.huobi.pro/market/history/kline?${toQueryString(params)}`
+    ).then((res) => res.json())
 
-    if (!response || response.status !== 'ok' || !Array.isArray(response.data) || response.data.length < 1) {
-      logger.error(`${this.constructor.name}: invalid api response:`, response ? JSON.stringify(response) : 'empty')
+    if (
+      !response ||
+      response.status !== 'ok' ||
+      !Array.isArray(response.data) ||
+      response.data.length < 1
+    ) {
+      logger.error(
+        `${this.constructor.name}: invalid api response:`,
+        response ? JSON.stringify(response) : 'empty'
+      )
       throw new Error('invalid response from Huobi')
     }
 
@@ -34,11 +42,11 @@ export class Huobi extends Quoter {
     }
 
     return response.data
-      .filter(row => parseFloat(row.vol) > 0)
-      .map(row => ({
+      .filter((row) => parseFloat(row.vol) > 0)
+      .map((row) => ({
         price: num(row.close).dividedBy(rate),
         volume: num(row.amount),
-        timestamp: row.id * 1000
+        timestamp: row.id * 1000,
       }))
       .sort((a, b) => a.timestamp - b.timestamp)
   }
@@ -47,7 +55,7 @@ export class Huobi extends Quoter {
     for (const quote of this.quotes) {
       // update last trades of LUNA/quote
       await this.fetchLatestTrades(quote)
-        .then(trades => {
+        .then((trades) => {
           if (!trades.length) {
             return
           }

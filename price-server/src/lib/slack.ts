@@ -12,7 +12,7 @@ export function sendSlack(message: string): Promise<Response> {
     body: JSON.stringify({
       channel: config.get('slack.channel'),
       username: 'Oracle PriceServer',
-      text: message
-    })
+      text: message,
+    }),
   })
 }

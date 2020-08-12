@@ -9,11 +9,11 @@ export const fiatProvider = new FiatProvider('KRW')
 
 const providers: Provider[] = [
   new LunaProvider('LUNA'), // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
-  fiatProvider // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
+  fiatProvider, // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
 ]
 
 export async function initialize(): Promise<void> {
-  await Promise.all(providers.map(provider => provider.initialize()))
+  await Promise.all(providers.map((provider) => provider.initialize()))
 
   await loop()
 }
@@ -33,7 +33,7 @@ async function loop(): Promise<void> {
   while (true) {
     const now = Date.now()
 
-    await bluebird.mapSeries(providers, provider => provider.tick(now)).catch(errorHandler)
+    await bluebird.mapSeries(providers, (provider) => provider.tick(now)).catch(errorHandler)
 
     report(now)
 

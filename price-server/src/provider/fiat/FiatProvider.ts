@@ -15,7 +15,7 @@ class FiatProvider extends Provider {
         new CurrencyLayer(baseCurrency, opts.quotes, {
           interval: opts.interval || 1000,
           timeout: opts.timeout || 5000,
-          apiKey: opts.apiKey
+          apiKey: opts.apiKey,
         })
       )
     }
@@ -27,7 +27,7 @@ class FiatProvider extends Provider {
         new AlphaVantage(baseCurrency, opts.quotes, {
           interval: opts.interval || 1000,
           timeout: opts.timeout || 5000,
-          apiKey: opts.apiKey
+          apiKey: opts.apiKey,
         })
       )
     }
@@ -39,7 +39,7 @@ class FiatProvider extends Provider {
         new Fixer(baseCurrency, opts.quotes, {
           interval: opts.interval || 1000,
           timeout: opts.timeout || 5000,
-          apiKey: opts.apiKey
+          apiKey: opts.apiKey,
         })
       )
     }

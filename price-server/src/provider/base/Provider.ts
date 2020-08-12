@@ -24,15 +24,15 @@ export class Provider {
     for (const quoter of this.quoters) {
       await quoter.initialize()
     }
-    this.quotes = uniq(concat(...this.quoters.map(quoter => quoter.getQuotes())))
+    this.quotes = uniq(concat(...this.quoters.map((quoter) => quoter.getQuotes())))
   }
 
   public async tick(now: number): Promise<boolean> {
-    const responses = await Promise.all(this.quoters.map(quoter => quoter.tick(now)))
+    const responses = await Promise.all(this.quoters.map((quoter) => quoter.tick(now)))
     let isUpdated = false
 
     // if some quoter updated
-    if (responses.some(response => response)) {
+    if (responses.some((response) => response)) {
       this.adjustPrices()
       isUpdated = true
     }
@@ -68,11 +68,11 @@ export class Provider {
 
   // collect latest trade records
   protected collectTrades(quote: string): Trades {
-    return concat(...this.quoters.map(quoter => quoter.getTrades(quote) || []))
+    return concat(...this.quoters.map((quoter) => quoter.getTrades(quote) || []))
   }
 
   protected collectPrice(quote: string): BigNumber[] {
-    return this.quoters.map(quoter => quoter.getPrice(quote)).filter(price => price)
+    return this.quoters.map((quoter) => quoter.getPrice(quote)).filter((price) => price)
   }
 
   protected adjustPrices(): void {
@@ -95,19 +95,26 @@ export class Provider {
 
     try {
       if (!this.reporter || !isSameDay(now, this.reportedAt)) {
-        this.reporter = createReporter(`report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`, [
-          'time',
-          ...this.quotes.map(quote => `${this.baseCurrency}/${quote}`),
-          ...concat(
-            ...this.quoters.map(quoter =>
-              concat(...quoter.getQuotes().map(quote => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`))
-            )
-          )
-        ])
+        this.reporter = createReporter(
+          `report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`,
+          [
+            'time',
+            ...this.quotes.map((quote) => `${this.baseCurrency}/${quote}`),
+            ...concat(
+              ...this.quoters.map((quoter) =>
+                concat(
+                  ...quoter
+                    .getQuotes()
+                    .map((quote) => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`)
+                )
+              )
+            ),
+          ]
+        )
       }
 
       const report = {
-        time: format(Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000, 'MM-dd HH:mm')
+        time: format(Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000, 'MM-dd HH:mm'),
       }
 
       // report adjust price

@@ -11,10 +11,10 @@ interface Options {
 export function init(opts: Options = {}): void {
   opts?.sentry?.enable && sentry.init({ dsn: opts.sentry.dsn })
 
-  process.on('unhandledRejection', error => {
+  process.on('unhandledRejection', (error) => {
     logger.error(error)
 
-    sentry.withScope(scope => {
+    sentry.withScope((scope) => {
       scope.setLevel(sentry.Severity.Critical)
       sentry.captureException(error)
     })

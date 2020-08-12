@@ -14,7 +14,7 @@ describe('volume weighted average price', () => {
       vwap([
         { price: num(1), volume: num(1) },
         { price: num(2), volume: num(1) },
-        { price: num(3), volume: num(1) }
+        { price: num(3), volume: num(1) },
       ])
     ).toStrictEqual(num(2))
   })

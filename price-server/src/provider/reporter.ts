@@ -30,15 +30,15 @@ export function report(now: number): void {
     if (!reporter || !isSameDay(now, reportedAt)) {
       reporter = createReporter(`report/LunaPrices_${format(now, 'MM-dd_HHmm')}.csv`, [
         'time',
-        ...Object.keys(lunaPrices).map(quote => quote)
+        ...Object.keys(lunaPrices).map((quote) => quote),
       ])
     }
 
     reporter.writeRecords([
       {
         time: format(Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000, 'MM-dd HH:mm'),
-        ...lunaPrices
-      }
+        ...lunaPrices,
+      },
     ])
   } catch (error) {
     logger.error(error)

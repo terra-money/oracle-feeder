@@ -19,7 +19,7 @@ class LunaProvider extends Provider {
       this.quoters.push(
         new Bithumb(baseCurrency, opts.quotes, {
           interval: opts.interval || 100,
-          timeout: opts.timeout || 10000
+          timeout: opts.timeout || 10000,
         })
       )
     }
@@ -31,7 +31,7 @@ class LunaProvider extends Provider {
       this.quoters.push(
         new Coinone(baseCurrency, opts.quotes, {
           interval: opts.interval || 1000,
-          timeout: opts.timeout || 10000
+          timeout: opts.timeout || 10000,
         })
       )
     }
@@ -42,7 +42,7 @@ class LunaProvider extends Provider {
       this.quoters.push(
         new Huobi(baseCurrency, opts.quotes, {
           interval: opts.interval || 1000,
-          timeout: opts.timeout || 10000
+          timeout: opts.timeout || 10000,
         })
       )
     }
@@ -54,7 +54,9 @@ class LunaProvider extends Provider {
     for (const quote of this.quotes) {
       delete this.priceByQuote[quote]
 
-      const trades = this.collectTrades(quote).filter(trade => now - trade.timestamp < PRICE_PERIOD)
+      const trades = this.collectTrades(quote).filter(
+        (trade) => now - trade.timestamp < PRICE_PERIOD
+      )
 
       if (trades.length > 1) {
         // if have more than one, use tvwap(time volume weighted average price)

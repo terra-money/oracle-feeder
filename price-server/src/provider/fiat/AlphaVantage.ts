@@ -17,23 +17,32 @@ export class AlphaVantage extends Quoter {
       function: 'CURRENCY_EXCHANGE_RATE',
       from_currency: this.baseCurrency,
       to_currency: quote === 'SDR' ? 'XDR' : quote,
-      apikey: this.options.apiKey
+      apikey: this.options.apiKey,
     }
 
-    const response: Response = await nodeFetch(`https://www.alphavantage.co/query?${toQueryString(params)}`, {
-      timeout: this.options.timeout
-    }).then(res => res.json())
+    const response: Response = await nodeFetch(
+      `https://www.alphavantage.co/query?${toQueryString(params)}`,
+      {
+        timeout: this.options.timeout,
+      }
+    ).then((res) => res.json())
 
     if (
       !response ||
       !response['Realtime Currency Exchange Rate'] ||
       !response['Realtime Currency Exchange Rate']['5. Exchange Rate']
     ) {
-      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
+      logger.error(
+        `${this.constructor.name}: wrong api response`,
+        response ? JSON.stringify(response) : 'empty'
+      )
       throw new Error('Invalid response from AlphaVantage')
     }
 
-    this.setPrice(quote === 'XDR' ? 'SDR' : quote, num(response['Realtime Currency Exchange Rate']['5. Exchange Rate']))
+    this.setPrice(
+      quote === 'XDR' ? 'SDR' : quote,
+      num(response['Realtime Currency Exchange Rate']['5. Exchange Rate'])
+    )
   }
 
   protected async update(): Promise<boolean> {

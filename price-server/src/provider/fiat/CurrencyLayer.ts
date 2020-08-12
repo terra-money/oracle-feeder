@@ -16,15 +16,21 @@ export class CurrencyLayer extends Quoter {
     const params = {
       access_key: this.options.apiKey,
       source: this.baseCurrency,
-      currencies: this.quotes.map(quote => (quote === 'SDR' ? 'XDR' : quote)).join(',')
+      currencies: this.quotes.map((quote) => (quote === 'SDR' ? 'XDR' : quote)).join(','),
     }
 
-    const response: Response = await nodeFetch(`https://apilayer.net/api/live?${toQueryString(params)}`, {
-      timeout: this.options.timeout
-    }).then(res => res.json())
+    const response: Response = await nodeFetch(
+      `https://apilayer.net/api/live?${toQueryString(params)}`,
+      {
+        timeout: this.options.timeout,
+      }
+    ).then((res) => res.json())
 
     if (!response || !response.success || !response.quotes) {
-      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
+      logger.error(
+        `${this.constructor.name}: wrong api response`,
+        response ? JSON.stringify(response) : 'empty'
+      )
       throw new Error('Invalid response from CurrencyLayer')
     }
 

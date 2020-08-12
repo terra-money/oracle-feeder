@@ -16,8 +16,8 @@ export class WebSocketQuoter extends Quoter {
 
     this.ws.on('open', () => this.onConnect())
     this.ws.on('close', (code, reason) => this.onDisconnect(code, reason))
-    this.ws.on('error', error => this.onError(error))
-    this.ws.on('message', raw => this.onRawData(raw))
+    this.ws.on('error', (error) => this.onError(error))
+    this.ws.on('message', (raw) => this.onRawData(raw))
     this.ws.on('ping', () => this.ws.pong())
     this.ws.on('pong', () => this.alive())
   }

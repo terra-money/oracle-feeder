@@ -5,7 +5,7 @@ import * as logger from 'lib/logger'
 import { Quoter, Trades } from '../base'
 
 const candlestickUrl = {
-  KRW: 'https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinoneluna&type=1m'
+  KRW: 'https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinoneluna&type=1m',
 }
 
 interface CandlestickResponse {
@@ -25,20 +25,28 @@ export class Coinone extends Quoter {
   private async fetchLatestTrades(quote: string): Promise<Trades> {
     // get latest candles
     const response: CandlestickResponse = await nodeFetch(candlestickUrl[quote], {
-      timeout: this.options.timeout
-    }).then(res => res.json())
+      timeout: this.options.timeout,
+    }).then((res) => res.json())
 
-    if (!response || !response.success || !Array.isArray(response.data) || response.data.length < 1) {
-      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
+    if (
+      !response ||
+      !response.success ||
+      !Array.isArray(response.data) ||
+      response.data.length < 1
+    ) {
+      logger.error(
+        `${this.constructor.name}: wrong api response`,
+        response ? JSON.stringify(response) : 'empty'
+      )
       throw new Error('Invalid response from Coinone')
     }
 
     return response.data
-      .filter(row => parseFloat(row.Volume) > 0)
-      .map(row => ({
+      .filter((row) => parseFloat(row.Volume) > 0)
+      .map((row) => ({
         price: num(row.Close),
         volume: num(row.Volume),
-        timestamp: +row.DT
+        timestamp: +row.DT,
       }))
   }
 
@@ -46,7 +54,7 @@ export class Coinone extends Quoter {
     for (const quote of this.quotes) {
       // update last trades of LUNA/quote
       await this.fetchLatestTrades(quote)
-        .then(trades => {
+        .then((trades) => {
           if (!trades.length) {
             return
           }
