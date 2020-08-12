@@ -1,6 +1,5 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import * as CryptoJS from 'crypto-js'
 import * as keyUtils from './keyUtils'
 
 const KEY_SIZE = 256
@@ -15,13 +14,11 @@ interface Key {
 
 function encrypt(plainText, pass): string {
   const salt = crypto.randomBytes(16)
-  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
   const iv = crypto.randomBytes(16)
+  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
 
   const cipher = crypto.createCipheriv('AES-256-CBC', key, iv)
-  cipher.setAutoPadding(true)
-  cipher.update(plainText)
-  const encryptedText = cipher.final().toString('base64')
+  const encryptedText = Buffer.concat([cipher.update(plainText), cipher.final()]).toString('base64')
 
   // salt, iv will be hex 32 in length
   // append them to the ciphertext for use  in decryption
@@ -29,20 +26,18 @@ function encrypt(plainText, pass): string {
 }
 
 function decrypt(transitmessage, pass) {
-  const salt = CryptoJS.enc.Hex.parse(transitmessage.substr(0, 32))
-  const iv = CryptoJS.enc.Hex.parse(transitmessage.substr(32, 32))
-  const encrypted = transitmessage.substring(64)
+  const salt = Buffer.from(transitmessage.substr(0, 32), 'hex')
+  const iv = Buffer.from(transitmessage.substr(32, 32), 'hex')
+  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
 
-  const key = CryptoJS.PBKDF2(pass, salt, {
-    keySize: KEY_SIZE / 32,
-    iterations: ITERATIONS,
-  })
+  const encryptedText = transitmessage.substring(64)
+  const cipher = crypto.createDecipheriv('AES-256-CBC', key, iv)
+  const decryptedText = Buffer.concat([
+    cipher.update(encryptedText, 'base64'),
+    cipher.final(),
+  ]).toString()
 
-  return CryptoJS.AES.decrypt(encrypted, key, {
-    iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  }).toString(CryptoJS.enc.Utf8)
+  return decryptedText
 }
 
 export async function importKey(path: string, password: string, mnemonic: string): Promise<void> {
@@ -88,5 +83,3 @@ export function getKey(path: string, password: string): keyUtils.Key {
     throw new Error('Incorrect password')
   }
 }
-
-console.log(encrypt(JSON.stringify({ abcd: '1234' }), '12345678'))

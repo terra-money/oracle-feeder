@@ -14,7 +14,6 @@
     "bip32": "^2",
     "bip39": "^3.0.1",
     "bluebird": "^3.7.2",
-    "crypto-js": "^4",
     "ledger-cosmos-js": "^2.1.7",
     "prompt": "^1.0.0",
     "promptly": "^3.0.3",
