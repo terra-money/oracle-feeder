@@ -37,6 +37,12 @@ export interface Coin {
   amount: string
 }
 
+export interface BaseRequest {
+  chain_id: string
+  sequence: string
+  account_number: string
+}
+
 export function generateStdTx(msg: Message[], fee: Fee, memo = ''): StdTx {
   return {
     fee,

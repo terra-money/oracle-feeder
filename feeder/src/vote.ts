@@ -1,6 +1,6 @@
 import * as crypto from 'crypto'
 import * as Bluebird from 'bluebird'
-import { Key } from './keyUtils'
+import { Wallet } from './wallet'
 import * as ks from './keystore'
 import {
   Message,
@@ -8,6 +8,8 @@ import {
   generatePrevoteMsg,
   generateVoteHash,
   generateStdTx,
+  Signature,
+  BaseRequest,
 } from './msg'
 import * as promptly from 'promptly'
 import * as wallet from './wallet'
@@ -35,7 +37,7 @@ interface VoteArgs {
 // yarn start vote command
 export async function vote(args: VoteArgs): Promise<void> {
   const { lcdAddress, denoms } = args
-  const { ledgerApp, voter } = await initKey(args.ledgerMode, args.keyPath, args.password)
+  const { ledgerApp, wallet: voter } = await initKey(args.ledgerMode, args.keyPath, args.password)
 
   const valAddrs = args.validator || [voter.terraValAddress]
   const voterAddr = voter.terraAddress
@@ -184,44 +186,39 @@ async function initKey(
   ledgerMode: boolean,
   keyPath: string,
   password?: string
-): Promise<{ ledgerApp?: any; voter: Key }> {
+): Promise<{ ledgerApp?: any; wallet: Wallet }> {
   let ledgerApp
-  let voter
+  let wallet
 
   if (ledgerMode) {
     console.info(`Initializing ledger`)
 
-    const ledgerNode = await ledger.getLedgerNode()
-    ledgerApp = await ledger.getLedgerApp(ledgerNode)
-    voter = await ledger.getAccountFromLedger(ledgerApp)
+    ledgerApp = await ledger.getLedgerApp()
+    wallet = await ledger.getWalletFromLedger(ledgerApp)
 
-    if (voter === null) {
+    if (wallet === null) {
       console.error(`Ledger is not connected or locked`)
-
-      if (ledgerNode !== null) {
-        ledgerNode.close_async()
-      }
+      ledger.closeLedger()
     }
 
     process.on('SIGINT', () => {
-      if (ledgerNode !== null) {
-        ledgerNode.close_async()
-      }
-
+      console.info('Closing ledger')
+      ledger.closeLedger()
       process.exit()
     })
   }
 
-  if (!voter) {
-    console.info(`getting key from keystore`)
+  if (!wallet) {
+    console.info(`getting wallet from keystore`)
 
-    voter = ks.getKey(
+    wallet = ks.load(
       keyPath,
+      'voter',
       password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
     )
   }
 
-  return { ledgerApp, voter }
+  return { ledgerApp, wallet }
 }
 
 interface FilterPricesArgs {
@@ -389,13 +386,19 @@ async function broadcastMsg({
   tx.fee.amount = est.fees
   tx.fee.gas = est.gas
 
-  const signature = await wallet.sign(ledgerApp, voter, tx, {
+  const baseRequest: BaseRequest = {
     chain_id: chainID,
     account_number: accountNubmer,
     sequence,
-  })
+  }
+  let signature: Signature
+
+  if (ledgerApp) {
+    signature = await ledger.sign(ledgerApp, voter, tx, baseRequest)
+  } else {
+    signature = await wallet.sign(voter, tx, baseRequest)
+  }
 
   tx.signatures.push(signature)
-
   return broadcast(lcdAddress, tx, 'sync')
 }

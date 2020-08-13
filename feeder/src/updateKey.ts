@@ -1,7 +1,7 @@
 import * as keystore from './keystore'
 import * as promptly from 'promptly'
 
-export async function updateKey(path: string): Promise<void> {
+export async function updateKey(filePath: string): Promise<void> {
   const password = await promptly.password(`Enter a passphrase to encrypt your key to disk:`, {
     replace: `*`,
   })
@@ -24,6 +24,6 @@ export async function updateKey(path: string): Promise<void> {
     return
   }
 
-  await keystore.importKey(path, password, mnemonic)
+  await keystore.save(filePath, 'voter', password, mnemonic)
   console.info(`saved!`)
 }

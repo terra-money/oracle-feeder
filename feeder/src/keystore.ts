@@ -1,12 +1,11 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import * as keyUtils from './keyUtils'
+import { Wallet, generateFromMnemonic } from './wallet'
 
 const KEY_SIZE = 256
 const ITERATIONS = 100
-const DEFAULT_KEY_NAME = `voter`
 
-interface Key {
+interface Entity {
   name: string
   address: string
   ciphertext: string
@@ -40,26 +39,7 @@ function decrypt(transitmessage, pass) {
   return decryptedText
 }
 
-export async function importKey(path: string, password: string, mnemonic: string): Promise<void> {
-  const wallet = await keyUtils.generateFromMnemonic(mnemonic)
-  const keys = loadKeys(path)
-
-  if (keys.find((key) => key.name === DEFAULT_KEY_NAME)) {
-    throw new Error(`Key with that name already exists`)
-  }
-
-  const ciphertext = encrypt(JSON.stringify(wallet), password)
-
-  keys.push({
-    name: DEFAULT_KEY_NAME,
-    address: wallet.terraAddress,
-    ciphertext,
-  })
-
-  fs.writeFileSync(path, JSON.stringify(keys))
-}
-
-export function loadKeys(path: string): Key[] {
+function loadEntities(path: string): Entity[] {
   try {
     return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`)
   } catch (e) {
@@ -68,12 +48,36 @@ export function loadKeys(path: string): Key[] {
   }
 }
 
-export function getKey(path: string, password: string): keyUtils.Key {
-  const keys = loadKeys(path)
-  const key = keys.find((key) => key.name === DEFAULT_KEY_NAME)
+export async function save(
+  filePath: string,
+  name: string,
+  password: string,
+  mnemonic: string
+): Promise<void> {
+  const wallet: Wallet = await generateFromMnemonic(mnemonic)
+  const keys = loadEntities(filePath)
+
+  if (keys.find((key) => key.name === name)) {
+    throw new Error('Key already exists by that name')
+  }
+
+  const ciphertext = encrypt(JSON.stringify(wallet), password)
+
+  keys.push({
+    name,
+    address: wallet.terraAddress,
+    ciphertext,
+  })
+
+  fs.writeFileSync(filePath, JSON.stringify(keys))
+}
+
+export function load(filePath: string, name: string, password: string): Wallet {
+  const keys = loadEntities(filePath)
+  const key = keys.find((key) => key.name === name)
 
   if (!key) {
-    throw new Error('Cannot find key')
+    throw new Error('Cannot load key by that name')
   }
 
   try {

@@ -15,7 +15,6 @@
     "bip39": "^3.0.2",
     "bluebird": "^3.7.2",
     "ledger-cosmos-js": "^2.1.7",
-    "prompt": "^1.0.0",
     "promptly": "^3.0.3",
     "ripemd160": "^2.0.2",
     "secp256k1": "^4.0.2",
@@ -23,6 +22,9 @@
     "typescript": "^3.9.7"
   },
   "devDependencies": {
+    "@types/bech32": "^1.1.2",
+    "@types/ripemd160": "^2.0.0",
+    "@types/secp256k1": "^4.0.1",
     "@typescript-eslint/eslint-plugin": "^3.9.0",
     "@typescript-eslint/parser": "^3.9.0",
     "eslint": "^7.6.0",
