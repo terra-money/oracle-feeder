@@ -69,9 +69,11 @@ export class Quoter {
 
   protected setTrades(quote: string, trades: Trades): void {
     if (Array.isArray(trades)) {
+      const now = Date.now()
+
       // trades filtering that are past 60 minutes
       this.tradesByQuote[quote] = trades.filter(
-        (trade) => Date.now() - trade.timestamp < 60 * 60 * 1000
+        (trade) => now - trade.timestamp < 60 * 60 * 1000 && now < trade.timestamp
       )
 
       this.alive()

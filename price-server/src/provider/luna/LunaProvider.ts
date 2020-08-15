@@ -72,7 +72,6 @@ class LunaProvider extends Provider {
 
       if (this.priceByQuote[quote] && this.priceByQuote[quote].isNaN()) {
         delete this.priceByQuote[quote]
-        sendSlack(`LUNA/${quote} isNaN..\n${JSON.stringify(trades)}`).catch()
       }
     }
   }

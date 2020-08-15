@@ -42,14 +42,6 @@ export class Huobi extends Quoter {
       return []
     }
 
-    for (const row of response.data) {
-      if (row.id * 1000 > Date.now()) {
-        const error = `huobi timestamp error, ${JSON.stringify(response)}`
-        sendSlack(error).catch()
-        return []
-      }
-    }
-
     return response.data
       .filter((row) => parseFloat(row.vol) > 0)
       .map((row) => ({
