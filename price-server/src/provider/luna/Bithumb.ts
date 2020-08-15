@@ -97,7 +97,8 @@ export class Bithumb extends WebSocketQuoter {
         continue
       }
 
-      const timestamp = Math.floor(new Date(row.contDtm).getTime() / 60000) * 60000
+      // row.contDtm has no timezone info, so need to add timezone data
+      const timestamp = Math.floor(new Date(row.contDtm + '+09:00').getTime() / 60000) * 60000
       const price = num(row.contPrice)
       const volume = num(row.contQty)
 
