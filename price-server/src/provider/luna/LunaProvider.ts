@@ -1,6 +1,7 @@
 import { BigNumber } from 'bignumber.js'
 import * as config from 'config'
 import { average, tvwap } from 'lib/statistics'
+import { sendSlack } from 'lib/slack'
 import { Provider } from '../base'
 import Bithumb from './Bithumb'
 import Coinone from './Coinone'
@@ -54,9 +55,8 @@ class LunaProvider extends Provider {
     for (const quote of this.quotes) {
       delete this.priceByQuote[quote]
 
-      const trades = this.collectTrades(quote).filter(
-        (trade) => now - trade.timestamp < PRICE_PERIOD
-      )
+      const trades = this.collectTrades(quote)
+        .filter((trade) => now - trade.timestamp < PRICE_PERIOD || now < trade.timestamp)
 
       if (trades.length > 1) {
         // if have more than one, use tvwap(time volume weighted average price)
@@ -68,6 +68,11 @@ class LunaProvider extends Provider {
         if (prices.length > 0) {
           this.priceByQuote[quote] = average(prices)
         }
+      }
+
+      if (this.priceByQuote[quote] && this.priceByQuote[quote].isNaN()) {
+        delete this.priceByQuote[quote]
+        sendSlack(`LUNA/${quote} isNaN..\n${JSON.stringify(trades)}`).catch()
       }
     }
   }

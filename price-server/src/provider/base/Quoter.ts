@@ -60,18 +60,22 @@ export class Quoter {
   }
 
   protected setPrice(quote: string, price: BigNumber): void {
-    this.priceByQuote[quote] = price
+    if (!price || !price.isNaN()) {
+      this.priceByQuote[quote] = price
 
-    this.alive()
+      this.alive()
+    }
   }
 
   protected setTrades(quote: string, trades: Trades): void {
-    // trades filtering that are past 60 minutes
-    this.tradesByQuote[quote] = trades.filter(
-      (trade) => Date.now() - trade.timestamp < 60 * 60 * 1000
-    )
+    if (Array.isArray(trades)) {
+      // trades filtering that are past 60 minutes
+      this.tradesByQuote[quote] = trades.filter(
+        (trade) => Date.now() - trade.timestamp < 60 * 60 * 1000
+      )
 
-    this.alive()
+      this.alive()
+    }
   }
 
   protected alive(): void {

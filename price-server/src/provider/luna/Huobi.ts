@@ -2,6 +2,7 @@ import nodeFetch from 'node-fetch'
 import { errorHandler } from 'lib/error'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
+import { sendSlack } from 'lib/slack'
 import { Quoter, Trades } from '../base'
 import { toQueryString } from 'lib/fetch'
 import { fiatProvider } from '..'
@@ -41,12 +42,20 @@ export class Huobi extends Quoter {
       return []
     }
 
+    for (const row of response.data) {
+      if (row.id * 1000 > Date.now()) {
+        const error = `huobi timestamp error, ${JSON.stringify(response)}`
+        sendSlack(error).catch()
+        return []
+      }
+    }
+
     return response.data
       .filter((row) => parseFloat(row.vol) > 0)
       .map((row) => ({
         price: num(row.close).dividedBy(rate),
         volume: num(row.amount),
-        timestamp: row.id * 1000,
+        timestamp: +row.id * 1000,
       }))
       .sort((a, b) => a.timestamp - b.timestamp)
   }
