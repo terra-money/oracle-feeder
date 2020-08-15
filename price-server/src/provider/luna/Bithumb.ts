@@ -4,7 +4,7 @@ import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
 import { WebSocketQuoter, Trades } from '../base'
-
+import { format } from 'date-fns'
 const headers = {
   'user-agent':
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
@@ -97,7 +97,8 @@ export class Bithumb extends WebSocketQuoter {
         continue
       }
 
-      const timestamp = Math.floor(new Date(row.contDtm).getTime() / 60000) * 60000
+      // row.contDtm has no timezone info, so need to add timezone data
+      const timestamp = Math.floor(new Date(row.contDtm + '+09:00').getTime() / 60000) * 60000
       const price = num(row.contPrice)
       const volume = num(row.contQty)
 
