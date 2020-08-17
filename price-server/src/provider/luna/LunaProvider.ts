@@ -1,7 +1,6 @@
 import { BigNumber } from 'bignumber.js'
 import * as config from 'config'
 import { average, tvwap } from 'lib/statistics'
-import { sendSlack } from 'lib/slack'
 import { Provider } from '../base'
 import Bithumb from './Bithumb'
 import Coinone from './Coinone'
@@ -56,7 +55,7 @@ class LunaProvider extends Provider {
       delete this.priceByQuote[quote]
 
       const trades = this.collectTrades(quote)
-        .filter((trade) => now - trade.timestamp < PRICE_PERIOD || now < trade.timestamp)
+        .filter((trade) => now - trade.timestamp < PRICE_PERIOD && now >= trade.timestamp)
 
       if (trades.length > 1) {
         // if have more than one, use tvwap(time volume weighted average price)

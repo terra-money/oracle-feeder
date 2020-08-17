@@ -73,7 +73,7 @@ export class Quoter {
 
       // trades filtering that are past 60 minutes
       this.tradesByQuote[quote] = trades.filter(
-        (trade) => now - trade.timestamp < 60 * 60 * 1000 && now < trade.timestamp
+        (trade) => now - trade.timestamp < 60 * 60 * 1000 && now >= trade.timestamp
       )
 
       this.alive()
