@@ -1,5 +1,5 @@
 import { BigNumber } from 'bignumber.js'
-import { TradesByQuote, Trades, PriceByQuote } from './types'
+import { TradesBySymbol, Trades, PriceBySymbol } from './types'
 import { sendSlack } from 'lib/slack'
 
 interface QuoterOptions {
@@ -10,20 +10,20 @@ interface QuoterOptions {
 
 export class Quoter {
   protected options: QuoterOptions
-  protected baseCurrency: string // base currency
-  protected quotes: string[] = [] // quote currencies
+  protected symbols: string[] = []
 
-  private tradesByQuote: TradesByQuote = {}
-  private priceByQuote: PriceByQuote = {}
+  private tradesBySymbol: TradesBySymbol = {}
+  private priceBySymbol: PriceBySymbol = {}
 
   private tickedAt: number
   private isAlive = true
   private alivedAt: number
 
-  constructor(baseCurrency: string, quotes: string[], options: QuoterOptions) {
-    this.baseCurrency = baseCurrency
-    this.quotes = quotes
-    this.options = options
+  constructor(symbols: string[], options: QuoterOptions) {
+    Object.assign(this, {
+      symbols,
+      options,
+    })
   }
 
   public async initialize(): Promise<void> {
@@ -43,36 +43,36 @@ export class Quoter {
     return isUpdated
   }
 
-  public getQuotes(): string[] {
-    return this.quotes
+  public getSymbols(): string[] {
+    return this.symbols
   }
 
-  public getPrice(quote: string): BigNumber {
-    return this.isAlive ? this.priceByQuote[quote] : undefined
+  public getPrice(symbol: string): BigNumber {
+    return this.isAlive ? this.priceBySymbol[symbol] : undefined
   }
 
-  public getTrades(quote: string): Trades {
-    return this.isAlive ? this.tradesByQuote[quote] : []
+  public getTrades(symbol: string): Trades {
+    return this.isAlive ? this.tradesBySymbol[symbol] || [] : []
   }
 
   protected async update(): Promise<boolean> {
     return false
   }
 
-  protected setPrice(quote: string, price: BigNumber): void {
-    if (!price || !price.isNaN()) {
-      this.priceByQuote[quote] = price
+  protected setPrice(symbol: string, price: BigNumber): void {
+    if (price && !price.isNaN()) {
+      this.priceBySymbol[symbol] = price
 
       this.alive()
     }
   }
 
-  protected setTrades(quote: string, trades: Trades): void {
+  protected setTrades(symbol: string, trades: Trades): void {
     if (Array.isArray(trades)) {
       const now = Date.now()
 
       // trades filtering that are past 60 minutes
-      this.tradesByQuote[quote] = trades.filter(
+      this.tradesBySymbol[symbol] = trades.filter(
         (trade) => now - trade.timestamp < 60 * 60 * 1000 && now >= trade.timestamp
       )
 

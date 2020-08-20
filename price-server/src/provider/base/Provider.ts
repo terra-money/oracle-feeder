@@ -1,30 +1,25 @@
 import { BigNumber } from 'bignumber.js'
-import * as config from 'config'
 import { uniq, concat } from 'lodash'
 import { format, addMinutes, isSameMinute, isSameDay } from 'date-fns'
+import * as config from 'config'
 import { createReporter } from 'lib/reporter'
 import { average } from 'lib/statistics'
 import * as logger from 'lib/logger'
-import { PriceByQuote, Trades } from './types'
+import { PriceBySymbol, Trades } from './types'
 import Quoter from './Quoter'
 
 export class Provider {
   protected quoters: Quoter[] = []
-  protected quotes: string[] = [] // quote currencies
-  protected priceByQuote: PriceByQuote = {}
-  protected baseCurrency: string
+  protected symbols: string[] = []
+  protected priceBySymbol: PriceBySymbol = {}
   private reporter
   private reportedAt = 0
-
-  constructor(baseCurrency: string) {
-    this.baseCurrency = baseCurrency
-  }
 
   public async initialize(): Promise<void> {
     for (const quoter of this.quoters) {
       await quoter.initialize()
     }
-    this.quotes = uniq(concat(...this.quoters.map((quoter) => quoter.getQuotes())))
+    this.symbols = uniq(concat(...this.quoters.map((quoter) => quoter.getSymbols())))
   }
 
   public async tick(now: number): Promise<boolean> {
@@ -45,50 +40,37 @@ export class Provider {
     return isUpdated
   }
 
-  public getPriceBy(quote: string): BigNumber {
-    return this.priceByQuote[quote]
+  public getPriceBy(symbol: string): BigNumber {
+    return this.priceBySymbol[symbol]
   }
 
-  public getLunaPrices(lunaPrices: PriceByQuote): PriceByQuote {
-    if (this.baseCurrency === 'LUNA') {
-      return this.priceByQuote
-    }
-
-    // convert base currency to Luna and return
-    const prices: PriceByQuote = {}
-
-    if (lunaPrices[this.baseCurrency]) {
-      for (const quote of Object.keys(this.priceByQuote)) {
-        prices[quote] = this.priceByQuote[quote].multipliedBy(lunaPrices[this.baseCurrency])
-      }
-    }
-
-    return prices
+  public getPrices(): PriceBySymbol {
+    return this.priceBySymbol
   }
 
   // collect latest trade records
-  protected collectTrades(quote: string): Trades {
-    return concat(...this.quoters.map((quoter) => quoter.getTrades(quote) || []))
+  protected collectTrades(symbol: string): Trades {
+    return concat(...this.quoters.map((quoter) => quoter.getTrades(symbol) || []))
   }
 
-  protected collectPrice(quote: string): BigNumber[] {
-    return this.quoters.map((quoter) => quoter.getPrice(quote)).filter((price) => price)
+  protected collectPrice(symbol: string): BigNumber[] {
+    return this.quoters.map((quoter) => quoter.getPrice(symbol)).filter((price) => price)
   }
 
   protected adjustPrices(): void {
     // calculate average of prices
-    for (const quote of this.quotes) {
-      delete this.priceByQuote[quote]
+    for (const symbol of this.symbols) {
+      delete this.priceBySymbol[symbol]
 
-      const prices: BigNumber[] = this.collectPrice(quote)
+      const prices: BigNumber[] = this.collectPrice(symbol)
 
       if (prices.length > 0) {
-        this.priceByQuote[quote] = average(prices)
+        this.priceBySymbol[symbol] = average(prices)
       }
     }
   }
 
-  private report(now: number) {
+  private report(now: number): void {
     if (isSameMinute(now, this.reportedAt)) {
       return
     }
@@ -99,13 +81,11 @@ export class Provider {
           `report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`,
           [
             'time',
-            ...this.quotes.map((quote) => `${this.baseCurrency}/${quote}`),
+            ...this.symbols,
             ...concat(
               ...this.quoters.map((quoter) =>
                 concat(
-                  ...quoter
-                    .getQuotes()
-                    .map((quote) => `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`)
+                  ...quoter.getSymbols().map((symbol) => `${quoter.constructor.name}\n${symbol}`)
                 )
               )
             ),
@@ -118,15 +98,15 @@ export class Provider {
       }
 
       // report adjust price
-      for (const quote of this.quotes) {
-        report[`${this.baseCurrency}/${quote}`] = this.priceByQuote[quote]?.toFixed(8)
+      for (const symbol of this.symbols) {
+        report[symbol] = this.priceBySymbol[symbol]?.toFixed(8)
       }
 
       // report quoter's price
       for (const quoter of this.quoters) {
-        for (const quote of quoter.getQuotes()) {
-          const key = `${quoter.constructor.name}\n${this.baseCurrency}/${quote}`
-          report[key] = quoter.getPrice(quote)?.toFixed(8)
+        for (const symbol of quoter.getSymbols()) {
+          const key = `${quoter.constructor.name}\n${symbol}`
+          report[key] = quoter.getPrice(symbol)?.toFixed(8)
         }
       }
 

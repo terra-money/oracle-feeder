@@ -3,7 +3,7 @@ import * as logger from 'lib/logger'
 import { errorHandler } from 'lib/error'
 import { toQueryString } from 'lib/fetch'
 import { num } from 'lib/num'
-import { Quoter } from '../base'
+import { Quoter } from 'provider/base'
 
 interface Response {
   success: boolean
@@ -16,14 +16,15 @@ export class Fixer extends Quoter {
     const params = {
       access_key: this.options.apiKey,
       // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription
-      symbols: this.quotes.map((quote) => (quote === 'SDR' ? 'XDR' : quote)).join(',') + ',KRW',
+      symbols:
+        this.symbols
+          .map((symbol) => (symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')))
+          .join(',') + ',KRW',
     }
 
     const response: Response = await nodeFetch(
       `http://data.fixer.io/api/latest?${toQueryString(params)}`,
-      {
-        timeout: this.options.timeout,
-      }
+      { timeout: this.options.timeout }
     ).then((res) => res.json())
 
     if (!response || !response.success || !response.rates) {
@@ -47,7 +48,7 @@ export class Fixer extends Quoter {
 
     // update last trades
     for (const quote of Object.keys(response.rates)) {
-      this.setPrice(quote === 'XDR' ? 'SDR' : quote, num(response.rates[quote]))
+      this.setPrice(quote === 'XDR' ? 'KRW/SDR' : `KRW/${quote}`, num(response.rates[quote]))
     }
   }
 

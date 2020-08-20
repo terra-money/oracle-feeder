@@ -50,16 +50,18 @@ export class WebSocketQuoter extends Quoter {
     setTimeout(() => this.connect(this.wsUrl), 1000)
   }
 
-  protected onError(error: Error): void {
+  // eslint-disable-next-line
+  protected onError(error): void {
     logger.error(`${this.constructor.name} websocket: `, error)
   }
 
-  protected onData(data: Record<string, unknown>): void {
-    data
-    return
+  // eslint-disable-next-line
+  protected onData(data: object): void {
+    // do nothing
   }
 
-  private onRawData(raw) {
+  // eslint-disable-next-line
+  protected onRawData(raw): void {
     let data
 
     try {

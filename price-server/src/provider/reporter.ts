@@ -3,7 +3,7 @@ import { reduce } from 'lodash'
 import { format, isSameDay, isSameMinute, addMinutes } from 'date-fns'
 import * as logger from 'lib/logger'
 import { createReporter } from 'lib/reporter'
-import { getLunaPrices } from './'
+import { lunaProvider } from 'provider'
 
 let reporter
 let reportedAt = 0
@@ -15,8 +15,8 @@ export function report(now: number): void {
 
   try {
     const lunaPrices = reduce(
-      getLunaPrices(),
-      (result, value, key) => Object.assign(result, { [`LUNA/${key}`]: value.toFixed(18) }),
+      lunaProvider.getLunaPrices(),
+      (result, value, key) => Object.assign(result, { [key]: value.toFixed(18) }),
       {}
     )
 

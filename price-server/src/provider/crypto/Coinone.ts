@@ -2,11 +2,8 @@ import nodeFetch from 'node-fetch'
 import { errorHandler } from 'lib/error'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
-import { Quoter, Trades } from '../base'
-
-const candlestickUrl = {
-  KRW: 'https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinoneluna&type=1m',
-}
+import { Quoter, Trades } from 'provider/base'
+import { getBaseCurrency } from 'lib/currency'
 
 interface CandlestickResponse {
   success: boolean
@@ -22,11 +19,13 @@ interface CandlestickResponse {
 }
 
 export class Coinone extends Quoter {
-  private async fetchLatestTrades(quote: string): Promise<Trades> {
+  private async fetchLatestTrades(symbol: string): Promise<Trades> {
     // get latest candles
-    const response: CandlestickResponse = await nodeFetch(candlestickUrl[quote], {
-      timeout: this.options.timeout,
-    }).then((res) => res.json())
+    const base = getBaseCurrency(symbol)
+    const response: CandlestickResponse = await nodeFetch(
+      `https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinone${base.toLowerCase()}&type=1m`,
+      { timeout: this.options.timeout }
+    ).then((res) => res.json())
 
     if (
       !response ||
@@ -51,16 +50,15 @@ export class Coinone extends Quoter {
   }
 
   protected async update(): Promise<boolean> {
-    for (const quote of this.quotes) {
-      // update last trades of LUNA/quote
-      await this.fetchLatestTrades(quote)
+    for (const symbol of this.symbols) {
+      await this.fetchLatestTrades(symbol)
         .then((trades) => {
           if (!trades.length) {
             return
           }
 
-          this.setTrades(quote, trades)
-          this.setPrice(quote, trades[trades.length - 1].price)
+          this.setTrades(symbol, trades)
+          this.setPrice(symbol, trades[trades.length - 1].price)
         })
         .catch(errorHandler)
     }

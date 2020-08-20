@@ -1,53 +1,38 @@
 module.exports = {
   port: 8532,
-  sentry: {
-    // https://sentry.io/ - error reporting service
-    enable: false,
-    dsn: '',
-  },
+  sentry: '', // sentry dsn (https://sentry.io/ - error reporting service)
   slack: {
     // for incident alarm (e.g. exchange shutdown)
-    enable: false,
     channel: '#bot-test',
     url: '',
   },
-  provider: {
+  lunaProvider: {
     bithumb: {
-      enable: true,
-      base: 'LUNA',
-      quotes: ['KRW'], // available quote list
+      symbols: ['LUNA/KRW'], // available symbol list
       interval: 100, // update interval
     },
     coinone: {
-      enable: true,
-      base: 'LUNA',
-      quotes: ['KRW'],
+      symbols: ['LUNA/KRW'],
       interval: 1000,
     },
     huobi: {
-      enable: true,
-      base: 'LUNA',
-      quotes: ['KRW'],
-      interval: 1000,
+      symbols: ['LUNA/USDT'], // available symbol list
+      interval: 100, // update interval
     },
+  },
+  fiatProvider: {
     currencylayer: {
-      enable: true,
-      base: 'KRW',
-      quotes: ['SDR', 'USD', 'MNT'],
+      symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
       interval: 60 * 1000,
       apiKey: '', // necessary
     },
     alphavantage: {
-      enable: true,
-      base: 'KRW',
-      quotes: ['SDR', 'USD', 'MNT'],
+      symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
       interval: 60 * 1000,
       apiKey: '', // necessary
     },
     fixer: {
-      enable: false,
-      base: 'KRW',
-      quotes: ['SDR', 'USD', 'MNT'],
+      symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
       interval: 60 * 60 * 1000, // 1 hours (free api support only hourly update)
       apiKey: '', // necessary
     },

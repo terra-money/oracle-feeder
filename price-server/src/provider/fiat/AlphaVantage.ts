@@ -3,7 +3,7 @@ import { errorHandler } from 'lib/error'
 import { toQueryString } from 'lib/fetch'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
-import { Quoter } from '../base'
+import { Quoter } from 'provider/base'
 
 interface Response {
   'Realtime Currency Exchange Rate': {
@@ -12,11 +12,12 @@ interface Response {
 }
 
 export class AlphaVantage extends Quoter {
-  private async updateLastPrice(quote: string): Promise<void> {
+  private async updateLastPrice(symbol: string): Promise<void> {
+    const quote = symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')
     const params = {
       function: 'CURRENCY_EXCHANGE_RATE',
-      from_currency: this.baseCurrency,
-      to_currency: quote === 'SDR' ? 'XDR' : quote,
+      from_currency: 'KRW',
+      to_currency: quote,
       apikey: this.options.apiKey,
     }
 
@@ -39,15 +40,12 @@ export class AlphaVantage extends Quoter {
       throw new Error('Invalid response from AlphaVantage')
     }
 
-    this.setPrice(
-      quote === 'XDR' ? 'SDR' : quote,
-      num(response['Realtime Currency Exchange Rate']['5. Exchange Rate'])
-    )
+    this.setPrice(symbol, num(response['Realtime Currency Exchange Rate']['5. Exchange Rate']))
   }
 
   protected async update(): Promise<boolean> {
-    for (const quote of this.quotes) {
-      await this.updateLastPrice(quote).catch(errorHandler)
+    for (const symbol of this.symbols) {
+      await this.updateLastPrice(symbol).catch(errorHandler)
     }
 
     return true

@@ -3,7 +3,7 @@ import { errorHandler } from 'lib/error'
 import { toQueryString } from 'lib/fetch'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
-import { Quoter } from '../base'
+import { Quoter } from 'provider/base'
 
 interface Response {
   success: boolean
@@ -15,8 +15,10 @@ export class CurrencyLayer extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
       access_key: this.options.apiKey,
-      source: this.baseCurrency,
-      currencies: this.quotes.map((quote) => (quote === 'SDR' ? 'XDR' : quote)).join(','),
+      source: 'KRW',
+      currencies: this.symbols
+        .map((symbol) => (symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')))
+        .join(','),
     }
 
     const response: Response = await nodeFetch(
@@ -36,8 +38,11 @@ export class CurrencyLayer extends Quoter {
 
     // update last trades
     for (const symbol of Object.keys(response.quotes)) {
-      const quote = symbol.replace('KRW', '')
-      this.setPrice(quote === 'XDR' ? 'SDR' : quote, num(response.quotes[symbol]))
+      const convertedSymbol = symbol.replace('KRW', 'KRW/')
+      this.setPrice(
+        convertedSymbol === 'KRW/XDR' ? 'KRW/SDR' : convertedSymbol,
+        num(response.quotes[symbol])
+      )
     }
   }
 

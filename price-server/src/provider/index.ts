@@ -1,32 +1,19 @@
-import { Provider, PriceByQuote } from './base'
+import { Provider } from './base'
 import * as bluebird from 'bluebird'
 import { errorHandler } from 'lib/error'
 import { report } from './reporter'
-import LunaProvider from './luna/LunaProvider'
+import LunaProvider from './crypto/LunaProvider'
 import FiatProvider from './fiat/FiatProvider'
 
-export const fiatProvider = new FiatProvider('KRW')
+export const fiatProvider = new FiatProvider()
+export const lunaProvider = new LunaProvider()
 
-const providers: Provider[] = [
-  new LunaProvider('LUNA'), // base currency is LUNA (LUNA/KRW LUNA/USD LUNA/...)
-  fiatProvider, // base currency is KRW (KRW/USD KRW/SDR KRW/MNT ...)
-]
+const providers: Provider[] = [fiatProvider, lunaProvider]
 
 export async function initialize(): Promise<void> {
-  await Promise.all(providers.map((provider) => provider.initialize()))
+  await bluebird.mapSeries(providers, (provider) => provider.initialize())
 
   await loop()
-}
-
-export function getLunaPrices(): PriceByQuote {
-  let lunaPrices: PriceByQuote = {}
-
-  // collect luna prices
-  for (const provider of providers) {
-    lunaPrices = Object.assign(lunaPrices, provider.getLunaPrices(lunaPrices))
-  }
-
-  return lunaPrices
 }
 
 async function loop(): Promise<void> {

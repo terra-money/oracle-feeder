@@ -8,10 +8,10 @@ export interface Trade {
 
 export type Trades = Trade[]
 
-export interface TradesByQuote {
-  [quote: string]: Trades
+export interface TradesBySymbol {
+  [symbol: string]: Trades
 }
 
-export interface PriceByQuote {
-  [quote: string]: BigNumber
+export interface PriceBySymbol {
+  [symbol: string]: BigNumber
 }

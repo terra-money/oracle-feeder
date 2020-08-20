@@ -1,18 +1,18 @@
 import * as config from 'config'
-import { Provider } from '../base'
+import { Provider } from 'provider/base'
 import CurrencyLayer from './CurrencyLayer'
 import AlphaVantage from './AlphaVantage'
 import Fixer from './Fixer'
 
 class FiatProvider extends Provider {
-  constructor(baseCurrency: string) {
-    super(baseCurrency)
+  constructor() {
+    super()
 
-    if (config.get('provider.currencylayer.enable')) {
-      const opts = config.get('provider.currencylayer')
+    if (config.fiatProvider?.currencylayer) {
+      const opts = config.fiatProvider.currencylayer
 
       this.quoters.push(
-        new CurrencyLayer(baseCurrency, opts.quotes, {
+        new CurrencyLayer(opts.symbols, {
           interval: opts.interval || 1000,
           timeout: opts.timeout || 5000,
           apiKey: opts.apiKey,
@@ -20,11 +20,11 @@ class FiatProvider extends Provider {
       )
     }
 
-    if (config.get('provider.alphavantage.enable')) {
-      const opts = config.get('provider.alphavantage')
+    if (config.fiatProvider?.alphavantage) {
+      const opts = config.fiatProvider.alphavantage
 
       this.quoters.push(
-        new AlphaVantage(baseCurrency, opts.quotes, {
+        new AlphaVantage(opts.symbols, {
           interval: opts.interval || 1000,
           timeout: opts.timeout || 5000,
           apiKey: opts.apiKey,
@@ -32,17 +32,23 @@ class FiatProvider extends Provider {
       )
     }
 
-    if (config.get('provider.fixer.enable')) {
-      const opts = config.get('provider.fixer')
+    if (config.fiatProvider?.fixer) {
+      const opts = config.fiatProvider.fixer
 
       this.quoters.push(
-        new Fixer(baseCurrency, opts.quotes, {
+        new Fixer(opts.symbols, {
           interval: opts.interval || 1000,
           timeout: opts.timeout || 5000,
           apiKey: opts.apiKey,
         })
       )
     }
+  }
+
+  public async initialize(): Promise<void> {
+    await super.initialize()
+
+    await this.tick(Date.now())
   }
 }
 

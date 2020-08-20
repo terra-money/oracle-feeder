@@ -2,7 +2,7 @@ import nodeFetch, { Response } from 'node-fetch'
 import * as config from 'config'
 
 export function sendSlack(message: string): Promise<Response> {
-  if (!config?.slack?.enable || !config?.slack?.url) {
+  if (!config?.slack?.url || !config?.slack?.channel) {
     return
   }
 

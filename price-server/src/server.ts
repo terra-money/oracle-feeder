@@ -5,7 +5,8 @@ import * as bluebird from 'bluebird'
 import * as config from 'config'
 import { init as initErrorHandler, errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
-import { initialize as initializeProviders, getLunaPrices } from './provider'
+import { initialize as initializeProviders, lunaProvider } from 'provider'
+import { getQuoteCurrency } from 'lib/currency'
 
 bluebird.config({ longStackTraces: true })
 global.Promise = bluebird
@@ -18,13 +19,13 @@ async function createServer() {
   })
 
   app.get('/latest', (req, res) => {
-    const lunaPrices = getLunaPrices()
+    const lunaPrices = lunaProvider.getLunaPrices()
 
     send(res, 200, {
       created_at: new Date().toISOString(),
-      prices: Object.keys(lunaPrices).map((quote) => ({
-        currency: quote,
-        price: lunaPrices[quote].toFixed(18),
+      prices: Object.keys(lunaPrices).map((symbol) => ({
+        currency: getQuoteCurrency(symbol),
+        price: lunaPrices[symbol].toFixed(18),
       })),
     })
   })

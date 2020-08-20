@@ -1,29 +1,12 @@
 import nodeFetch from 'node-fetch'
-import { toFormData } from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
-import { WebSocketQuoter, Trades } from '../base'
-import { format } from 'date-fns'
-const headers = {
-  'user-agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-  'x-requested-with': 'XMLHttpRequest',
-}
-
-const requestData = {
-  KRW: {
-    // LUNA/KRW
-    coinType: 'C0534',
-    crncCd: 'C0100',
-    tickType: '01M',
-    csrf_xcoin_name: 'd2e131dccab300919c9fafcec567bb51',
-  },
-}
+import { WebSocketQuoter, Trades } from 'provider/base'
+import { getBaseCurrency, getQuoteCurrency } from 'lib/currency'
 
 interface CandlestickResponse {
-  error: string
-  message?: string
+  status: string
   data?: Record<string, unknown>
 }
 
@@ -42,18 +25,18 @@ export class Bithumb extends WebSocketQuoter {
   private isUpdated = false
 
   public async initialize(): Promise<void> {
-    for (const quote of this.quotes) {
-      this.setTrades(quote, [])
+    for (const symbol of this.symbols) {
+      this.setTrades(symbol, [])
 
       // update last trades and price of LUNA/quote
-      await this.fetchLatestTrades(quote)
+      await this.fetchLatestTrades(symbol)
         .then((trades) => {
           if (!trades.length) {
             return
           }
 
-          this.setTrades(quote, trades)
-          this.setPrice(quote, trades[trades.length - 1].price)
+          this.setTrades(symbol, trades)
+          this.setPrice(symbol, trades[trades.length - 1].price)
         })
         .catch(errorHandler)
     }
@@ -68,7 +51,10 @@ export class Bithumb extends WebSocketQuoter {
     super.onConnect()
 
     // subscribe transaction
-    const symbols = this.quotes.map((quote) => `"${this.baseCurrency}_${quote}"`).join(',')
+    const symbols = this.symbols
+      .map((symbol) => `"${getBaseCurrency(symbol)}_${getQuoteCurrency(symbol)}"`)
+      .join(',')
+
     this.ws.send(`{"type":"transaction", "symbols":[${symbols}]}`)
   }
 
@@ -91,9 +77,9 @@ export class Bithumb extends WebSocketQuoter {
 
   private onTransaction(data: TransactionResponse) {
     for (const row of data.content.list) {
-      const quote = row.symbol.split('_')[1]
+      const symbol = row.symbol.replace('_', '/')
 
-      if (this.quotes.indexOf(quote) < 0 || row.contQty === '0') {
+      if (this.symbols.indexOf(symbol) < 0 || row.contQty === '0') {
         continue
       }
 
@@ -102,41 +88,37 @@ export class Bithumb extends WebSocketQuoter {
       const price = num(row.contPrice)
       const volume = num(row.contQty)
 
-      const trades = this.getTrades(quote) || []
+      const trades = this.getTrades(symbol) || []
       const currentTrade = trades.find((trade) => trade.timestamp === timestamp)
 
       // make 1m candle stick
       if (currentTrade) {
         currentTrade.price = price
-        currentTrade.volume.plus(volume)
+        currentTrade.volume = currentTrade.volume.plus(volume)
       } else {
         trades.push({ price, volume, timestamp })
       }
 
-      this.setTrades(quote, trades)
-      this.setPrice(quote, price)
+      this.setTrades(symbol, trades)
+      this.setPrice(symbol, price)
     }
 
     this.isUpdated = true
   }
 
-  private async fetchLatestTrades(quote: string): Promise<Trades> {
+  private async fetchLatestTrades(symbol: string): Promise<Trades> {
     // get latest candles
+    // reference: (https://apidocs.bithumb.com/docs/candlestick)
+    const base = getBaseCurrency(symbol)
+    const quote = getQuoteCurrency(symbol)
     const response: CandlestickResponse = await nodeFetch(
-      `https://www.bithumb.com/trade_history/chart_data?_=${Date.now()}`,
-      {
-        method: 'POST',
-        headers: Object.assign(headers, {
-          cookie: `csrf_xcoin_name=${requestData[quote].csrf_xcoin_name}`,
-        }),
-        body: toFormData(requestData[quote]),
-        timeout: this.options.timeout,
-      }
+      `https://api.bithumb.com/public/candlestick/${base}_${quote}/1m`,
+      { timeout: this.options.timeout }
     ).then((res) => res.json())
 
     if (
       !response ||
-      response.error !== '0000' ||
+      response.status !== '0000' ||
       !Array.isArray(response.data) ||
       response.data.length < 1
     ) {

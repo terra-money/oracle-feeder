@@ -2,14 +2,11 @@ import * as sentry from '@sentry/node'
 import * as logger from './logger'
 
 interface Options {
-  sentry?: {
-    enable: boolean
-    dsn: string
-  }
+  sentry?: string
 }
 
 export function init(opts: Options = {}): void {
-  opts?.sentry?.enable && sentry.init({ dsn: opts.sentry.dsn })
+  opts?.sentry && sentry.init({ dsn: opts.sentry })
 
   process.on('unhandledRejection', (error) => {
     logger.error(error)
