@@ -55,6 +55,7 @@ export class Binance extends WebSocketQuoter {
     this.isUpdated = true
 
     // try connect to websocket server
+    // reference: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-streams
     const symbols = this.symbols
       .map((symbol) => `${symbol.replace('/', '').toLowerCase()}@kline_1m`)
       .join('/')
@@ -76,7 +77,7 @@ export class Binance extends WebSocketQuoter {
     const price = num(data.k.c)
     const volume = num(data.k.v)
 
-    this.setTrade(symbol, timestamp, price, volume)
+    this.setTrade(symbol, timestamp, price, volume, true)
     this.setPrice(symbol, price)
     this.calculateKRWPrice(symbol)
 

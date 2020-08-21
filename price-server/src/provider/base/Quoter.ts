@@ -4,6 +4,7 @@ import { sendSlack } from 'lib/slack'
 import { getQuoteCurrency, getBaseCurrency } from 'lib/currency'
 import { fiatProvider } from 'provider'
 import { TradesBySymbol, Trades, PriceBySymbol } from './types'
+import { format } from 'date-fns'
 
 export interface QuoterOptions {
   symbols: string[] // support symbols
@@ -104,7 +105,8 @@ export class Quoter {
     symbol: string,
     timestamp: number,
     price: BigNumber,
-    volume: BigNumber
+    volume: BigNumber,
+    isAccumulatedVolume = false
   ): Trades {
     const trades = this.getTrades(symbol) || []
     const candleTimestamp = Math.floor(timestamp / 60000) * 60000
@@ -113,7 +115,7 @@ export class Quoter {
     // make 1m candle stick
     if (currentTrade) {
       currentTrade.price = price
-      currentTrade.volume = volume
+      currentTrade.volume = isAccumulatedVolume ? volume : currentTrade.volume.plus(volume)
     } else {
       trades.push({ price, volume, timestamp: candleTimestamp })
     }
@@ -164,6 +166,18 @@ export class Quoter {
     if (this.isAlive && Date.now() - this.alivedAt > 3 * 60 * 1000) {
       sendSlack(`${this.constructor.name} is no response!`).catch()
       this.isAlive = false
+    }
+  }
+
+  printTrades(symbol: string): void {
+    const trades = this.getTrades(symbol)
+    for (const trade of trades) {
+      console.log(
+        symbol,
+        format(trade.timestamp, 'yyyy-MM-dd HH:mm:ss'),
+        trade.price.toFixed(4),
+        trade.volume.toFixed(4)
+      )
     }
   }
 }

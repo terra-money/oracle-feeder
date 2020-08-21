@@ -42,6 +42,7 @@ export class Bithumb extends WebSocketQuoter {
     }
 
     // connect to bithumb websocket server
+    // reference: https://apidocs.bithumb.com/docs/websocket_public
     this.connect('wss://pubwss.bithumb.com/pub/ws')
 
     return

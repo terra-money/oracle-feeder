@@ -56,6 +56,7 @@ export class Huobi extends WebSocketQuoter {
     super.onConnect()
 
     // subscribe transaction
+    // reference: https://huobiapi.github.io/docs/spot/v1/en/#market-candlestick
     for (const symbol of this.symbols) {
       this.ws.send(`{"sub": "market.${symbol.replace('/', '').toLowerCase()}.kline.1min"}`)
     }
@@ -94,7 +95,7 @@ export class Huobi extends WebSocketQuoter {
       const price = num(data.tick.close)
       const volume = num(data.tick.amount)
 
-      this.setTrade(symbol, timestamp, price, volume)
+      this.setTrade(symbol, timestamp, price, volume, true)
       this.setPrice(symbol, price)
       this.calculateKRWPrice(symbol)
 
