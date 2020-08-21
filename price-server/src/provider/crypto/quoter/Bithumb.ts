@@ -28,7 +28,6 @@ export class Bithumb extends WebSocketQuoter {
     for (const symbol of this.symbols) {
       this.setTrades(symbol, [])
 
-      // update last trades and price of LUNA/quote
       await this.fetchLatestTrades(symbol)
         .then((trades) => {
           if (!trades.length) {
@@ -40,12 +39,11 @@ export class Bithumb extends WebSocketQuoter {
         })
         .catch(errorHandler)
     }
+    this.isUpdated = true
 
-    // connect to bithumb websocket server
+    // connect to websocket server
     // reference: https://apidocs.bithumb.com/docs/websocket_public
     this.connect('wss://pubwss.bithumb.com/pub/ws')
-
-    return
   }
 
   protected onConnect(): void {

@@ -7,8 +7,11 @@ import { toQueryString } from 'lib/fetch'
 import { WebSocketQuoter, Trades } from 'provider/base'
 
 interface StreamData {
-  ch: string // channel name
-  ts: number // timestamp
+  ch?: string // channel name
+  ts?: number // timestamp
+  ping?: number
+  subbed?: string
+  status?: string
 }
 
 interface CandlestickStreamData extends StreamData {
@@ -73,13 +76,12 @@ export class Huobi extends WebSocketQuoter {
     this.alive()
   }
 
-  // eslint-disable-next-line
-  protected onData(streamData): void {
+  protected onData(streamData: StreamData): void {
     if (streamData.ping) {
       this.ws.send(`{"pong": ${streamData.ping}}`)
     } else if (streamData.subbed) {
       if (streamData.status !== 'ok') {
-        throw new Error(streamData)
+        throw new Error(JSON.stringify(streamData))
       }
       // logger.info(`Huobi: subscribe to ${streamData.subbed}, status: ${streamData.status}`)
     } else if (streamData.ch?.indexOf('market.') === 0) {
@@ -101,7 +103,7 @@ export class Huobi extends WebSocketQuoter {
 
       this.isUpdated = true
     } else {
-      throw new Error(streamData)
+      throw new Error(JSON.stringify(streamData))
     }
   }
 
