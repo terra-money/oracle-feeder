@@ -6,7 +6,7 @@ import { createReporter } from 'lib/reporter'
 import { lunaProvider } from 'provider'
 
 let reporter
-let reportedAt = 0
+let reportedAt = Date.now()
 
 export function report(now: number): void {
   if (isSameMinute(now, reportedAt)) {

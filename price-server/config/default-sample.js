@@ -33,6 +33,9 @@ module.exports = {
     bitfinex: {
       symbols: ['USDT/USD'],
     },
+    kraken: {
+      symbols: ['USDT/USD'],
+    },
   },
   fiatProvider: {
     currencylayer: {

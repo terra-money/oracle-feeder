@@ -2,7 +2,7 @@ import { BigNumber } from 'bignumber.js'
 import * as config from 'config'
 import { average, tvwap } from 'lib/statistics'
 import { Provider } from 'provider/base'
-import { Upbit } from './quoter'
+import { Upbit, Bitfinex, Kraken } from './quoter'
 
 const PRICE_PERIOD = 3 * 60 * 1000 // 3 minutes
 
@@ -10,10 +10,11 @@ class CryptoProvider extends Provider {
   constructor() {
     super()
 
-    const { upbit, bitfinex } = config.cryptoProvider
+    const { upbit, bitfinex, kraken } = config.cryptoProvider
 
     upbit && this.quoters.push(new Upbit(upbit))
     bitfinex && this.quoters.push(new Bitfinex(bitfinex))
+    kraken && this.quoters.push(new Kraken(kraken))
   }
 
   protected adjustPrices(): void {
