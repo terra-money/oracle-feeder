@@ -10,9 +10,10 @@ class CryptoProvider extends Provider {
   constructor() {
     super()
 
-    const { upbit } = config.cryptoProvider
+    const { upbit, bitfinex } = config.cryptoProvider
 
     upbit && this.quoters.push(new Upbit(upbit))
+    bitfinex && this.quoters.push(new Bitfinex(bitfinex))
   }
 
   protected adjustPrices(): void {

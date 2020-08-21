@@ -26,6 +26,14 @@ module.exports = {
       quoteToKRW: 'USDT', // calculate USDT to KRW price with kimchi premium
     },
   },
+  cryptoProvider: {
+    upbit: {
+      symbols: ['BTC/KRW'],
+    },
+    bitfinex: {
+      symbols: ['USDT/USD'],
+    },
+  },
   fiatProvider: {
     currencylayer: {
       symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
