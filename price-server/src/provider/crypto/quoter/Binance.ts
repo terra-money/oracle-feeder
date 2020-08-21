@@ -98,7 +98,7 @@ export class Binance extends WebSocketQuoter {
         `${this.constructor.name}: invalid api response:`,
         response ? JSON.stringify(response) : 'empty'
       )
-      throw new Error('invalid response from Binance')
+      throw new Error(`${this.constructor.name}: invalid response`)
     }
 
     return response

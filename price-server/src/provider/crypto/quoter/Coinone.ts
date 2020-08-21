@@ -37,7 +37,7 @@ export class Coinone extends Quoter {
         `${this.constructor.name}: wrong api response`,
         response ? JSON.stringify(response) : 'empty'
       )
-      throw new Error('Invalid response from Coinone')
+      throw new Error(`${this.constructor.name}: invalid response`)
     }
 
     return response.data

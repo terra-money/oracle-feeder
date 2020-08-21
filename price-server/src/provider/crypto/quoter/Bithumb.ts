@@ -116,7 +116,7 @@ export class Bithumb extends WebSocketQuoter {
         `${this.constructor.name}: wrong api response`,
         response ? JSON.stringify(response) : 'empty'
       )
-      throw new Error('Invalid response from Bithumb')
+      throw new Error(`${this.constructor.name}: invalid response`)
     }
 
     return response.data.map((row) => ({
