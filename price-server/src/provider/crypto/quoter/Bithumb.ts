@@ -84,22 +84,11 @@ export class Bithumb extends WebSocketQuoter {
       }
 
       // row.contDtm has no timezone info, so need to add timezone data
-      const timestamp = Math.floor(new Date(row.contDtm + '+09:00').getTime() / 60000) * 60000
+      const timestamp = new Date(row.contDtm + '+09:00').getTime()
       const price = num(row.contPrice)
       const volume = num(row.contQty)
 
-      const trades = this.getTrades(symbol) || []
-      const currentTrade = trades.find((trade) => trade.timestamp === timestamp)
-
-      // make 1m candle stick
-      if (currentTrade) {
-        currentTrade.price = price
-        currentTrade.volume = currentTrade.volume.plus(volume)
-      } else {
-        trades.push({ price, volume, timestamp })
-      }
-
-      this.setTrades(symbol, trades)
+      this.setTrade(symbol, timestamp, price, volume)
       this.setPrice(symbol, price)
     }
 

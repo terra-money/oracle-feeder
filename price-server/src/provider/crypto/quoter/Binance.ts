@@ -51,9 +51,7 @@ export class Binance extends WebSocketQuoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-
-          // make base/KRW price
-          this.automadeTrades(symbol, trades)
+          this.makeKRWPrice(symbol, trades)
         })
         .catch(errorHandler)
     }
@@ -70,17 +68,13 @@ export class Binance extends WebSocketQuoter {
     return concat(
       this.symbols,
       this.symbols
-        .map((symbol) => {
-          if (getQuoteCurrency(symbol) === 'BUSD') {
-            return `${getBaseCurrency(symbol)}/KRW`
-          }
-        })
-        .filter((symbol) => symbol)
+        .filter((symbol) => getQuoteCurrency(symbol) === 'BUSD')
+        .map((symbol) => `${getBaseCurrency(symbol)}/KRW`)
     )
   }
 
   // make base/KRW from base/USDT
-  private automadeTrades(symbol: string, trades: Trades): void {
+  private makeKRWPrice(symbol: string, trades: Trades): void {
     const rate = fiatProvider.getPriceBy('KRW/USD')
 
     if (getQuoteCurrency(symbol) !== 'BUSD' || !rate) {
@@ -108,26 +102,14 @@ export class Binance extends WebSocketQuoter {
     if (!symbol) {
       return
     }
+
     const timestamp = +data.k.t
     const price = num(data.k.c)
     const volume = num(data.k.v)
 
-    const trades = this.getTrades(symbol) || []
-    const currentTrade = trades.find((trade) => trade.timestamp === timestamp)
-
-    // make 1m candle stick
-    if (currentTrade) {
-      currentTrade.price = price
-      currentTrade.volume = volume
-    } else {
-      trades.push({ price, volume, timestamp })
-    }
-
-    this.setTrades(symbol, trades)
+    const trades = this.setTrade(symbol, timestamp, price, volume)
     this.setPrice(symbol, price)
-
-    // make base/KRW price
-    this.automadeTrades(symbol, trades)
+    this.makeKRWPrice(symbol, trades)
 
     this.isUpdated = true
   }

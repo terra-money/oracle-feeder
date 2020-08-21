@@ -1,8 +1,6 @@
 import * as config from 'config'
 import { Provider } from 'provider/base'
-import CurrencyLayer from './CurrencyLayer'
-import AlphaVantage from './AlphaVantage'
-import Fixer from './Fixer'
+import { CurrencyLayer, AlphaVantage, Fixer } from './quoter'
 
 class FiatProvider extends Provider {
   constructor() {

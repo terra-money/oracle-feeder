@@ -8,7 +8,7 @@ import { Binance, Bithumb, Coinone, Huobi } from './quoter'
 
 const PRICE_PERIOD = 3 * 60 * 1000 // 3 minutes
 
-class LunaProvider extends Provider {
+class CryptoProvider extends Provider {
   constructor() {
     super()
 
@@ -107,4 +107,4 @@ class LunaProvider extends Provider {
   }
 }
 
-export default LunaProvider
+export default CryptoProvider
