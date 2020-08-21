@@ -80,6 +80,29 @@ export class Quoter {
     }
   }
 
+  protected setTrade(
+    symbol: string,
+    timestamp: number,
+    price: BigNumber,
+    volume: BigNumber
+  ): Trades {
+    const trades = this.getTrades(symbol) || []
+    const candleTimestamp = Math.floor(timestamp / 60000) * 60000
+    const currentTrade = trades.find((trade) => trade.timestamp === candleTimestamp)
+
+    // make 1m candle stick
+    if (currentTrade) {
+      currentTrade.price = price
+      currentTrade.volume = volume
+    } else {
+      trades.push({ price, volume, timestamp: candleTimestamp })
+    }
+
+    this.setTrades(symbol, trades)
+
+    return trades
+  }
+
   protected alive(): void {
     if (!this.isAlive) {
       const downtime = ((Date.now() - this.alivedAt - this.options.interval) / 60 / 1000).toFixed(1)
