@@ -7,6 +7,7 @@ import { fiatProvider } from 'provider'
 import Bithumb from './Bithumb'
 import Coinone from './Coinone'
 import Huobi from './Huobi'
+import Binance from './Binance'
 
 const PRICE_PERIOD = 3 * 60 * 1000 // 3 minutes
 
@@ -43,7 +44,18 @@ class LunaProvider extends Provider {
 
       this.quoters.push(
         new Huobi(opts.symbols, {
-          interval: opts.interval || 1000,
+          interval: opts.interval || 100,
+          timeout: opts.timeout || 10000,
+        })
+      )
+    }
+
+    if (config.lunaProvider?.binance) {
+      const opts = config.lunaProvider.binance
+
+      this.quoters.push(
+        new Binance(opts.symbols, {
+          interval: opts.interval || 100,
           timeout: opts.timeout || 10000,
         })
       )
