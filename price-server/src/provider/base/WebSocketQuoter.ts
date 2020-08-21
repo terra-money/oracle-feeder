@@ -1,12 +1,18 @@
 import * as WebSocket from 'ws'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
-import Quoter from './Quoter'
+import Quoter, { QuoterOptions } from './Quoter'
 
 export class WebSocketQuoter extends Quoter {
   protected ws: WebSocket
   protected wsUrl: string
   private sendedPingAt = 0
+
+  constructor(options: QuoterOptions) {
+    super(options)
+
+    this.options.interval = 100
+  }
 
   public connect(wsUrl: string): void {
     this.disconnect()

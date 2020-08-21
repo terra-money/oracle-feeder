@@ -6,41 +6,11 @@ class FiatProvider extends Provider {
   constructor() {
     super()
 
-    if (config.fiatProvider?.currencylayer) {
-      const opts = config.fiatProvider.currencylayer
+    const { currencylayer, alphavantage, fixer } = config.fiatProvider
 
-      this.quoters.push(
-        new CurrencyLayer(opts.symbols, {
-          interval: opts.interval || 1000,
-          timeout: opts.timeout || 5000,
-          apiKey: opts.apiKey,
-        })
-      )
-    }
-
-    if (config.fiatProvider?.alphavantage) {
-      const opts = config.fiatProvider.alphavantage
-
-      this.quoters.push(
-        new AlphaVantage(opts.symbols, {
-          interval: opts.interval || 1000,
-          timeout: opts.timeout || 5000,
-          apiKey: opts.apiKey,
-        })
-      )
-    }
-
-    if (config.fiatProvider?.fixer) {
-      const opts = config.fiatProvider.fixer
-
-      this.quoters.push(
-        new Fixer(opts.symbols, {
-          interval: opts.interval || 1000,
-          timeout: opts.timeout || 5000,
-          apiKey: opts.apiKey,
-        })
-      )
-    }
+    currencylayer && this.quoters.push(new CurrencyLayer(currencylayer))
+    alphavantage && this.quoters.push(new AlphaVantage(alphavantage))
+    fixer && this.quoters.push(new Fixer(fixer))
   }
 
   public async initialize(): Promise<void> {

@@ -1,10 +1,15 @@
 import { BigNumber } from 'bignumber.js'
-import { TradesBySymbol, Trades, PriceBySymbol } from './types'
+import { concat } from 'lodash'
 import { sendSlack } from 'lib/slack'
+import { getQuoteCurrency, getBaseCurrency } from 'lib/currency'
+import { fiatProvider } from 'provider'
+import { TradesBySymbol, Trades, PriceBySymbol } from './types'
 
-interface QuoterOptions {
+export interface QuoterOptions {
+  symbols: string[] // support symbols
   interval: number // update interval
   timeout: number // api call timeout
+  quoteToKRW?: string // 'USDT' | 'BUSD', quote to calculate KRW price(with kimchi premium)
   apiKey?: string
 }
 
@@ -19,11 +24,17 @@ export class Quoter {
   private isAlive = true
   private alivedAt: number
 
-  constructor(symbols: string[], options: QuoterOptions) {
-    Object.assign(this, {
-      symbols,
-      options,
-    })
+  constructor(options: QuoterOptions) {
+    Object.assign(this, { options })
+
+    this.symbols = options.symbols
+
+    if (!this.options.interval) {
+      this.options.interval = 1000
+    }
+    if (!this.options.timeout) {
+      this.options.timeout = 10000
+    }
   }
 
   public async initialize(): Promise<void> {
@@ -44,6 +55,15 @@ export class Quoter {
   }
 
   public getSymbols(): string[] {
+    if (this.options.quoteToKRW) {
+      return concat(
+        this.symbols,
+        this.symbols
+          .filter((symbol) => getQuoteCurrency(symbol) === this.options.quoteToKRW)
+          .map((symbol) => `${getBaseCurrency(symbol)}/KRW`)
+      )
+    }
+
     return this.symbols
   }
 
@@ -101,6 +121,32 @@ export class Quoter {
     this.setTrades(symbol, trades)
 
     return trades
+  }
+
+  protected calculateKRWPrice(symbol: string): void {
+    const { quoteToKRW } = this.options
+    const rate = fiatProvider.getPriceBy('KRW/USD')
+
+    if (!quoteToKRW || getQuoteCurrency(symbol) !== quoteToKRW || !rate) {
+      return
+    }
+
+    const convertedSymbol = `${getBaseCurrency(symbol)}/KRW`
+    const trades = this.getTrades(symbol)
+
+    if (trades.length > 1) {
+      const calculatedTrades = this.getTrades(symbol).map((trade) => ({
+        timestamp: trade.timestamp,
+        price: trade.price.dividedBy(rate),
+        volume: trade.volume,
+      }))
+
+      this.setTrades(convertedSymbol, calculatedTrades)
+      this.setPrice(convertedSymbol, calculatedTrades[calculatedTrades.length - 1].price)
+    } else {
+      const price = this.getPrice(symbol)
+      price && this.setPrice(convertedSymbol, price.dividedBy(rate))
+    }
   }
 
   protected alive(): void {

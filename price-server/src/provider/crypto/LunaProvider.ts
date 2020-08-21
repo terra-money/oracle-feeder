@@ -12,51 +12,12 @@ class LunaProvider extends Provider {
   constructor() {
     super()
 
-    // bithumb quoter
-    if (config.lunaProvider?.bithumb) {
-      const opts = config.lunaProvider.bithumb
+    const { bithumb, coinone, huobi, binance } = config.lunaProvider
 
-      this.quoters.push(
-        new Bithumb(opts.symbols, {
-          interval: opts.interval || 100,
-          timeout: opts.timeout || 10000,
-        })
-      )
-    }
-
-    // coinone quoter
-    if (config.lunaProvider?.coinone) {
-      const opts = config.lunaProvider.coinone
-
-      this.quoters.push(
-        new Coinone(opts.symbols, {
-          interval: opts.interval || 1000,
-          timeout: opts.timeout || 10000,
-        })
-      )
-    }
-
-    if (config.lunaProvider?.huobi) {
-      const opts = config.lunaProvider.huobi
-
-      this.quoters.push(
-        new Huobi(opts.symbols, {
-          interval: opts.interval || 100,
-          timeout: opts.timeout || 10000,
-        })
-      )
-    }
-
-    if (config.lunaProvider?.binance) {
-      const opts = config.lunaProvider.binance
-
-      this.quoters.push(
-        new Binance(opts.symbols, {
-          interval: opts.interval || 100,
-          timeout: opts.timeout || 10000,
-        })
-      )
-    }
+    bithumb && this.quoters.push(new Bithumb(bithumb))
+    coinone && this.quoters.push(new Coinone(coinone))
+    huobi && this.quoters.push(new Huobi(huobi))
+    binance && this.quoters.push(new Binance(binance))
   }
 
   protected adjustPrices(): void {

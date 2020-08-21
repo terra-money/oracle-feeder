@@ -18,22 +18,31 @@ module.exports = {
     huobi: {
       symbols: ['LUNA/USDT'], // available symbol list
       interval: 100, // update interval
+      quoteToKRW: 'USDT', // calculate USDT to KRW price with kimchi premium
+    },
+    binance: {
+      symbols: ['LUNA/USDT'], // available symbol list
+      interval: 100, // update interval
+      quoteToKRW: 'USDT', // calculate USDT to KRW price with kimchi premium
     },
   },
   fiatProvider: {
     currencylayer: {
       symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
       interval: 60 * 1000,
+      timeout: 5000,
       apiKey: '', // necessary
     },
     alphavantage: {
       symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
       interval: 60 * 1000,
+      timeout: 5000,
       apiKey: '', // necessary
     },
     fixer: {
       symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
       interval: 60 * 60 * 1000, // 1 hours (free api support only hourly update)
+      timeout: 5000,
       apiKey: '', // necessary
     },
   },

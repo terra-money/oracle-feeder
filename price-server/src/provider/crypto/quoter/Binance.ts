@@ -1,12 +1,9 @@
 import nodeFetch from 'node-fetch'
-import { concat } from 'lodash'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
 import { toQueryString } from 'lib/fetch'
 import { WebSocketQuoter, Trades } from 'provider/base'
-import { fiatProvider } from 'provider'
-import { getQuoteCurrency, getBaseCurrency } from 'lib/currency'
 
 interface StreamData {
   stream: string
@@ -51,7 +48,7 @@ export class Binance extends WebSocketQuoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-          this.makeKRWPrice(symbol, trades)
+          this.calculateKRWPrice(symbol)
         })
         .catch(errorHandler)
     }
@@ -62,34 +59,6 @@ export class Binance extends WebSocketQuoter {
       .map((symbol) => `${symbol.replace('/', '').toLowerCase()}@kline_1m`)
       .join('/')
     this.connect(`wss://stream.binance.com:9443/stream?streams=${symbols}`)
-  }
-
-  public getSymbols(): string[] {
-    return concat(
-      this.symbols,
-      this.symbols
-        .filter((symbol) => getQuoteCurrency(symbol) === 'BUSD')
-        .map((symbol) => `${getBaseCurrency(symbol)}/KRW`)
-    )
-  }
-
-  // make base/KRW from base/USDT
-  private makeKRWPrice(symbol: string, trades: Trades): void {
-    const rate = fiatProvider.getPriceBy('KRW/USD')
-
-    if (getQuoteCurrency(symbol) !== 'BUSD' || !rate) {
-      return
-    }
-
-    const convertedSymbol = `${getBaseCurrency(symbol)}/KRW`
-    const calculatedTrades = trades.map((trade) => ({
-      timestamp: trade.timestamp,
-      price: trade.price.dividedBy(rate),
-      volume: trade.volume,
-    }))
-
-    this.setTrades(convertedSymbol, calculatedTrades)
-    this.setPrice(convertedSymbol, calculatedTrades[calculatedTrades.length - 1].price)
   }
 
   protected onData(streamData: StreamData): void {
@@ -107,9 +76,9 @@ export class Binance extends WebSocketQuoter {
     const price = num(data.k.c)
     const volume = num(data.k.v)
 
-    const trades = this.setTrade(symbol, timestamp, price, volume)
+    this.setTrade(symbol, timestamp, price, volume)
     this.setPrice(symbol, price)
-    this.makeKRWPrice(symbol, trades)
+    this.calculateKRWPrice(symbol)
 
     this.isUpdated = true
   }

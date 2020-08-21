@@ -1,13 +1,10 @@
 import nodeFetch from 'node-fetch'
-import { concat } from 'lodash'
 import * as pako from 'pako'
 import { num } from 'lib/num'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { toQueryString } from 'lib/fetch'
 import { WebSocketQuoter, Trades } from 'provider/base'
-import { fiatProvider } from 'provider'
-import { getQuoteCurrency, getBaseCurrency } from 'lib/currency'
 
 interface StreamData {
   ch: string // channel name
@@ -45,7 +42,7 @@ export class Huobi extends WebSocketQuoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-          this.makeKRWPrice(symbol, trades)
+          this.calculateKRWPrice(symbol)
         })
         .catch(errorHandler)
     }
@@ -53,15 +50,6 @@ export class Huobi extends WebSocketQuoter {
 
     // try connect to websocket server
     this.connect('wss://api.huobi.pro/ws')
-  }
-
-  public getSymbols(): string[] {
-    return concat(
-      this.symbols,
-      this.symbols
-        .filter((symbol) => getQuoteCurrency(symbol) === 'BUSD')
-        .map((symbol) => `${getBaseCurrency(symbol)}/KRW`)
-    )
   }
 
   protected onConnect(): void {
@@ -106,32 +94,14 @@ export class Huobi extends WebSocketQuoter {
       const price = num(data.tick.close)
       const volume = num(data.tick.amount)
 
-      const trades = this.setTrade(symbol, timestamp, price, volume)
+      this.setTrade(symbol, timestamp, price, volume)
       this.setPrice(symbol, price)
-      this.makeKRWPrice(symbol, trades)
+      this.calculateKRWPrice(symbol)
 
       this.isUpdated = true
     } else {
       throw new Error(streamData)
     }
-  }
-
-  private makeKRWPrice(symbol: string, trades: Trades): void {
-    const rate = fiatProvider.getPriceBy('KRW/USD')
-
-    if (getQuoteCurrency(symbol) !== 'USDT' || !rate) {
-      return
-    }
-
-    const convertedSymbol = `${getBaseCurrency(symbol)}/KRW`
-    const calculatedTrades = trades.map((trade) => ({
-      timestamp: trade.timestamp,
-      price: trade.price.dividedBy(rate),
-      volume: trade.volume,
-    }))
-
-    this.setTrades(convertedSymbol, calculatedTrades)
-    this.setPrice(convertedSymbol, calculatedTrades[calculatedTrades.length - 1].price)
   }
 
   private async fetchLatestTrades(symbol: string): Promise<Trades> {
