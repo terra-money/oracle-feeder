@@ -31,7 +31,7 @@ export async function queryAccount(lcdAddress: string, address: string) {
 
   const { account_number, sequence } = res.data.result.value;
 
-  if (typeof account_number !== 'number' || typeof sequence !== 'number') {
+  if (typeof account_number !== 'string' || typeof sequence !== 'string') {
     throw new Error('Failed to fetch account number and sequence');
   }
 
