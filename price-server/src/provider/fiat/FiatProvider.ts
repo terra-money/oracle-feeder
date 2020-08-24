@@ -1,10 +1,10 @@
 import * as config from 'config'
-import { Provider } from 'provider/base'
+import { Provider, ProviderOptions } from 'provider/base'
 import { CurrencyLayer, AlphaVantage, Fixer } from './quoter'
 
 class FiatProvider extends Provider {
-  constructor() {
-    super()
+  constructor(options: ProviderOptions) {
+    super(options)
 
     const { currencylayer, alphavantage, fixer } = config.fiatProvider
 

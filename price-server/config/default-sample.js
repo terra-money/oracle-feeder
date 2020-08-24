@@ -7,6 +7,7 @@ module.exports = {
     url: '',
   },
   lunaProvider: {
+    adjustTvwapSymbols: ['LUNA/KRW', 'LUNA/USDT'],
     bithumb: {
       symbols: ['LUNA/KRW'], // available symbol list
       interval: 100, // update interval
@@ -27,8 +28,12 @@ module.exports = {
     },
   },
   cryptoProvider: {
+    adjustTvwapSymbols: ['USDT/USD'],
     upbit: {
       symbols: ['BTC/KRW'],
+    },
+    binance: {
+      symbols: ['BTC/USDT'],
     },
     bitfinex: {
       symbols: ['USDT/USD'],

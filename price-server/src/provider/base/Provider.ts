@@ -3,17 +3,28 @@ import { uniq, concat } from 'lodash'
 import { format, addMinutes, isSameMinute, isSameDay } from 'date-fns'
 import * as config from 'config'
 import { createReporter } from 'lib/reporter'
-import { average } from 'lib/statistics'
+import { average, tvwap } from 'lib/statistics'
 import * as logger from 'lib/logger'
 import { PriceBySymbol, Trades } from './types'
 import Quoter from './Quoter'
 
+const TVWAP_PERIOD = 3 * 60 * 1000 // 3 minutes
+
+export interface ProviderOptions {
+  adjustTvwapSymbols?: string[] // symbol list that adjust price using tvwap
+}
+
 export class Provider {
+  protected options: ProviderOptions
   protected quoters: Quoter[] = []
   protected symbols: string[] = []
   protected priceBySymbol: PriceBySymbol = {}
   private reporter
   private reportedAt = 0
+
+  constructor(options: ProviderOptions) {
+    Object.assign(this, { options })
+  }
 
   public async initialize(): Promise<void> {
     for (const quoter of this.quoters) {
@@ -58,14 +69,37 @@ export class Provider {
   }
 
   protected adjustPrices(): void {
-    // calculate average of prices
+    const now = Date.now()
+
     for (const symbol of this.symbols) {
       delete this.priceBySymbol[symbol]
 
-      const prices: BigNumber[] = this.collectPrice(symbol)
+      let useTvwap = this.options.adjustTvwapSymbols?.indexOf(symbol) > -1
 
-      if (prices.length > 0) {
-        this.priceBySymbol[symbol] = average(prices)
+      if (useTvwap) {
+        const trades = this.collectTrades(symbol).filter(
+          (trade) => now - trade.timestamp < TVWAP_PERIOD && now >= trade.timestamp
+        )
+
+        if (trades.length > 1) {
+          // if have more than one, use tvwap(time volume weighted average price)
+          this.priceBySymbol[symbol] = tvwap(trades)
+        } else {
+          useTvwap = false
+        }
+      }
+
+      // use average last price of quoters
+      if (!useTvwap) {
+        const prices: BigNumber[] = this.collectPrice(symbol)
+
+        if (prices.length > 0) {
+          this.priceBySymbol[symbol] = average(prices)
+        }
+      }
+
+      if (this.priceBySymbol[symbol] && this.priceBySymbol[symbol].isNaN()) {
+        delete this.priceBySymbol[symbol]
       }
     }
   }
