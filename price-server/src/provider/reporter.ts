@@ -3,7 +3,7 @@ import { reduce } from 'lodash'
 import { format, isSameDay, isSameMinute, addMinutes } from 'date-fns'
 import * as logger from 'lib/logger'
 import { createReporter } from 'lib/reporter'
-import { lunaProvider } from 'provider'
+import { getLunaPrices, getUsdtToKrwRate, getBtcPremium } from 'prices'
 
 let reporter
 let reportedAt = Date.now()
@@ -15,10 +15,12 @@ export function report(now: number): void {
 
   try {
     const lunaPrices = reduce(
-      lunaProvider.getLunaPrices(),
+      getLunaPrices(),
       (result, value, key) => Object.assign(result, { [key]: value.toFixed(18) }),
       {}
     )
+    lunaPrices['USDT/KRW'] = getUsdtToKrwRate()?.toFixed(18)
+    lunaPrices['BTC Premium'] = getBtcPremium()?.toFixed(18)
 
     logger.info(lunaPrices)
 

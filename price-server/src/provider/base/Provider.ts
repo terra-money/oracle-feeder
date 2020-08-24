@@ -31,6 +31,11 @@ export class Provider {
       await quoter.initialize()
     }
     this.symbols = uniq(concat(...this.quoters.map((quoter) => quoter.getSymbols())))
+
+    await this.tick(Date.now())
+
+    const quoters = this.quoters.map((quoter) => quoter.constructor.name).join(', ')
+    logger.info(`initialized ${this.constructor.name}: ${quoters}`)
   }
 
   public async tick(now: number): Promise<boolean> {

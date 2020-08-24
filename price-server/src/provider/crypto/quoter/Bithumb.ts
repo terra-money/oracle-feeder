@@ -59,7 +59,7 @@ export class Bithumb extends WebSocketQuoter {
 
   protected onData(data: Record<string, unknown>): void {
     if (data?.status === '0000') {
-      logger.info(`${this.constructor.name}: ${data.resmsg}`)
+      // logger.info(`${this.constructor.name}: ${data.resmsg}`)
       return
     }
 

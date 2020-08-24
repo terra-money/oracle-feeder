@@ -1,10 +1,10 @@
 {
   "name": "@terra-money/price-server",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "src/main.ts",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/server.ts",
+    "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
     "test": "jest",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --fix"
   },

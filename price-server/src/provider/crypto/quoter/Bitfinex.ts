@@ -76,7 +76,7 @@ export class Bitfinex extends WebSocketQuoter {
 
     switch (data?.event) {
       case 'info':
-        logger.info(`${this.constructor.name}: ${JSON.stringify(data)}`)
+        // logger.info(`${this.constructor.name}: ${JSON.stringify(data)}`)
         break
 
       case 'subscribed':
@@ -89,7 +89,7 @@ export class Bitfinex extends WebSocketQuoter {
         if (symbol) {
           this.symbolByChanId[data.chanId] = symbol
         }
-        logger.info(`${this.constructor.name}: subscribed to ${symbol}(${data.pair})`)
+        // logger.info(`${this.constructor.name}: subscribed to ${symbol}(${data.pair})`)
         break
 
       default:

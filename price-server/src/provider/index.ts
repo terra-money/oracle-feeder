@@ -14,19 +14,13 @@ export const lunaProvider = new LunaProvider(config.lunaProvider)
 const providers: Provider[] = [fiatProvider, cryptoProvider, lunaProvider]
 
 export async function initialize(): Promise<void> {
-  await bluebird.mapSeries(providers, (provider) => provider.initialize())
-
-  await loop()
+  for (const provider of providers) {
+    await provider.initialize()
+  }
 }
 
-async function loop(): Promise<void> {
-  while (true) {
-    const now = Date.now()
+export async function tick(now: number): Promise<void> {
+  await bluebird.mapSeries(providers, (provider) => provider.tick(now)).catch(errorHandler)
 
-    await bluebird.mapSeries(providers, (provider) => provider.tick(now)).catch(errorHandler)
-
-    report(now)
-
-    await bluebird.delay(10)
-  }
+  report(now)
 }

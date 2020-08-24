@@ -1,7 +1,5 @@
 import * as config from 'config'
-import { getQuoteCurrency } from 'lib/currency'
-import { Provider, ProviderOptions, PriceBySymbol } from 'provider/base'
-import { fiatProvider } from 'provider'
+import { Provider, ProviderOptions } from 'provider/base'
 import { Binance, Bithumb, Coinone, Huobi } from './quoter'
 
 class LunaProvider extends Provider {
@@ -14,25 +12,6 @@ class LunaProvider extends Provider {
     coinone && this.quoters.push(new Coinone(coinone))
     huobi && this.quoters.push(new Huobi(huobi))
     binance && this.quoters.push(new Binance(binance))
-  }
-
-  public getLunaPrices(): PriceBySymbol {
-    const prices: PriceBySymbol = {
-      'LUNA/KRW': this.priceBySymbol['LUNA/KRW'],
-    }
-
-    if (!prices['LUNA/KRW']) {
-      return {}
-    }
-
-    // make 'LUNA/FIAT' rates
-    for (const symbol of Object.keys(fiatProvider.getPrices())) {
-      prices[`LUNA/${getQuoteCurrency(symbol)}`] = fiatProvider
-        .getPriceBy(symbol)
-        .multipliedBy(prices['LUNA/KRW'])
-    }
-
-    return prices
   }
 }
 

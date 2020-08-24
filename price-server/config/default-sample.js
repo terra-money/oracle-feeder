@@ -8,39 +8,19 @@ module.exports = {
   },
   lunaProvider: {
     adjustTvwapSymbols: ['LUNA/KRW', 'LUNA/USDT'],
-    bithumb: {
-      symbols: ['LUNA/KRW'], // available symbol list
-      interval: 100, // update interval
-    },
-    coinone: {
-      symbols: ['LUNA/KRW'],
-      interval: 1000,
-    },
-    huobi: {
-      symbols: ['LUNA/USDT'], // available symbol list
-      interval: 100, // update interval
-      quoteToKRW: 'USDT', // calculate USDT to KRW price with kimchi premium
-    },
-    binance: {
-      symbols: ['LUNA/USDT'], // available symbol list
-      interval: 100, // update interval
-      quoteToKRW: 'USDT', // calculate USDT to KRW price with kimchi premium
-    },
+    bithumb: { symbols: ['LUNA/KRW'] },
+    coinone: { symbols: ['LUNA/KRW'] },
+    huobi: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
+    binance: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
   },
   cryptoProvider: {
-    adjustTvwapSymbols: ['USDT/USD'],
-    upbit: {
-      symbols: ['BTC/KRW'],
-    },
-    binance: {
-      symbols: ['BTC/USDT'],
-    },
-    bitfinex: {
-      symbols: ['USDT/USD'],
-    },
-    kraken: {
-      symbols: ['USDT/USD'],
-    },
+    adjustTvwapSymbols: ['BTC/KRW', 'USDT/USD'],
+    upbit: { symbols: ['BTC/KRW'] },
+    bithumb: { symbols: ['BTC/KRW'] },
+    binance: { symbols: ['BTC/USDT'] },
+    huobi: { symbols: ['LUNA/USDT'] },
+    bitfinex: { symbols: ['USDT/USD'] },
+    kraken: { symbols: ['USDT/USD'] },
   },
   fiatProvider: {
     currencylayer: {

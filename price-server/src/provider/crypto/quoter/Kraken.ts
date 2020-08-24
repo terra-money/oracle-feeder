@@ -30,7 +30,7 @@ export class Kraken extends WebSocketQuoter {
           if (!trades.length) {
             return
           }
-          // console.log(trades)
+
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
         })
@@ -68,12 +68,12 @@ export class Kraken extends WebSocketQuoter {
 
     switch (data?.event) {
       case 'systemStatus':
-        logger.info(`${this.constructor.name}: ${JSON.stringify(data)}`)
+        // logger.info(`${this.constructor.name}: ${JSON.stringify(data)}`)
         break
 
       case 'subscriptionStatus':
         if (data.status === 'subscribed') {
-          logger.info(`${this.constructor.name}: subscribed to ${data.pair}`)
+          // logger.info(`${this.constructor.name}: subscribed to ${data.pair}`)
         } else {
           logger.warn(`${this.constructor.name}: ${JSON.stringify(data)}`)
         }

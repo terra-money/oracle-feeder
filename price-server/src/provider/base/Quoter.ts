@@ -1,16 +1,17 @@
 import { BigNumber } from 'bignumber.js'
 import { concat } from 'lodash'
+import * as logger from 'lib/logger'
 import { sendSlack } from 'lib/slack'
 import { getQuoteCurrency, getBaseCurrency } from 'lib/currency'
-import { fiatProvider } from 'provider'
 import { TradesBySymbol, Trades, PriceBySymbol } from './types'
 import { format } from 'date-fns'
+import { getUsdtToKrwRate } from 'prices'
 
 export interface QuoterOptions {
   symbols: string[] // support symbols
   interval: number // update interval
   timeout: number // api call timeout
-  quoteToKRW?: string // 'USDT' | 'BUSD', quote to calculate KRW price(with kimchi premium)
+  krwPriceFrom?: string // 'USDT' | 'BUSD', quote to calculate KRW price(with kimchi premium)
   apiKey?: string
 }
 
@@ -56,11 +57,11 @@ export class Quoter {
   }
 
   public getSymbols(): string[] {
-    if (this.options.quoteToKRW) {
+    if (this.options.krwPriceFrom) {
       return concat(
         this.symbols,
         this.symbols
-          .filter((symbol) => getQuoteCurrency(symbol) === this.options.quoteToKRW)
+          .filter((symbol) => getQuoteCurrency(symbol) === this.options.krwPriceFrom)
           .map((symbol) => `${getBaseCurrency(symbol)}/KRW`)
       )
     }
@@ -126,10 +127,9 @@ export class Quoter {
   }
 
   protected calculateKRWPrice(symbol: string): void {
-    const { quoteToKRW } = this.options
-    const rate = fiatProvider.getPriceBy('KRW/USD')
-
-    if (!quoteToKRW || getQuoteCurrency(symbol) !== quoteToKRW || !rate) {
+    const { krwPriceFrom } = this.options
+    const krwRate = getUsdtToKrwRate()
+    if (!krwPriceFrom || getQuoteCurrency(symbol) !== krwPriceFrom || !krwRate) {
       return
     }
 
@@ -139,7 +139,7 @@ export class Quoter {
     if (trades.length > 1) {
       const calculatedTrades = this.getTrades(symbol).map((trade) => ({
         timestamp: trade.timestamp,
-        price: trade.price.dividedBy(rate),
+        price: trade.price.multipliedBy(krwRate),
         volume: trade.volume,
       }))
 
@@ -147,14 +147,18 @@ export class Quoter {
       this.setPrice(convertedSymbol, calculatedTrades[calculatedTrades.length - 1].price)
     } else {
       const price = this.getPrice(symbol)
-      price && this.setPrice(convertedSymbol, price.dividedBy(rate))
+      price && this.setPrice(convertedSymbol, price.multipliedBy(krwRate))
     }
   }
 
   protected alive(): void {
     if (!this.isAlive) {
       const downtime = ((Date.now() - this.alivedAt - this.options.interval) / 60 / 1000).toFixed(1)
-      sendSlack(`${this.constructor.name} is now alive. (downtime ${downtime} minutes)`).catch()
+      const msg = `${this.constructor.name} is now alive. (downtime ${downtime} minutes)`
+
+      logger.info(msg)
+      sendSlack(msg).catch()
+
       this.isAlive = true
     }
 
@@ -164,7 +168,11 @@ export class Quoter {
   private checkAlive(): void {
     // no responsed more than 3 minutes, it is down
     if (this.isAlive && Date.now() - this.alivedAt > 3 * 60 * 1000) {
-      sendSlack(`${this.constructor.name} is no response!`).catch()
+      const msg = `${this.constructor.name} is no response!`
+
+      logger.warn(msg)
+      sendSlack(msg).catch()
+
       this.isAlive = false
     }
   }
