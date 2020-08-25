@@ -19,8 +19,8 @@ export function report(now: number): void {
       (result, value, key) => Object.assign(result, { [key]: value.toFixed(18) }),
       {}
     )
-    lunaPrices['USDT/KRW'] = getUsdtToKrwRate()?.toFixed(18)
-    lunaPrices['BTC Premium'] = getBtcPremium()?.toFixed(18)
+    lunaPrices['USDT/KRW'] = getUsdtToKrwRate()?.toFixed(18) || ''
+    lunaPrices['BTC Premium'] = getBtcPremium()?.toFixed(18) || ''
 
     logger.info(lunaPrices)
 

@@ -128,8 +128,12 @@ export class Quoter {
 
   protected calculateKRWPrice(symbol: string): void {
     const { krwPriceFrom } = this.options
+    if (!krwPriceFrom || getQuoteCurrency(symbol) !== krwPriceFrom) {
+      return
+    }
+
     const krwRate = getUsdtToKrwRate()
-    if (!krwPriceFrom || getQuoteCurrency(symbol) !== krwPriceFrom || !krwRate) {
+    if (!krwRate) {
       return
     }
 

@@ -44,7 +44,7 @@ export class WebSocketQuoter extends Quoter {
   }
 
   protected onConnect(): void {
-    // logger.info(`${this.constructor.name}: websocket connected to ${this.wsUrl}`)
+    logger.info(`${this.constructor.name}: websocket connected to ${this.wsUrl}`)
 
     this.alive()
   }
