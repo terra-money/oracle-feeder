@@ -1,0 +1,68 @@
+{
+  "name": "@terra-money/price-server",
+  "version": "1.0.0",
+  "main": "src/main.ts",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
+    "test": "jest",
+    "lint": "eslint '*/**/*.{js,ts,tsx}' --fix"
+  },
+  "dependencies": {
+    "@polka/send-type": "^0.5.2",
+    "@sentry/node": "5.20.1",
+    "bignumber.js": "^9.0.0",
+    "bluebird": "^3.7.2",
+    "config": "^3.3.1",
+    "csv-writer": "^1.6.0",
+    "date-fns": "^2.15.0",
+    "form-data": "^3.0.0",
+    "lodash": "^4.17.19",
+    "node-fetch": "^2.6.0",
+    "pako": "^1.0.11",
+    "polka": "^0.5.2",
+    "ts-node": "^8.10.2",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "^3.9.7",
+    "ws": "^7.3.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.9",
+    "@types/node-fetch": "^2.5.7",
+    "@types/sinon": "^9.0.4",
+    "@types/ws": "^7.2.6",
+    "@typescript-eslint/eslint-plugin": "^3.9.0",
+    "@typescript-eslint/parser": "^3.9.0",
+    "eslint": "^7.6.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "husky": "^4",
+    "jest": "^26.3.0",
+    "lint-staged": "^10",
+    "prettier": "^2.0.5",
+    "sinon": "^9.0.3",
+    "ts-jest": "^26.2.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "./src/**/*.{js,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix",
+      "git add"
+    ],
+    "./src/**/*.{json,css}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "prettier": {
+    "parser": "typescript",
+    "printWidth": 100,
+    "singleQuote": true,
+    "semi": false
+  }
+}

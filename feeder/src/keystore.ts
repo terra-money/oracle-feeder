@@ -1,90 +1,89 @@
-import * as fs from 'fs';
-import * as CryptoJS from 'crypto-js';
-import * as keyUtils from './keyUtils';
+import * as fs from 'fs'
+import * as crypto from 'crypto'
+import { Wallet, generateFromMnemonic } from './wallet'
 
-const KEY_SIZE = 256;
-const ITERATIONS = 100;
-const DEFAULT_KEY_NAME = `voter`;
+const KEY_SIZE = 256
+const ITERATIONS = 100
 
-export function loadKeys(path: string) {
-  try {
-    return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`);
-  } catch (e) {
-    console.error('loadKeys', e.message);
-    return [];
-  }
+interface Entity {
+  name: string
+  address: string
+  ciphertext: string
 }
 
-function decrypt(transitmessage, pass) {
-  const salt = CryptoJS.enc.Hex.parse(transitmessage.substr(0, 32));
-  const iv = CryptoJS.enc.Hex.parse(transitmessage.substr(32, 32));
-  const encrypted = transitmessage.substring(64);
+function encrypt(plainText, pass): string {
+  const salt = crypto.randomBytes(16)
+  const iv = crypto.randomBytes(16)
+  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
 
-  const key = CryptoJS.PBKDF2(pass, salt, {
-    keySize: KEY_SIZE / 32,
-    iterations: ITERATIONS,
-  });
-
-  return CryptoJS.AES.decrypt(encrypted, key, {
-    iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  }).toString(CryptoJS.enc.Utf8);
-}
-
-export function getKey(path: string, password: string): keyUtils.Key {
-  const keys = loadKeys(path);
-  const key = keys.find((key) => key.name === DEFAULT_KEY_NAME);
-
-  if (!key) {
-    throw new Error('Cannot find key');
-  }
-
-  try {
-    const plainText = decrypt(key.ciphertext, password);
-    return JSON.parse(plainText);
-  } catch (err) {
-    throw new Error('Incorrect password');
-  }
-}
-
-// TODO needs proof reading
-function encrypt(plainText, pass) {
-  const salt = CryptoJS.lib.WordArray.random(128 / 8);
-
-  const key = CryptoJS.PBKDF2(pass, salt, {
-    keySize: KEY_SIZE / 32,
-    iterations: ITERATIONS,
-  });
-
-  const iv = CryptoJS.lib.WordArray.random(128 / 8);
-
-  const encrypted = CryptoJS.AES.encrypt(plainText, key, {
-    iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
+  const cipher = crypto.createCipheriv('AES-256-CBC', key, iv)
+  const encryptedText = Buffer.concat([cipher.update(plainText), cipher.final()]).toString('base64')
 
   // salt, iv will be hex 32 in length
   // append them to the ciphertext for use  in decryption
-  return salt.toString() + iv.toString() + encrypted.toString();
+  return salt.toString('hex') + iv.toString('hex') + encryptedText
 }
 
-export async function importKey(path: string, password: string, mnemonic: string) {
-  const wallet = await keyUtils.generateFromMnemonic(mnemonic);
-  const keys = loadKeys(path);
+function decrypt(transitmessage, pass) {
+  const salt = Buffer.from(transitmessage.substr(0, 32), 'hex')
+  const iv = Buffer.from(transitmessage.substr(32, 32), 'hex')
+  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
 
-  if (keys.find((key) => key.name === DEFAULT_KEY_NAME)) {
-    throw new Error(`Key with that name already exists`);
+  const encryptedText = transitmessage.substring(64)
+  const cipher = crypto.createDecipheriv('AES-256-CBC', key, iv)
+  const decryptedText = Buffer.concat([
+    cipher.update(encryptedText, 'base64'),
+    cipher.final(),
+  ]).toString()
+
+  return decryptedText
+}
+
+function loadEntities(path: string): Entity[] {
+  try {
+    return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`)
+  } catch (e) {
+    console.error('loadKeys', e.message)
+    return []
+  }
+}
+
+export async function save(
+  filePath: string,
+  name: string,
+  password: string,
+  mnemonic: string
+): Promise<void> {
+  const wallet: Wallet = await generateFromMnemonic(mnemonic)
+  const keys = loadEntities(filePath)
+
+  if (keys.find((key) => key.name === name)) {
+    throw new Error('Key already exists by that name')
   }
 
-  const ciphertext = encrypt(JSON.stringify(wallet), password);
+  const ciphertext = encrypt(JSON.stringify(wallet), password)
 
   keys.push({
-    name: DEFAULT_KEY_NAME,
+    name,
     address: wallet.terraAddress,
     ciphertext,
-  });
+  })
 
-  fs.writeFileSync(path, JSON.stringify(keys));
+  fs.writeFileSync(filePath, JSON.stringify(keys))
+}
+
+export function load(filePath: string, name: string, password: string): Wallet {
+  const keys = loadEntities(filePath)
+  const key = keys.find((key) => key.name === name)
+
+  if (!key) {
+    throw new Error('Cannot load key by that name')
+  }
+
+  try {
+    const plainText = decrypt(key.ciphertext, password)
+    return JSON.parse(plainText)
+  } catch (err) {
+    throw new Error('Incorrect password')
+  }
 }
