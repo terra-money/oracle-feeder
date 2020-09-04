@@ -109,7 +109,7 @@ export async function broadcast(lcdAddress: string, tx: StdTx, mode: string) {
     const height: string = await ax
       .get(`${lcdAddress}/txs/${data.txhash}`)
       .then(({ data: tx }) => {
-        if (tx.code || (tx.logs && !tx.logs[0].success)) {
+        if (tx.code) {
           throw new Error(`successful tx with error: ${tx.raw_log}, hash: ${data.txhash}`)
         }
 
