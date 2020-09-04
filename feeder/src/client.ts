@@ -72,7 +72,7 @@ export async function estimateTax(
     lcdAddress + ENDPOINT_TX_ESTIMATE_FEE,
     JSON.stringify({
       tx,
-      gas_prices: [{ amount: '0.015', denom: 'ukrw' }],
+      gas_prices: [{ amount: '178.05', denom: 'ukrw' }],
       gas_adjustment: '1.4',
     })
   )
@@ -109,7 +109,7 @@ export async function broadcast(lcdAddress: string, tx: StdTx, mode: string) {
     const height: string = await ax
       .get(`${lcdAddress}/txs/${data.txhash}`)
       .then(({ data: tx }) => {
-        if (tx.code) {
+        if (tx.code || (tx.logs && !tx.logs[0].success)) {
           throw new Error(`successful tx with error: ${tx.raw_log}, hash: ${data.txhash}`)
         }
 
