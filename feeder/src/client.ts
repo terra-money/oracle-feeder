@@ -73,7 +73,7 @@ export async function estimateTax(
     JSON.stringify({
       tx,
       gas_prices: [{ amount: '178.05', denom: 'ukrw' }],
-      gas_adjustment: '1.4',
+      gas_adjustment: '1.2',
     })
   )
 
