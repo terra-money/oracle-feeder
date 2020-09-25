@@ -110,7 +110,9 @@ export async function broadcast(lcdAddress: string, tx: StdTx, mode: string) {
       .get(`${lcdAddress}/txs/${data.txhash}`)
       .then(({ data: tx }) => {
         if (tx.code) {
-          throw new Error(`successful tx with error. code: ${tx.code}, raw_log: ${tx.raw_log}, hash: ${data.txhash}`)
+          throw new Error(
+            `successful tx with error. code: ${tx.code}, raw_log: ${tx.raw_log}, hash: ${data.txhash}`
+          )
         }
 
         console.info(`txhash: ${tx.txhash}`)
