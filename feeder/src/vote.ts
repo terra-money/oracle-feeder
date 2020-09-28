@@ -203,10 +203,7 @@ export async function processVote(args: VoteArgs): Promise<void> {
   fillAbstainPrices(oracleWhitelist, prices)
 
   // Build Exchage Rate Vote Msgs
-  const voteMsgs: MsgExchangeRateVote[] =
-    previousVotePeriod && currentVotePeriod - previousVotePeriod === 1
-      ? buildVoteMsgs(prices, valAddrs, voterAddr)
-      : []
+  const voteMsgs: MsgExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
   // Build Exchage Rate Prevote Msgs
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
