@@ -25,8 +25,6 @@ const ax = axios.create({
 })
 
 async function initKey(keyPath: string, password?: string): Promise<RawKey> {
-  console.info(`getting wallet from keystore`)
-
   const plainEntity = ks.load(
     keyPath,
     'voter',
@@ -149,34 +147,18 @@ function buildVoteMsgs(
   return voteMsgs
 }
 
-interface VoteArgs {
-  ledgerMode: boolean
-  lcdAddress: string
-  chainID: string
-  validator: string[]
-  source: string[]
-  password: string
-  denoms: string
-  keyPath: string
-}
-
 let previousVoteMsgs: MsgExchangeRateVote[] = []
 let previousVotePeriod = 0
 
 // yarn start vote command
-export async function processVote(args: VoteArgs): Promise<void> {
-  const rawKey: RawKey = await initKey(args.keyPath, args.password)
-  const valAddrs = args.validator || [rawKey.valAddress]
-  const voterAddr = rawKey.accAddress
-  const denoms = args.denoms.split(',').map((s) => s.toLowerCase())
-
-  const client = new LCDClient({
-    URL: args.lcdAddress,
-    chainID: args.chainID,
-    gasPrices: { uluna: '0.15', ukrw: '178.05' },
-  })
-  const wallet = new Wallet(client, rawKey)
-
+export async function processVote(
+  client: LCDClient,
+  wallet: Wallet,
+  priceURLs: string[],
+  valAddrs: string[],
+  voterAddr: string,
+  denoms: string[]
+): Promise<void> {
   const {
     oracleVotePeriod,
     oracleWhitelist,
@@ -193,7 +175,7 @@ export async function processVote(args: VoteArgs): Promise<void> {
     return
   }
 
-  const prices = await getPrices(args.source)
+  const prices = await getPrices(priceURLs)
 
   // Make not intended denoms prices to zero (abstain)
   // Remove denoms not in
@@ -213,13 +195,13 @@ export async function processVote(args: VoteArgs): Promise<void> {
     .broadcast(tx)
     .then(({ code, height, txhash, raw_log }) => {
       if (!code && height > 0) {
-        console.log(`broadcast: txhash ${txhash} at height ${height}`)
+        console.log(`broadcast success: txhash: ${txhash}, height ${height}`)
 
         // Update last success VotePeriod
         previousVotePeriod = Math.floor(height / oracleVotePeriod)
         previousVoteMsgs = voteMsgs
       } else {
-        console.error(`broadcast: code: ${code}, raw_log: ${raw_log}`)
+        console.error(`broadcast error: code: ${code}, raw_log: ${raw_log}`)
       }
     })
     .catch((err) => {
@@ -228,11 +210,33 @@ export async function processVote(args: VoteArgs): Promise<void> {
     })
 }
 
+interface VoteArgs {
+  ledgerMode: boolean
+  lcdAddress: string
+  chainID: string
+  validator: string[]
+  source: string[]
+  password: string
+  denoms: string
+  keyPath: string
+}
+
 export async function vote(args: VoteArgs): Promise<void> {
+  const client = new LCDClient({
+    URL: args.lcdAddress,
+    chainID: args.chainID,
+    gasPrices: { uluna: '0.15', ukrw: '178.05' },
+  })
+  const rawKey: RawKey = await initKey(args.keyPath, args.password)
+  const valAddrs = args.validator || [rawKey.valAddress]
+  const voterAddr = rawKey.accAddress
+  const denoms = args.denoms.split(',').map((s) => s.toLowerCase())
+  const wallet = new Wallet(client, rawKey)
+
   while (true) {
     const startTime = Date.now()
 
-    await processVote(args).catch((err) => {
+    await processVote(client, wallet, args.source, valAddrs, voterAddr, denoms).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {
