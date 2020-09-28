@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { Wallet, generateFromMnemonic } from './wallet'
+import { MnemonicKey } from '@terra-money/terra.js'
 
 const KEY_SIZE = 256
 const ITERATIONS = 100
@@ -9,6 +9,13 @@ interface Entity {
   name: string
   address: string
   ciphertext: string
+}
+
+interface PlainEntity {
+  privateKey: string
+  publicKey: string
+  terraAddress: string
+  terraValAddress: string
 }
 
 function encrypt(plainText, pass): string {
@@ -54,25 +61,34 @@ export async function save(
   password: string,
   mnemonic: string
 ): Promise<void> {
-  const wallet: Wallet = await generateFromMnemonic(mnemonic)
   const keys = loadEntities(filePath)
 
   if (keys.find((key) => key.name === name)) {
     throw new Error('Key already exists by that name')
   }
 
-  const ciphertext = encrypt(JSON.stringify(wallet), password)
+  const mnemonicKey = new MnemonicKey({ mnemonic })
+
+  const ciphertext = encrypt(
+    JSON.stringify({
+      privateKey: mnemonicKey.privateKey.toString(`hex`),
+      publicKey: mnemonicKey.publicKey.toString(`hex`),
+      terraAddress: mnemonicKey.accAddress,
+      terraValAddress: mnemonicKey.valAddress,
+    }),
+    password
+  )
 
   keys.push({
     name,
-    address: wallet.terraAddress,
+    address: mnemonicKey.accAddress,
     ciphertext,
   })
 
   fs.writeFileSync(filePath, JSON.stringify(keys))
 }
 
-export function load(filePath: string, name: string, password: string): Wallet {
+export function load(filePath: string, name: string, password: string): PlainEntity {
   const keys = loadEntities(filePath)
   const key = keys.find((key) => key.name === name)
 
