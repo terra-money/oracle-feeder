@@ -8,9 +8,9 @@ import * as ks from './keystore'
 import {
   LCDClient,
   OracleWhitelist,
-  MsgExchangeRateVote,
   RawKey,
   Wallet,
+  MsgAggregateExchangeRateVote,
 } from '@terra-money/terra.js'
 
 const ax = axios.create({
@@ -130,24 +130,21 @@ function buildVoteMsgs(
   prices: Price[],
   valAddrs: string[],
   voterAddr: string
-): MsgExchangeRateVote[] {
-  const voteMsgs: MsgExchangeRateVote[] = []
-
-  prices.forEach(({ currency, price }) => {
-    const denom = `u${currency.toLowerCase()}`
-
-    console.info(`vote! ${denom} ${price} ${valAddrs}`)
-
-    valAddrs.forEach((valAddr) => {
-      const salt = crypto.randomBytes(2).toString('hex')
-      voteMsgs.push(new MsgExchangeRateVote(price, denom, salt, voterAddr, valAddr))
+): MsgAggregateExchangeRateVote[] {
+  const coins = prices
+    .map(({ currency, price }) => {
+      const denom = `u${currency.toLowerCase()}`
+      return `${price}${denom}`
     })
-  })
+    .join(',')
 
-  return voteMsgs
+  return valAddrs.map((valAddr) => {
+    const salt = crypto.randomBytes(2).toString('hex')
+    return new MsgAggregateExchangeRateVote(coins, salt, voterAddr, valAddr)
+  })
 }
 
-let previousVoteMsgs: MsgExchangeRateVote[] = []
+let previousVoteMsgs: MsgAggregateExchangeRateVote[] = []
 let previousVotePeriod = 0
 
 // yarn start vote command
@@ -185,7 +182,7 @@ export async function processVote(
   fillAbstainPrices(oracleWhitelist, prices)
 
   // Build Exchage Rate Vote Msgs
-  const voteMsgs: MsgExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
+  const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
   // Build Exchage Rate Prevote Msgs
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
