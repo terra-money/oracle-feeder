@@ -222,7 +222,7 @@ export async function vote(args: VoteArgs): Promise<void> {
   const client = new LCDClient({
     URL: args.lcdAddress,
     chainID: args.chainID,
-    gasPrices: { uluna: '0.15', ukrw: '178.05' },
+    gasPrices: { /*uluna: '0.15',*/ ukrw: '178.05' },
   })
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
   const valAddrs = args.validator || [rawKey.valAddress]
