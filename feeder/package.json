@@ -8,7 +8,7 @@
     "lint": "eslint 'src/**/*.{js,ts,tsx}' --fix"
   },
   "dependencies": {
-    "@terra-money/terra.js": "^0.4.19",
+    "@terra-money/terra.js": "^0.4.20",
     "argparse": "^1.0.10",
     "axios": "^0.19.2",
     "bluebird": "^3.7.2",
