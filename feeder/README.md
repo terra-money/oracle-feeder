@@ -15,7 +15,8 @@ saved!
 ✨  Done in 9.19s.
 ```
 
-## Voting
+## Start voting
+> You must start Price Server and LCD rest-server first to run oracle feeder.
 ```
 $ npm start vote -- \
 --source <price source url> \
