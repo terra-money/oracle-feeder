@@ -8,11 +8,11 @@ $ npm i
 
 2. Set config
 ```
-# Start with sample script
+# Copy sample config file
 $ cp ./config/default.sample.js ./config/default.js
 
 # Update config as you want
-# Set api key of forex API
+# Set forex API key
 $ vim ./config/default.js
 ```
 
