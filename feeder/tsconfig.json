@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es5",
+    "lib": [
+      "es2019"
+    ],
     "module": "commonjs",
     "allowJs": false,
     "emitDecoratorMetadata": true,
