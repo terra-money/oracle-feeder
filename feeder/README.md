@@ -37,7 +37,7 @@ Make sure the Price Server is running.
 
 ```
 npm start vote -- \
-   --source sdf \
+   --source http://localhost:8532 \
    --lcd https://lcd.terra.dev \
    --chain-id columbus-3 \
    --denoms sdr,krw,usd,mnt \
