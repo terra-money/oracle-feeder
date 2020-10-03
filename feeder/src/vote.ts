@@ -225,7 +225,9 @@ async function validateTx(client: LCDClient, txhash: string): Promise<number> {
       .then((txinfo) => {
         height = txinfo.height
       })
-      .catch(/* Ignore not found error */)
+      .catch((_) => {
+        /* Ignore not found error */
+      })
   }
 
   return height
