@@ -37,7 +37,7 @@ Make sure the Price Server is running.
 
 ```
 npm start vote -- \
-   --source http://localhost:8532 \
+   --source http://localhost:8532/latest \
    --lcd https://lcd.terra.dev \
    --chain-id columbus-3 \
    --denoms sdr,krw,usd,mnt \
@@ -48,7 +48,7 @@ npm start vote -- \
 
 | Argument | Description | Example |
 | - | - | - |
-| `source` | Price server URL. | http://localhost:8532 |
+| `source` | Price server URL. | http://localhost:8532/latest |
 | `lcd` | LCD server URL. | https://lcd.terra.dev |
 | `chain-id` | Chain ID. | `columbus-4` |
 | `denoms` | Denoms to vote for (comma-separated). | `sdr,krw,usd,mnt` | 
