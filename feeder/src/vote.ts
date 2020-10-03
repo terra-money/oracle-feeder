@@ -189,14 +189,20 @@ export async function processVote(
   const tx = await wallet.createAndSignTx({ msgs })
 
   await client.tx
-    .broadcast(tx)
-    .then(({ code, height, txhash, raw_log }) => {
-      if (!code && height > 0) {
-        console.log(`broadcast success: txhash: ${txhash}, height ${height}`)
+    .broadcastSync(tx)
+    .then(({ code, txhash, raw_log }) => {
+      if (!code) {
+        return validateTx(client, txhash).then((height) => {
+          if (height == 0) {
+            console.error(`broadcast error: txhash not found: ${txhash}`)
+          } else {
+            console.log(`broadcast success: txhash: ${txhash}`)
 
-        // Update last success VotePeriod
-        previousVotePeriod = Math.floor(height / oracleVotePeriod)
-        previousVoteMsgs = voteMsgs
+            // Update last success VotePeriod
+            previousVotePeriod = Math.floor(height / oracleVotePeriod)
+            previousVoteMsgs = voteMsgs
+          }
+        })
       } else {
         console.error(`broadcast error: code: ${code}, raw_log: ${raw_log}`)
       }
@@ -205,6 +211,24 @@ export async function processVote(
       console.error(tx.toJSON())
       throw err
     })
+}
+
+async function validateTx(client: LCDClient, txhash: string): Promise<number> {
+  let height = 0
+  let max_retry = 20
+  while (!height && max_retry > 0) {
+    await Bluebird.delay(1000)
+    max_retry--
+
+    await client.tx
+      .txInfo(txhash)
+      .then((txinfo) => {
+        height = txinfo.height
+      })
+      .catch(/* Ignore not found error */)
+  }
+
+  return height
 }
 
 interface VoteArgs {
