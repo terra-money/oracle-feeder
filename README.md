@@ -16,6 +16,9 @@ This solution has 2 components:
 
    Daemon software that implements the Terra Oracle module's voting procedure and regularly submits exchange rate votes.
 
+## Prerequisites
+* Install [Node.js version 12 or greater](https://nodejs.org/)
+
 ## Instructions
 
 1. Clone this repository
