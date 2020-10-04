@@ -208,6 +208,8 @@ export async function processVote(
       }
     })
     .catch((err) => {
+      previousVotePeriod = 0
+      previousVoteMsgs = []
       console.error(tx.toJSON())
       throw err
     })
