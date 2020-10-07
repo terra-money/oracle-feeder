@@ -121,7 +121,7 @@ function fillAbstainPrices(oracleWhitelist: string[], prices: Price[]) {
     })
 
     if (!found) {
-      prices.push({ currency: denom.slice(1).toUpperCase(), price: '-1.000000000000000000' })
+      prices.push({ currency: denom.slice(1).toUpperCase(), price: '0.000000000000000000' })
     }
   })
 }
