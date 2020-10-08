@@ -99,12 +99,34 @@ async function getPrices(sources: string[]): Promise<Price[]> {
 }
 
 /**
+ * fillAbstainPrices returns abstain prices array for denoms that can be found in oracle whitelist
+ * but not in the prices
+ */
+function fillAbstainPrices(prices: Price[], oracleWhitelist: string[]) {
+  const abstainPrices: Price[] = []
+
+  oracleWhitelist.forEach((denom) => {
+    const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
+
+    if (!found) {
+      abstainPrices.push({
+        currency: denom.slice(1).toUpperCase(),
+        price: '0.000000000000000000',
+      })
+    }
+  })
+
+  return abstainPrices
+}
+
+/**
  * filterPrices treverses prices array for following logics:
  * 1. Removes price that cannot be found in oracle white list
  * 2. Mutates price with 0.00 for abstaining vote which are not listed in denoms parameter
+ * 3. Fill abstain prices
  */
 function filterPrices(prices: Price[], oracleWhitelist: string[], denoms: string[]): Price[] {
-  return prices
+  const newPrices = prices
     .map(({ currency }) => {
       if (oracleWhitelist.indexOf(`u${currency.toLowerCase()}`) === -1) {
         return
@@ -115,23 +137,8 @@ function filterPrices(prices: Price[], oracleWhitelist: string[], denoms: string
       }
     })
     .filter(Boolean) as Price[]
-}
 
-/**
- * fillAbstainPrices pushes abstain price to prices array
- * for denoms that can be found in oracle whitelist but not in the prices
- */
-function fillAbstainPrices(prices: Price[], oracleWhitelist: string[]) {
-  oracleWhitelist.forEach((denom) => {
-    const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
-
-    if (!found) {
-      prices.push({
-        currency: denom.slice(1).toUpperCase(),
-        price: '0.000000000000000000',
-      })
-    }
-  })
+  return newPrices.concat(fillAbstainPrices(newPrices, oracleWhitelist))
 }
 
 function buildVoteMsgs(
@@ -175,13 +182,9 @@ export async function processVote(
     return
   }
 
-  const prices = await getPrices(priceURLs)
-
   // Removes non-whitelisted currencies and abstain vote for currencies that are not in denoms parameter
-  filterPrices(prices, oracleWhitelist, denoms)
-
   // Abstain for not fetched currencies
-  fillAbstainPrices(prices, oracleWhitelist)
+  const prices = filterPrices(await getPrices(priceURLs), oracleWhitelist, denoms)
 
   // Build Exchage Rate Vote Msgs
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
