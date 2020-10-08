@@ -235,8 +235,13 @@ async function validateTx(client: LCDClient, txhash: string): Promise<number> {
       .then((txinfo) => {
         height = txinfo.height
       })
-      .catch(() => {
-        /* Ignore not found error */
+      .catch((err) => {
+        // print except for 404 not found error
+        if (err.isAxiosError && err.response && err.response.status !== 404) {
+          console.error(err.response.data)
+        } else if (!err.isAxiosError) {
+          console.error(err.message)
+        }
       })
   }
 
