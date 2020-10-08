@@ -164,10 +164,10 @@ export async function processVote(
   } = await loadOracleParams(client)
 
   // Skip until new voting period
-  // Skip left block is equal with or less than a block in VotePeriod
+  // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2
   if (
     (previousVotePeriod && previousVotePeriod === currentVotePeriod) ||
-    indexInVotePeriod >= oracleVotePeriod - 1
+    oracleVotePeriod - indexInVotePeriod < 2
   ) {
     return
   }
