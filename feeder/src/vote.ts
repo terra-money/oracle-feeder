@@ -127,7 +127,9 @@ function fillAbstainPrices(prices: Price[], oracleWhitelist: string[]) {
  */
 function filterPrices(prices: Price[], oracleWhitelist: string[], denoms: string[]): Price[] {
   const newPrices = prices
-    .map(({ currency }) => {
+    .map((price) => {
+      const { currency } = price
+
       if (oracleWhitelist.indexOf(`u${currency.toLowerCase()}`) === -1) {
         return
       }
@@ -135,6 +137,8 @@ function filterPrices(prices: Price[], oracleWhitelist: string[], denoms: string
       if (denoms.indexOf(currency.toLowerCase()) === -1) {
         return { currency, price: '0.000000000000000000' }
       }
+
+      return price
     })
     .filter(Boolean) as Price[]
 
