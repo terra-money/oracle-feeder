@@ -51,7 +51,12 @@ async function loadOracleParams(
   const currentVotePeriod = Math.floor(currentBlockHeight / oracleVotePeriod)
   const indexInVotePeriod = currentBlockHeight % oracleVotePeriod
 
-  return { oracleVotePeriod, oracleWhitelist, currentVotePeriod, indexInVotePeriod }
+  return {
+    oracleVotePeriod,
+    oracleWhitelist,
+    currentVotePeriod,
+    indexInVotePeriod,
+  }
 }
 
 interface Price {
@@ -93,37 +98,51 @@ async function getPrices(sources: string[]): Promise<Price[]> {
   return results[0].data.prices
 }
 
+/**
+ * fillAbstainPrices returns abstain prices array for denoms that can be found in oracle whitelist
+ * but not in the prices
+ */
+function fillAbstainPrices(prices: Price[], oracleWhitelist: string[]) {
+  const abstainPrices: Price[] = []
+
+  oracleWhitelist.forEach((denom) => {
+    const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
+
+    if (!found) {
+      abstainPrices.push({
+        currency: denom.slice(1).toUpperCase(),
+        price: '0.000000000000000000',
+      })
+    }
+  })
+
+  return abstainPrices
+}
+
+/**
+ * filterPrices treverses prices array for following logics:
+ * 1. Removes price that cannot be found in oracle white list
+ * 2. Mutates price with 0.00 for abstaining vote which are not listed in denoms parameter
+ * 3. Fill abstain prices
+ */
 function filterPrices(prices: Price[], oracleWhitelist: string[], denoms: string[]): Price[] {
-  return prices
-    .map(({ currency }) => {
+  const newPrices = prices
+    .map((price) => {
+      const { currency } = price
+
       if (oracleWhitelist.indexOf(`u${currency.toLowerCase()}`) === -1) {
         return
       }
 
       if (denoms.indexOf(currency.toLowerCase()) === -1) {
-        return { currency, price: '-1.000000000000000000' }
+        return { currency, price: '0.000000000000000000' }
       }
+
+      return price
     })
     .filter(Boolean) as Price[]
-}
 
-function fillAbstainPrices(oracleWhitelist: string[], prices: Price[]) {
-  oracleWhitelist.forEach((denom) => {
-    let found = false
-
-    prices.every(({ currency }) => {
-      if (denom === `u${currency.toLowerCase()}`) {
-        found = true
-        return false
-      }
-
-      return true
-    })
-
-    if (!found) {
-      prices.push({ currency: denom.slice(1).toUpperCase(), price: '0.000000000000000000' })
-    }
-  })
+  return newPrices.concat(fillAbstainPrices(newPrices, oracleWhitelist))
 }
 
 function buildVoteMsgs(
@@ -131,12 +150,7 @@ function buildVoteMsgs(
   valAddrs: string[],
   voterAddr: string
 ): MsgAggregateExchangeRateVote[] {
-  const coins = prices
-    .map(({ currency, price }) => {
-      const denom = `u${currency.toLowerCase()}`
-      return `${price}${denom}`
-    })
-    .join(',')
+  const coins = prices.map(({ currency, price }) => `${price}u${currency.toLowerCase()}`).join(',')
 
   return valAddrs.map((valAddr) => {
     const salt = crypto.randomBytes(2).toString('hex')
@@ -172,14 +186,9 @@ export async function processVote(
     return
   }
 
-  const prices = await getPrices(priceURLs)
-
-  // Make not intended denoms prices to zero (abstain)
-  // Remove denoms not in
-  filterPrices(prices, oracleWhitelist, denoms)
-
-  // Fill '0' price for not fetched currencies (abstain)
-  fillAbstainPrices(oracleWhitelist, prices)
+  // Removes non-whitelisted currencies and abstain vote for currencies that are not in denoms parameter
+  // Abstain for not fetched currencies
+  const prices = filterPrices(await getPrices(priceURLs), oracleWhitelist, denoms)
 
   // Build Exchage Rate Vote Msgs
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
@@ -216,6 +225,7 @@ export async function processVote(
 async function validateTx(client: LCDClient, txhash: string): Promise<number> {
   let height = 0
   let max_retry = 20
+
   while (!height && max_retry > 0) {
     await Bluebird.delay(1000)
     max_retry--
@@ -225,7 +235,7 @@ async function validateTx(client: LCDClient, txhash: string): Promise<number> {
       .then((txinfo) => {
         height = txinfo.height
       })
-      .catch((_) => {
+      .catch(() => {
         /* Ignore not found error */
       })
   }
