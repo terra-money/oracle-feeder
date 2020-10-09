@@ -279,9 +279,10 @@ export async function vote(args: VoteArgs): Promise<void> {
         console.error(err.message, err.response.data)
       } else {
         console.error(err.message)
-        previousVotePeriod = 0
-        previousVoteMsgs = []
       }
+
+      previousVotePeriod = 0
+      previousVoteMsgs = []
     })
 
     await Bluebird.delay(Math.max(3000, 3000 - (Date.now() - startTime)))
