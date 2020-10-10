@@ -181,8 +181,8 @@ export async function processVote(
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
   if (
-    (previousVotePeriod && currentVotePeriod == previousVotePeriod) ||
-    indexInVotePeriod == 0 ||
+    (previousVotePeriod && currentVotePeriod === previousVotePeriod) ||
+    indexInVotePeriod === 0 ||
     oracleVotePeriod - indexInVotePeriod < 2
   ) {
     return
@@ -190,7 +190,7 @@ export async function processVote(
 
   // If it failed to reveal the price,
   // reset the state by throwing error
-  if (previousVotePeriod && currentVotePeriod - previousVotePeriod != 1) {
+  if (previousVotePeriod && currentVotePeriod - previousVotePeriod !== 1) {
     throw new Error('Failed to Reveal Exchange Rates; reset to prevote')
   }
 
