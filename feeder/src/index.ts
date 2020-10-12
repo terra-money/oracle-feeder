@@ -87,7 +87,6 @@ async function main(): Promise<void> {
   registerCommands(parser)
   const args = parser.parseArgs()
 
-  console.log(args)
   if (args.subparser_name === `vote`) {
     await vote(args)
   } else if (args.subparser_name === `update-key`) {
