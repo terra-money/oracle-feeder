@@ -1,6 +1,6 @@
-# Oracle Price Server
+# `price-server`
 
-This component is responsible for fetching price data from outside data sources and makes it available through an HTTP service. 
+This component is reponsible for computing the exchange rate of LUNA to submit and makes it available through an HTTP endpoints.
 
 ## Instructions
 

@@ -1,4 +1,4 @@
-# Oracle Feeder
+# `feeder`
 
 This program will submit exchange rate prevotes and votes, implementing the [voting procedure](https://docs.terra.money/dev/spec-oracle.html#voting-procedure). 
 
