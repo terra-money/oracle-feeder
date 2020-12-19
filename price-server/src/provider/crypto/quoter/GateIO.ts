@@ -16,17 +16,21 @@ export class GateIO extends Quoter {
           limit: 200,
           interval: '1m',
         },
-        (error, data) => {
+        (error, data: string[][]) => {
           if (error) {
             reject(error)
           } else {
-            let i = 0
             const trades: Trades = []
 
-            while (i < data.length) {
+            for (let i = 0; i < data.length; i += 1) {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const [timestamp, volume, close, high, low, open] = data[i++]
-              trades.push({ price: num(close), volume: num(volume), timestamp: +timestamp })
+              const [timestamp, volume, close, high, low, open] = data[i]
+
+              trades.push({
+                price: num(close),
+                volume: num(volume),
+                timestamp: +timestamp,
+              })
             }
 
             resolve(trades)
