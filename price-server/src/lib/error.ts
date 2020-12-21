@@ -9,7 +9,7 @@ export function init(opts: Options = {}): void {
   opts?.sentry && sentry.init({ dsn: opts.sentry })
 
   process.on('unhandledRejection', (error) => {
-    logger.error(error)
+    error && logger.error(error)
 
     sentry.withScope((scope) => {
       scope.setLevel(sentry.Severity.Critical)

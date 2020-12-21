@@ -25,7 +25,7 @@ export function getLunaPrices(): PriceBySymbol {
   return prices
 }
 
-export function getBtcPremium(): BigNumber {
+export function getBtcPremium(): BigNumber | undefined {
   try {
     const prices: { [symbol: string]: BigNumber } = {
       'BTC/KRW': cryptoProvider.getPriceBy('BTC/KRW'), // tvwap(upbit, bithumb)
@@ -55,7 +55,7 @@ export function getBtcPremium(): BigNumber {
   }
 }
 
-export function getUsdtToKrwRate(): BigNumber {
+export function getUsdtToKrwRate(): BigNumber | undefined {
   try {
     const prices: { [symbol: string]: BigNumber } = {
       'USDT/USD': cryptoProvider.getPriceBy('USDT/USD'), // tvwap(Kraken, Bitfinex)

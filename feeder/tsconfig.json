@@ -1,10 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "es2019"
-    ],
+    "lib": ["es2020"],
     "module": "commonjs",
+    "target": "es2019",
     "allowJs": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -13,6 +11,8 @@
     "skipLibCheck": true,
     "strictNullChecks": true,
     "sourceMap": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": "src",
+    "sourceRoot": "src"
   }
 }

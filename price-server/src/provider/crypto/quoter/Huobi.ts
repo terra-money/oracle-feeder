@@ -87,7 +87,7 @@ export class Huobi extends WebSocketQuoter {
     } else if (streamData.ch?.indexOf('market.') === 0) {
       const data = streamData as CandlestickStreamData
 
-      const ch = data.ch.replace('market.', '').replace('.kline.1min', '').toUpperCase()
+      const ch = data.ch!.replace('market.', '').replace('.kline.1min', '').toUpperCase()
       const symbol = this.symbols.find((symbol) => symbol.replace('/', '') === ch)
       if (!symbol) {
         return

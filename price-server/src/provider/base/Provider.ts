@@ -70,7 +70,9 @@ export class Provider {
   }
 
   protected collectPrice(symbol: string): BigNumber[] {
-    return this.quoters.map((quoter) => quoter.getPrice(symbol)).filter((price) => price)
+    return this.quoters
+      .map((quoter) => quoter.getPrice(symbol))
+      .filter((price) => price) as BigNumber[]
   }
 
   protected adjustPrices(): void {
@@ -79,7 +81,9 @@ export class Provider {
     for (const symbol of this.symbols) {
       delete this.priceBySymbol[symbol]
 
-      let useTvwap = this.options.adjustTvwapSymbols?.indexOf(symbol) > -1
+      let useTvwap = this.options.adjustTvwapSymbols
+        ? this.options.adjustTvwapSymbols.indexOf(symbol) !== -1
+        : false
 
       if (useTvwap) {
         const trades = this.collectTrades(symbol).filter(
