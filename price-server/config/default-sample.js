@@ -12,6 +12,7 @@ module.exports = {
     coinone: { symbols: ['LUNA/KRW'] },
     huobi: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
     binance: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
+    gateio: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
   },
   cryptoProvider: {
     adjustTvwapSymbols: ['BTC/KRW', 'USDT/USD'],
