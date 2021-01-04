@@ -1,25 +1,34 @@
 import { BigNumber } from 'bignumber.js'
 import { getQuoteCurrency } from 'lib/currency'
-import { PriceBySymbol } from 'provider/base'
-import { lunaProvider, fiatProvider, cryptoProvider } from 'provider'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
+import { PriceBySymbol } from 'provider/base'
+import { lunaProvider, fiatProvider, cryptoProvider } from 'provider'
 
 export function getLunaPrices(): PriceBySymbol {
-  const baseSymbol = 'LUNA/KRW'
+  const helpers: PriceBySymbol = {
+    'LUNA/USDT': lunaProvider.getPriceBy('LUNA/USDT'), // tvwap(binance, huobi)
+    'USDT/USD': cryptoProvider.getPriceBy('USDT/USD'), // tvwap(Kraken, Bitfinex)
+    'KRW/USD': fiatProvider.getPriceBy('KRW/USD'),
+  }
   const prices: PriceBySymbol = {
-    [baseSymbol]: lunaProvider.getPriceBy(baseSymbol),
+    'LUNA/KRW': lunaProvider.getPriceBy('LUNA/KRW'),
   }
 
-  if (!prices[baseSymbol]) {
-    return {}
+  if (helpers['LUNA/USDT'] && helpers['USDT/USD']) {
+    // LUNA/USD = LUNA/USDT * USDT/USD
+    prices['LUNA/USD'] = helpers['LUNA/USDT'].multipliedBy(helpers['USDT/USD'])
   }
 
   // make 'LUNA/FIAT' rates
-  for (const symbol of Object.keys(fiatProvider.getPrices())) {
-    prices[`LUNA/${getQuoteCurrency(symbol)}`] = fiatProvider
-      .getPriceBy(symbol)
-      .multipliedBy(prices[baseSymbol])
+  if (helpers['KRW/USD'] && prices['LUNA/USD']) {
+    Object.keys(fiatProvider.getPrices())
+      .filter((symbol) => symbol !== 'KRW/USD')
+      .map((symbol) => {
+        const exchangeRate = helpers['KRW/USD'].dividedBy(fiatProvider.getPriceBy(symbol))
+
+        prices[`LUNA/${getQuoteCurrency(symbol)}`] = prices['LUNA/USD'].dividedBy(exchangeRate)
+      })
   }
 
   return prices
