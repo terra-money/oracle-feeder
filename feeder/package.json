@@ -10,7 +10,7 @@
   "dependencies": {
     "@terra-money/terra.js": "^0.4.20",
     "argparse": "^1.0.10",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bluebird": "^3.7.2",
     "promptly": "^3.0.3",
     "ts-node": "^8.10.2",
