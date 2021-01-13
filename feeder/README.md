@@ -40,7 +40,7 @@ npm start vote -- \
    --source http://localhost:8532/latest \
    --lcd https://lcd.terra.dev \
    --chain-id columbus-3 \
-   --denoms sdr,krw,usd,mnt \
+   --denoms sdr,krw,usd,mnt,eur \
    --validator terravaloper1xx \
    --validator terravaloper1yy \
    --password "<password>"
