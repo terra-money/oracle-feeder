@@ -267,13 +267,14 @@ interface VoteArgs {
   password: string
   denoms: string
   keyPath: string
+  gasPrices: string
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
   const client = new LCDClient({
     URL: args.lcdAddress,
     chainID: args.chainID,
-    gasPrices: { /*uluna: '0.15',*/ ukrw: '1.7805' },
+    gasPrices: args.gasPrices,
   })
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
   const valAddrs = args.validator || [rawKey.valAddress]
