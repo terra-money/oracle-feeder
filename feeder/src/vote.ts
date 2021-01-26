@@ -12,7 +12,7 @@ import {
   MsgAggregateExchangeRateVote,
   isTxError,
 } from '@terra-money/terra.js'
-import packageInfo from '../package.json'
+import * as packageInfo from '../package.json'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
