@@ -7,10 +7,10 @@ import axios from 'axios'
 import * as ks from './keystore'
 import {
   LCDClient,
-  OracleWhitelist,
   RawKey,
   Wallet,
   MsgAggregateExchangeRateVote,
+  isTxError,
 } from '@terra-money/terra.js'
 
 const ax = axios.create({
@@ -44,7 +44,7 @@ async function loadOracleParams(
 }> {
   const oracleParams = await client.oracle.parameters()
   const oracleVotePeriod = oracleParams.vote_period
-  const oracleWhitelist: string[] = (oracleParams.whitelist as OracleWhitelist).map((e) => e.name)
+  const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
 
   const latestBlock = await client.tendermint.blockInfo()
   const currentBlockHeight = parseInt(latestBlock.block.header.height, 10)
@@ -205,29 +205,27 @@ export async function processVote(
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
   const tx = await wallet.createAndSignTx({ msgs })
 
-  await client.tx
-    .broadcastSync(tx)
-    .then(({ code, txhash, raw_log }) => {
-      if (!code) {
-        return validateTx(client, txhash).then((height) => {
-          if (height == 0) {
-            console.error(`broadcast error: txhash not found: ${txhash}`)
-          } else {
-            console.log(`broadcast success: txhash: ${txhash}`)
+  const res = await client.tx.broadcastSync(tx).catch((err) => {
+    console.error(tx.toJSON())
+    throw err
+  })
 
-            // Update last success VotePeriod
-            previousVotePeriod = Math.floor(height / oracleVotePeriod)
-            previousVoteMsgs = voteMsgs
-          }
-        })
-      } else {
-        console.error(`broadcast error: code: ${code}, raw_log: ${raw_log}`)
-      }
-    })
-    .catch((err) => {
-      console.error(tx.toJSON())
-      throw err
-    })
+  if (isTxError(res)) {
+    console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
+    return
+  }
+
+  const height = await validateTx(client, res.txhash)
+  if (height == 0) {
+    console.error(`broadcast error: txhash not found: ${res.txhash}`)
+    return
+  }
+
+  console.log(`broadcast success: txhash: ${res.txhash}`)
+
+  // Update last success VotePeriod
+  previousVotePeriod = Math.floor(height / oracleVotePeriod)
+  previousVoteMsgs = voteMsgs
 }
 
 async function validateTx(client: LCDClient, txhash: string): Promise<number> {
