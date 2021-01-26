@@ -12,6 +12,7 @@ import {
   MsgAggregateExchangeRateVote,
   isTxError,
 } from '@terra-money/terra.js'
+import packageInfo from '../package.json'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -203,7 +204,10 @@ export async function processVote(
 
   // Build Exchage Rate Prevote Msgs
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
-  const tx = await wallet.createAndSignTx({ msgs })
+  const tx = await wallet.createAndSignTx({
+    msgs,
+    memo: `${packageInfo.name}@${packageInfo.version}`,
+  })
 
   const res = await client.tx.broadcastSync(tx).catch((err) => {
     console.error(tx.toJSON())

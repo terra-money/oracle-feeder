@@ -13,6 +13,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "baseUrl": "src",
-    "sourceRoot": "src"
+    "sourceRoot": "src",
+    "resolveJsonModule": true
   }
 }
