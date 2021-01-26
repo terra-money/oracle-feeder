@@ -1,3 +1,18 @@
+const fiatSymbols = [
+  'KRW/SDR',
+  'KRW/USD',
+  'KRW/MNT',
+  'KRW/EUR',
+  'KRW/CNY',
+  'KRW/JPY',
+  'KRW/GBP',
+  'KRW/INR',
+  'KRW/CAD',
+  'KRW/CHF',
+  'KRW/HKD',
+  'KRW/AUD',
+]
+
 module.exports = {
   port: 8532,
   sentry: '', // sentry dsn (https://sentry.io/ - error reporting service)
@@ -25,7 +40,7 @@ module.exports = {
   },
   fiatProvider: {
     currencylayer: {
-      symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
+      symbols: fiatSymbols,
       interval: 60 * 1000,
       timeout: 5000,
       // https://currencylayer.com/product
@@ -33,7 +48,7 @@ module.exports = {
       apiKey: '', // necessary
     },
     fixer: {
-      symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
+      symbols: fiatSymbols,
       interval: 60 * 1000,
       timeout: 5000,
       // https://fixer.io/product
@@ -41,7 +56,7 @@ module.exports = {
       apiKey: '', // necessary
     },
     alphavantage: {
-      symbols: ['KRW/SDR', 'KRW/USD', 'KRW/MNT'],
+      symbols: fiatSymbols,
       interval: 60 * 1000,
       timeout: 5000,
       // https://www.alphavantage.co/premium/

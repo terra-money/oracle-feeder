@@ -66,6 +66,13 @@ function registerCommands(parser: ArgumentParser): void {
     defaultValue: `voter.json`,
   })
 
+  voteCommand.addArgument([`-g`, `--gas-prices`], {
+    action: `store`,
+    help: `gas prices (default 1.7805ukrw)`,
+    dest: `gasPrices`,
+    defaultValue: `1.7805ukrw`,
+  })
+
   // Updating Key command
   const keyCommand = subparsers.addParser(`update-key`, { addHelp: true })
 
