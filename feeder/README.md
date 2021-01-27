@@ -43,6 +43,7 @@ npm start vote -- \
    --denoms sdr,krw,usd,mnt,eur,cny,jpy,gbp,inr,cad,chf,hkd,aud,sgd \
    --validator terravaloper1xx \
    --validator terravaloper1yy \
+   --gas-prices 1.7805ukrw \
    --password "<password>"
 ```
 
