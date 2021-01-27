@@ -65,5 +65,6 @@ npm start vote -- \
    --chain-id columbus-3 \
    --denoms sdr,krw,usd,mnt \
    --validator terravaloper1xx \
-   --password "<password>"
+   --password "<password>" \
+   --gas-prices 1.7805ukrw
 ```
