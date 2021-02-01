@@ -24,7 +24,7 @@ export class Quoter {
 
   private tickedAt: number
   private isAlive = true
-  private alivedAt: number
+  private alivedAt = Date.now()
 
   constructor(options: QuoterOptions) {
     Object.assign(this, { options })
