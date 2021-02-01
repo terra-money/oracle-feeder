@@ -64,5 +64,11 @@ module.exports = {
       // recommend: 120 API request per minute: $49.99/month
       apiKey: '', // necessary
     },
+    bandprotocol: {
+      symbols: fiatSymbols,
+      interval: 60 * 1000,
+      timeout: 5000,
+      // https://data.bandprotocol.com/
+    },
   },
 }
