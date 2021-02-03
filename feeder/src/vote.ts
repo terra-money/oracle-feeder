@@ -17,7 +17,7 @@ import * as packageInfo from '../package.json'
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
-  timeout: 30000,
+  timeout: 20000,
   headers: {
     post: {
       'Content-Type': 'application/json',
@@ -296,6 +296,6 @@ export async function vote(args: VoteArgs): Promise<void> {
       previousVoteMsgs = []
     })
 
-    await Bluebird.delay(Math.max(2500, 2500 - (Date.now() - startTime)))
+    await Bluebird.delay(Math.max(2000, 2000 - (Date.now() - startTime)))
   }
 }
