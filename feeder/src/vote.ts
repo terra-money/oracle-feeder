@@ -296,6 +296,6 @@ export async function vote(args: VoteArgs): Promise<void> {
       previousVoteMsgs = []
     })
 
-    await Bluebird.delay(Math.max(3000, 3000 - (Date.now() - startTime)))
+    await Bluebird.delay(Math.max(2500, 2500 - (Date.now() - startTime)))
   }
 }
