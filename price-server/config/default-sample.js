@@ -12,6 +12,7 @@ const fiatSymbols = [
   'KRW/HKD',
   'KRW/AUD',
   'KRW/SGD',
+  'KRW/THB',
 ]
 
 module.exports = {
