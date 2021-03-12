@@ -17,7 +17,7 @@ import * as packageInfo from '../package.json'
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
-  timeout: 30000,
+  timeout: 10000,
   headers: {
     post: {
       'Content-Type': 'application/json',
@@ -237,7 +237,7 @@ async function validateTx(client: LCDClient, txhash: string): Promise<number> {
   let max_retry = 20
 
   while (!height && max_retry > 0) {
-    await Bluebird.delay(1000)
+    await Bluebird.delay(500)
     max_retry--
 
     await client.tx
@@ -296,6 +296,6 @@ export async function vote(args: VoteArgs): Promise<void> {
       previousVoteMsgs = []
     })
 
-    await Bluebird.delay(Math.max(3000, 3000 - (Date.now() - startTime)))
+    await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
 }
