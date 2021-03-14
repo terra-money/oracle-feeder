@@ -40,7 +40,7 @@ npm start vote -- \
    --source http://localhost:8532/latest \
    --lcd https://lcd.terra.dev \
    --chain-id columbus-4 \
-   --denoms sdr,krw,usd,mnt,eur,cny,jpy,gbp,inr,cad,chf,hkd,aud,sgd \
+   --denoms sdr,krw,usd,mnt,eur,cny,jpy,gbp,inr,cad,chf,hkd,aud,sgd,thb \
    --validator terravaloper1xx \
    --validator terravaloper1yy \
    --gas-prices 169.77ukrw \
