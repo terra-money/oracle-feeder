@@ -236,10 +236,10 @@ export async function processVote(
 
 async function validateTx(client: LCDClient, txhash: string): Promise<number> {
   let height = 0
-  let max_retry = 15
+  let max_retry = 28
 
   while (!height && max_retry > 0) {
-    await Bluebird.delay(1000)
+    await Bluebird.delay(500)
     max_retry--
 
     await client.tx
