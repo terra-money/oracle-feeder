@@ -253,7 +253,7 @@ async function validateTx(
   let lastCheckHeight = nextBlockHeight - 1
 
   while (!height && lastCheckHeight < maxBlockHeight) {
-    await Bluebird.delay(2000)
+    await Bluebird.delay(1500)
 
     const lastBlock = await client.tendermint.blockInfo()
     const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
