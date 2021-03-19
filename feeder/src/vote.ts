@@ -43,6 +43,7 @@ async function loadOracleParams(
   oracleWhitelist: string[]
   currentVotePeriod: number
   indexInVotePeriod: number
+  nextBlockHeight: number
 }> {
   const oracleParams = await client.oracle.parameters()
   const oracleVotePeriod = oracleParams.vote_period
@@ -60,6 +61,7 @@ async function loadOracleParams(
     oracleWhitelist,
     currentVotePeriod,
     indexInVotePeriod,
+    nextBlockHeight,
   }
 }
 
@@ -180,6 +182,7 @@ export async function processVote(
     oracleWhitelist,
     currentVotePeriod,
     indexInVotePeriod,
+    nextBlockHeight,
   } = await loadOracleParams(client)
 
   // Skip until new voting period
@@ -223,7 +226,7 @@ export async function processVote(
   //   return
   // }
 
-  const height = await validateTx(client, res.txhash)
+  const height = await validateTx(client, nextBlockHeight, res.txhash)
   if (height == 0) {
     console.error(`broadcast error: txhash not found: ${res.txhash}`)
     return
@@ -236,15 +239,33 @@ export async function processVote(
   previousVoteMsgs = voteMsgs
 }
 
-async function validateTx(client: LCDClient, txhash: string): Promise<number> {
+async function validateTx(
+  client: LCDClient,
+  nextBlockHeight: number,
+  txhash: string
+): Promise<number> {
   let height = 0
 
-  // wait three blocks 3 * 6.5 * 1000 / 500 = 39
-  let max_retry = 39
+  // wait 3 blocks
+  const maxBlockHeight = nextBlockHeight + 2
 
-  while (!height && max_retry > 0) {
+  // current block height
+  let lastCheckHeight = nextBlockHeight - 1
+
+  while (!height && lastCheckHeight < maxBlockHeight) {
+    await Bluebird.delay(2000)
+
+    const lastBlock = await client.tendermint.blockInfo()
+    const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
+    if (latestBlockHeight <= lastCheckHeight) {
+      continue
+    }
+
+    // set last check height to latest block height
+    lastCheckHeight = latestBlockHeight
+
+    // wait for indexing (not sure; but just for safety)
     await Bluebird.delay(500)
-    max_retry--
 
     await client.tx
       .txInfo(txhash)
