@@ -49,9 +49,11 @@ async function loadOracleParams(
   const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
 
   const latestBlock = await client.tendermint.blockInfo()
-  const currentBlockHeight = parseInt(latestBlock.block.header.height, 10)
-  const currentVotePeriod = Math.floor(currentBlockHeight / oracleVotePeriod)
-  const indexInVotePeriod = currentBlockHeight % oracleVotePeriod
+
+  // the vote will be included in the next block
+  const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1
+  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)
+  const indexInVotePeriod = nextBlockHeight % oracleVotePeriod
 
   return {
     oracleVotePeriod,
@@ -184,7 +186,6 @@ export async function processVote(
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
   if (
     (previousVotePeriod && currentVotePeriod === previousVotePeriod) ||
-    indexInVotePeriod === 0 ||
     oracleVotePeriod - indexInVotePeriod < 2
   ) {
     return
@@ -200,10 +201,10 @@ export async function processVote(
   // Abstain for not fetched currencies
   const prices = filterPrices(await getPrices(priceURLs), oracleWhitelist, denoms)
 
-  // Build Exchage Rate Vote Msgs
+  // Build Exchange Rate Vote Msgs
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
-  // Build Exchage Rate Prevote Msgs
+  // Build Exchange Rate Prevote Msgs
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
   const tx = await wallet.createAndSignTx({
     msgs,
@@ -211,15 +212,16 @@ export async function processVote(
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
-  const res = await client.tx.broadcastSync(tx).catch((err) => {
+  const res = await client.tx.broadcastAsync(tx).catch((err) => {
     console.error(tx.toJSON())
     throw err
   })
 
-  if (isTxError(res)) {
-    console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
-    return
-  }
+  // async do not conduct check tx
+  // if (isTxError(res)) {
+  //   console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
+  //   return
+  // }
 
   const height = await validateTx(client, res.txhash)
   if (height == 0) {
