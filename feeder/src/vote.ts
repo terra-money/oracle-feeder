@@ -236,7 +236,7 @@ export async function processVote(
 
 async function validateTx(client: LCDClient, txhash: string): Promise<number> {
   let height = 0
-  let max_retry = 20
+  let max_retry = 24
 
   while (!height && max_retry > 0) {
     await Bluebird.delay(500)
@@ -245,7 +245,11 @@ async function validateTx(client: LCDClient, txhash: string): Promise<number> {
     await client.tx
       .txInfo(txhash)
       .then((txinfo) => {
-        height = txinfo.height
+        if (!txinfo.code) {
+          height = txinfo.height
+        } else {
+          console.error(txinfo.raw_log)
+        }
       })
       .catch((err) => {
         // print except for 404 not found error
