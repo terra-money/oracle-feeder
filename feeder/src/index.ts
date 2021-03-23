@@ -68,9 +68,9 @@ function registerCommands(parser: ArgumentParser): void {
 
   voteCommand.addArgument([`-g`, `--gas-prices`], {
     action: `store`,
-    help: `gas prices (default 1.7805ukrw)`,
+    help: `gas prices (default 169.77ukrw)`,
     dest: `gasPrices`,
-    defaultValue: `1.7805ukrw`,
+    defaultValue: `169.77ukrw`,
   })
 
   // Updating Key command

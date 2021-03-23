@@ -19,10 +19,6 @@ export function init(opts: Options = {}): void {
 }
 
 export function errorHandler(error: Error): void {
-  if (error.message.includes('Invalid response')) {
-    return
-  }
-
   logger.error(error)
   sentry.captureException(error)
 }

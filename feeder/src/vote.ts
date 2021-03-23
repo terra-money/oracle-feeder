@@ -11,6 +11,7 @@ import {
   Wallet,
   MsgAggregateExchangeRateVote,
   isTxError,
+  StdFee,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 
@@ -42,21 +43,25 @@ async function loadOracleParams(
   oracleWhitelist: string[]
   currentVotePeriod: number
   indexInVotePeriod: number
+  nextBlockHeight: number
 }> {
   const oracleParams = await client.oracle.parameters()
   const oracleVotePeriod = oracleParams.vote_period
   const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
 
   const latestBlock = await client.tendermint.blockInfo()
-  const currentBlockHeight = parseInt(latestBlock.block.header.height, 10)
-  const currentVotePeriod = Math.floor(currentBlockHeight / oracleVotePeriod)
-  const indexInVotePeriod = currentBlockHeight % oracleVotePeriod
+
+  // the vote will be included in the next block
+  const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1
+  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)
+  const indexInVotePeriod = nextBlockHeight % oracleVotePeriod
 
   return {
     oracleVotePeriod,
     oracleWhitelist,
     currentVotePeriod,
     indexInVotePeriod,
+    nextBlockHeight,
   }
 }
 
@@ -177,13 +182,13 @@ export async function processVote(
     oracleWhitelist,
     currentVotePeriod,
     indexInVotePeriod,
+    nextBlockHeight,
   } = await loadOracleParams(client)
 
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
   if (
     (previousVotePeriod && currentVotePeriod === previousVotePeriod) ||
-    indexInVotePeriod === 0 ||
     oracleVotePeriod - indexInVotePeriod < 2
   ) {
     return
@@ -199,27 +204,29 @@ export async function processVote(
   // Abstain for not fetched currencies
   const prices = filterPrices(await getPrices(priceURLs), oracleWhitelist, denoms)
 
-  // Build Exchage Rate Vote Msgs
+  // Build Exchange Rate Vote Msgs
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
-  // Build Exchage Rate Prevote Msgs
+  // Build Exchange Rate Prevote Msgs
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
   const tx = await wallet.createAndSignTx({
     msgs,
+    fee: new StdFee(1000000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
-  const res = await client.tx.broadcastSync(tx).catch((err) => {
+  const res = await client.tx.broadcastAsync(tx).catch((err) => {
     console.error(tx.toJSON())
     throw err
   })
 
-  if (isTxError(res)) {
-    console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
-    return
-  }
+  // async do not conduct check tx
+  // if (isTxError(res)) {
+  //   console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
+  //   return
+  // }
 
-  const height = await validateTx(client, res.txhash)
+  const height = await validateTx(client, nextBlockHeight, res.txhash)
   if (height == 0) {
     console.error(`broadcast error: txhash not found: ${res.txhash}`)
     return
@@ -232,18 +239,42 @@ export async function processVote(
   previousVoteMsgs = voteMsgs
 }
 
-async function validateTx(client: LCDClient, txhash: string): Promise<number> {
+async function validateTx(
+  client: LCDClient,
+  nextBlockHeight: number,
+  txhash: string
+): Promise<number> {
   let height = 0
-  let max_retry = 20
 
-  while (!height && max_retry > 0) {
+  // wait 3 blocks
+  const maxBlockHeight = nextBlockHeight + 2
+
+  // current block height
+  let lastCheckHeight = nextBlockHeight - 1
+
+  while (!height && lastCheckHeight < maxBlockHeight) {
+    await Bluebird.delay(1500)
+
+    const lastBlock = await client.tendermint.blockInfo()
+    const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
+    if (latestBlockHeight <= lastCheckHeight) {
+      continue
+    }
+
+    // set last check height to latest block height
+    lastCheckHeight = latestBlockHeight
+
+    // wait for indexing (not sure; but just for safety)
     await Bluebird.delay(500)
-    max_retry--
 
     await client.tx
       .txInfo(txhash)
       .then((txinfo) => {
-        height = txinfo.height
+        if (!txinfo.code) {
+          height = txinfo.height
+        } else {
+          console.error(txinfo.raw_log)
+        }
       })
       .catch((err) => {
         // print except for 404 not found error

@@ -40,10 +40,10 @@ npm start vote -- \
    --source http://localhost:8532/latest \
    --lcd https://lcd.terra.dev \
    --chain-id columbus-4 \
-   --denoms sdr,krw,usd,mnt,eur,cny,jpy,gbp,inr,cad,chf,hkd,aud,sgd \
+   --denoms sdr,krw,usd,mnt,eur,cny,jpy,gbp,inr,cad,chf,hkd,aud,sgd,thb \
    --validator terravaloper1xx \
    --validator terravaloper1yy \
-   --gas-prices 1.7805ukrw \
+   --gas-prices 169.77ukrw \
    --password "<password>"
 ```
 
@@ -52,7 +52,7 @@ npm start vote -- \
 | `source`    | Price server URL.                                | http://localhost:8532/latest |
 | `lcd`       | LCD server URL.                                  | https://lcd.terra.dev        |
 | `chain-id`  | Chain ID.                                        | `columbus-4`                 |
-| `denoms`    | Denoms to vote for (comma-separated).            | `sdr,krw,usd,mnt`            |
-| `validator` | Validator to submit prices for (can be multiple) | `terravaloper1xx`            |
+| `denoms`    | Denoms to vote for (comma-separated).            | `sdr,krw,usd,mnt,eur,cny,jpy,gbp,inr,cad,chf,hkd,aud,sgd,thb` |
+| `validator` | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
 | `password`  | Password for mnemonic (assigned in step #2)      |                              |
-| `gas-prices`| Gas Price (default 1.7805ukrw, use 178.05ukrw for tequila-0004 |                |
+| `gas-prices`| Gas Price (default 169.77ukrw, use 178.05ukrw for tequila-0004) |                |
