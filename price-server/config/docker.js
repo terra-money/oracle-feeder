@@ -14,15 +14,15 @@ module.exports = {
     coinone: { symbols: process.env.LUNA_PROVIDER_COINONE_SYMBOLS.split(',') || [] },
     huobi: {
       symbols: process.env.LUNA_PROVIDER_HUOBI_SYMBOLS.split(',') || [],
-      krwPriceFrom: process.env.LUNA_PROVIDER_HUOBI_SYMBOLS || '',
+      krwPriceFrom: process.env.LUNA_PROVIDER_HUOBI_KRW_PRICE_FROM || undefined,
     },
     binance: {
       symbols: process.env.LUNA_PROVIDER_BINANCE_SYMBOLS.split(',') || [],
-      krwPriceFrom: process.env.LUNA_PROVIDER_BINANCE_SYMBOLS || '',
+      krwPriceFrom: process.env.LUNA_PROVIDER_BINANCE_KRW_PRICE_FROM || undefined,
     },
     gateio: {
       symbols: process.env.LUNA_PROVIDER_GATEIO_SYMBOLS.split(',') || [],
-      krwPriceFrom: process.env.LUNA_PROVIDER_GATEIO_SYMBOLS || '',
+      krwPriceFrom: process.env.LUNA_PROVIDER_GATEIO_KRW_PRICE_FROM || undefined,
     },
   },
   cryptoProvider: {
@@ -35,7 +35,7 @@ module.exports = {
     kraken: { symbols: process.env.CRYPTO_PROVIDER_KRAKEN_SYMBOLS.split(',') || [] },
   },
   fiatProvider: {
-    currencylayer: {
+    currencylayer: process.env.FIAT_PROVIDER_CURRENCY_LAYER_INTERVAL && {
       symbols: FIAT_SYMBOLS,
       interval: parseInt(process.env.FIAT_PROVIDER_CURRENCY_LAYER_INTERVAL) || 60 * 1000,
       timeout: parseInt(process.env.FIAT_PROVIDER_CURRENCY_LAYER_TIMEOUT) || 5000,
@@ -43,7 +43,7 @@ module.exports = {
       // recommend: business subscription(60second Updates): $79.99/month
       apiKey: process.env.FIAT_PROVIDER_CURRENCY_LAYER_API_KEY || '', // necessary
     },
-    fixer: {
+    fixer: process.env.FIAT_PROVIDER_FIXER_INTERVAL && {
       symbols: FIAT_SYMBOLS,
       interval: parseInt(process.env.FIAT_PROVIDER_FIXER_INTERVAL) || 60 * 1000,
       timeout: parseInt(process.env.FIAT_PROVIDER_FIXER_TIMEOUT) || 5000,
@@ -51,7 +51,7 @@ module.exports = {
       // recommend: professional plus(60second Updates): $80/month
       apiKey: process.env.FIAT_PROVIDER_FIXER_API_KEY || '', // necessary
     },
-    alphavantage: {
+    alphavantage: process.env.FIAT_PROVIDER_ALPHA_VANTAGE_INTERVAL && {
       symbols: FIAT_SYMBOLS.filter((symbol) => !symbol.includes('MNT')),
       interval: parseInt(process.env.FIAT_PROVIDER_ALPHA_VANTAGE_INTERVAL) || 60 * 1000,
       timeout: parseInt(process.env.FIAT_PROVIDER_ALPHA_VANTAGE_TIMEOUT) || 5000,
@@ -59,7 +59,7 @@ module.exports = {
       // recommend: 120 API request per minute: $49.99/month
       apiKey: process.env.FIAT_PROVIDER_ALPHA_VANTAGE_API_KEY || '', // necessary
     },
-    bandprotocol: {
+    bandprotocol: process.env.FIAT_PROVIDER_BAND_PROTOCOL_INTERVAL && {
       symbols: FIAT_SYMBOLS,
       interval: parseInt(process.env.FIAT_PROVIDER_BAND_PROTOCOL_INTERVAL) || 60 * 1000,
       timeout: parseInt(process.env.FIAT_PROVIDER_BAND_PROTOCOL_TIMEOUT) || 5000,
