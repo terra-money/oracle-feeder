@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
@@ -106,7 +106,7 @@ export class Kraken extends WebSocketQuoter {
     // Get candles
     // reference: https://www.kraken.com/features/api#get-ohlc-data
     const pair = symbol.replace('/', '').toLowerCase()
-    const response: CandleStickResponse = await nodeFetch(
+    const response: CandleStickResponse = await fetch(
       `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1`
     ).then((res) => res.json())
 

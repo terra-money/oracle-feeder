@@ -1,5 +1,5 @@
-import nodeFetch from 'node-fetch'
 import * as pako from 'pako'
+import fetch from 'lib/fetch'
 import { num } from 'lib/num'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
@@ -116,7 +116,7 @@ export class Huobi extends WebSocketQuoter {
 
     // Get candles from Huobi
     // reference: https://huobiapi.github.io/docs/spot/v1/en/#get-klines-candles
-    const response = await nodeFetch(
+    const response = await fetch(
       `https://api.huobi.pro/market/history/kline?${toQueryString(params)}`
     ).then((res) => res.json())
 

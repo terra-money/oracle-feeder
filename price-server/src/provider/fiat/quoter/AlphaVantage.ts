@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import { toQueryString } from 'lib/fetch'
 import * as logger from 'lib/logger'
@@ -21,7 +21,7 @@ export class AlphaVantage extends Quoter {
       apikey: this.options.apiKey,
     }
 
-    const response: Response = await nodeFetch(
+    const response: Response = await fetch(
       `https://www.alphavantage.co/query?${toQueryString(params)}`,
       {
         timeout: this.options.timeout,

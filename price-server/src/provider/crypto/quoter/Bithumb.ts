@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
@@ -99,7 +99,7 @@ export class Bithumb extends WebSocketQuoter {
     // reference: (https://apidocs.bithumb.com/docs/candlestick)
     const base = getBaseCurrency(symbol)
     const quote = getQuoteCurrency(symbol)
-    const response: CandlestickResponse = await nodeFetch(
+    const response: CandlestickResponse = await fetch(
       `https://api.bithumb.com/public/candlestick/${base}_${quote}/1m`,
       { timeout: this.options.timeout }
     ).then((res) => res.json())
