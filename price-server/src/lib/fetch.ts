@@ -15,7 +15,7 @@ const httpsAgent = new HttpsAgent({
 
 const options = {
   agent: function (_parsedURL) {
-    if (_parsedURL.protocol == 'https:') {
+    if (_parsedURL.protocol == 'http:') {
       return httpAgent
     } else {
       return httpsAgent
