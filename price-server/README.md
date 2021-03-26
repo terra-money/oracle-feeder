@@ -14,7 +14,7 @@ npm install
 
 ```sh
 # Copy sample config file
-cp ./config/default.sample.js ./config/default.js
+cp ./config/default-sample.js ./config/default.js
 # make edits
 vim ./config/default.js
 ```
