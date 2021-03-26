@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import * as logger from 'lib/logger'
 import { errorHandler } from 'lib/error'
 import { toQueryString } from 'lib/fetch'
@@ -22,7 +22,7 @@ export class Fixer extends Quoter {
           .join(',') + ',KRW',
     }
 
-    const response: Response = await nodeFetch(
+    const response: Response = await fetch(
       `http://data.fixer.io/api/latest?${toQueryString(params)}`,
       { timeout: this.options.timeout }
     ).then((res) => res.json())

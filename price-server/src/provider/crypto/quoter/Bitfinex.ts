@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
@@ -114,7 +114,7 @@ export class Bitfinex extends WebSocketQuoter {
     // reference: https://docs.bitfinex.com/reference#rest-public-candles
     const base = this.getBaseCurrency(symbol)
     const quote = this.getQuoteCurrency(symbol)
-    const response = await nodeFetch(
+    const response = await fetch(
       `https://api-pub.bitfinex.com/v2/candles/trade:1m:t${base}${quote}/hist`,
       { timeout: this.options.timeout }
     ).then((res) => res.json())

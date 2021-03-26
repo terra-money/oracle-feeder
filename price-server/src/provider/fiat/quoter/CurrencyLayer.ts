@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import { toQueryString } from 'lib/fetch'
 import { num } from 'lib/num'
@@ -21,7 +21,7 @@ export class CurrencyLayer extends Quoter {
         .join(','),
     }
 
-    const response: Response = await nodeFetch(
+    const response: Response = await fetch(
       `https://apilayer.net/api/live?${toQueryString(params)}`,
       {
         timeout: this.options.timeout,

@@ -1,4 +1,4 @@
-import nodeFetch, { Response } from 'node-fetch'
+import fetch, { Response } from 'lib/fetch'
 import * as config from 'config'
 
 export function sendSlack(message: string): Promise<Response | void> {
@@ -6,7 +6,7 @@ export function sendSlack(message: string): Promise<Response | void> {
     return Promise.resolve()
   }
 
-  return nodeFetch(config.get('slack.url'), {
+  return fetch(config.get('slack.url'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

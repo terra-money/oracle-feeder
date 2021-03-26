@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
@@ -99,7 +99,7 @@ export class Upbit extends WebSocketQuoter {
     // reference: https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
     const base = getBaseCurrency(symbol)
     const quote = getQuoteCurrency(symbol)
-    const response: CandleStickResponse[] = await nodeFetch(
+    const response: CandleStickResponse[] = await fetch(
       `https://api.upbit.com/v1/candles/minutes/1?market=${quote}-${base}&count=10`
     ).then((res) => res.json())
 

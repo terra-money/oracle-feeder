@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import { num } from 'lib/num'
 import * as logger from 'lib/logger'
@@ -22,7 +22,7 @@ export class Coinone extends Quoter {
   private async fetchLatestTrades(symbol: string): Promise<Trades> {
     // get latest candles
     const base = getBaseCurrency(symbol)
-    const response: CandlestickResponse = await nodeFetch(
+    const response: CandlestickResponse = await fetch(
       `https://tb.coinone.co.kr/api/v1/chart/olhc/?site=coinone${base.toLowerCase()}&type=1m`,
       { timeout: this.options.timeout }
     ).then((res) => res.json())

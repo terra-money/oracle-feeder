@@ -1,4 +1,4 @@
-import nodeFetch from 'node-fetch'
+import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
@@ -89,7 +89,7 @@ export class Binance extends WebSocketQuoter {
 
     // Get candles from Binance
     // reference: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-data
-    const response = await nodeFetch(
+    const response = await fetch(
       `https://api.binance.com/api/v3/klines?${toQueryString(params)}`
     ).then((res) => res.json())
 
