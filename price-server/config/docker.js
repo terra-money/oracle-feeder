@@ -10,29 +10,45 @@ module.exports = {
   },
   lunaProvider: {
     adjustTvwapSymbols: process.env.LUNA_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || [],
-    bithumb: { symbols: process.env.LUNA_PROVIDER_BITHUMB_SYMBOLS.split(',') || [] },
-    coinone: { symbols: process.env.LUNA_PROVIDER_COINONE_SYMBOLS.split(',') || [] },
-    huobi: {
+    bithumb: process.env.LUNA_PROVIDER_BITHUMB_SYMBOLS && {
+      symbols: process.env.LUNA_PROVIDER_BITHUMB_SYMBOLS.split(',') || [],
+    },
+    coinone: process.env.LUNA_PROVIDER_COINONE_SYMBOLS && {
+      symbols: process.env.LUNA_PROVIDER_COINONE_SYMBOLS.split(',') || [],
+    },
+    huobi: process.env.LUNA_PROVIDER_HUOBI_SYMBOLS && {
       symbols: process.env.LUNA_PROVIDER_HUOBI_SYMBOLS.split(',') || [],
       krwPriceFrom: process.env.LUNA_PROVIDER_HUOBI_KRW_PRICE_FROM || undefined,
     },
-    binance: {
+    binance: process.env.LUNA_PROVIDER_BINANCE_SYMBOLS && {
       symbols: process.env.LUNA_PROVIDER_BINANCE_SYMBOLS.split(',') || [],
       krwPriceFrom: process.env.LUNA_PROVIDER_BINANCE_KRW_PRICE_FROM || undefined,
     },
-    gateio: {
+    gateio: process.env.LUNA_PROVIDER_GATEIO_SYMBOLS && {
       symbols: process.env.LUNA_PROVIDER_GATEIO_SYMBOLS.split(',') || [],
       krwPriceFrom: process.env.LUNA_PROVIDER_GATEIO_KRW_PRICE_FROM || undefined,
     },
   },
   cryptoProvider: {
     adjustTvwapSymbols: process.env.CRYPTO_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || [],
-    upbit: { symbols: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS.split(',') || [] },
-    bithumb: { symbols: process.env.CRYPTO_PROVIDER_BITHUMB_SYMBOLS.split(',') || [] },
-    binance: { symbols: process.env.CRYPTO_PROVIDER_BINANCE_SYMBOLS.split(',') || [] },
-    huobi: { symbols: process.env.CRYPTO_PROVIDER_HUOBI_SYMBOLS.split(',') || [] },
-    bitfinex: { symbols: process.env.CRYPTO_PROVIDER_BITFINEX_SYMBOLS.split(',') || [] },
-    kraken: { symbols: process.env.CRYPTO_PROVIDER_KRAKEN_SYMBOLS.split(',') || [] },
+    upbit: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS && {
+      symbols: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS.split(',') || [],
+    },
+    bithumb: process.env.CRYPTO_PROVIDER_BITHUMB_SYMBOLS && {
+      symbols: process.env.CRYPTO_PROVIDER_BITHUMB_SYMBOLS.split(',') || [],
+    },
+    binance: process.env.CRYPTO_PROVIDER_BINANCE_SYMBOLS && {
+      symbols: process.env.CRYPTO_PROVIDER_BINANCE_SYMBOLS.split(',') || [],
+    },
+    huobi: process.env.CRYPTO_PROVIDER_HUOBI_SYMBOLS && {
+      symbols: process.env.CRYPTO_PROVIDER_HUOBI_SYMBOLS.split(',') || [],
+    },
+    bitfinex: process.env.CRYPTO_PROVIDER_BITFINEX_SYMBOLS && {
+      symbols: process.env.CRYPTO_PROVIDER_BITFINEX_SYMBOLS.split(',') || [],
+    },
+    kraken: process.env.CRYPTO_PROVIDER_KRAKEN_SYMBOLS && {
+      symbols: process.env.CRYPTO_PROVIDER_KRAKEN_SYMBOLS.split(',') || [],
+    },
   },
   fiatProvider: {
     currencylayer: process.env.FIAT_PROVIDER_CURRENCY_LAYER_INTERVAL && {
