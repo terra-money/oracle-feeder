@@ -28,7 +28,7 @@ export class BandProtocol extends Quoter {
       min_count: 3,
       ask_count: 4,
     }
-    const response: Response = await fetch(`https://poa-api.bandchain.org/oracle/request_prices`, {
+    const response: Response = await fetch(`https://api-gm-lb.bandchain.org/oracle/request_prices`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
