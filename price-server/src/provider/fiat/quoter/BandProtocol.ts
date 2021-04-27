@@ -46,17 +46,18 @@ export class BandProtocol extends Quoter {
     }
 
     // convert to KRW prices & update last trades
-    const krwPrice = response.result.find((res) => res.symbol === 'USD/KRW')
-    const krwRate = 1 / +num(krwPrice ? krwPrice.multiplier / krwPrice.px : 1)
+    const krwPrice = response.result.find((res) => res.symbol === 'KRW')
+    const krwRate = num(1).div(krwPrice ? num(krwPrice.multiplier).div(krwPrice.px) : 1)
 
     for (const price of response.result) {
       if (price.symbol === 'KRW') {
-        this.setPrice('KRW/USD', num(krwRate))
+        this.setPrice('KRW/USD', krwRate)
         continue
       }
-      const usdPrice = num(price.multiplier / price.px)
-      const adjusted = +usdPrice * krwRate
-      this.setPrice(price.symbol === 'XDR' ? 'KRW/SDR' : `KRW/${price.symbol}`, num(adjusted))
+
+      const usdPrice = num(price.multiplier).div(price.px)
+      const adjusted = usdPrice.multipliedBy(krwRate)
+      this.setPrice(price.symbol === 'XDR' ? 'KRW/SDR' : `KRW/${price.symbol}`, adjusted)
     }
   }
 
