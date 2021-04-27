@@ -211,7 +211,7 @@ export async function processVote(
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
   const tx = await wallet.createAndSignTx({
     msgs,
-    fee: new StdFee(1000000, []),
+    fee: new StdFee(msgs.length * 100000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
