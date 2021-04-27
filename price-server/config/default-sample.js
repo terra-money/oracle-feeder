@@ -71,5 +71,11 @@ module.exports = {
       timeout: 5000,
       // https://data.bandprotocol.com/
     },
+    exchangerate: {
+      symbols: fiatSymbols,
+      interval: 60 * 1000,
+      timeout: 5000,
+      // https://exchangerate.host/
+    },
   },
 }
