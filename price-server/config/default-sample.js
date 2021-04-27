@@ -36,7 +36,7 @@ module.exports = {
     upbit: { symbols: ['BTC/KRW'] },
     bithumb: { symbols: ['BTC/KRW'] },
     binance: { symbols: ['BTC/USDT'] },
-    huobi: { symbols: ['LUNA/USDT'] },
+    huobi: { symbols: ['BTC/USDT'] },
     bitfinex: { symbols: ['USDT/USD'] },
     kraken: { symbols: ['USDT/USD'] },
   },
