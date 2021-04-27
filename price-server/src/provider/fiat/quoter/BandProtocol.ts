@@ -25,14 +25,17 @@ export class BandProtocol extends Quoter {
       symbols: symbolsUSD.map((symbol) =>
         symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')
       ),
-      min_count: 3,
-      ask_count: 4,
+      min_count: 10,
+      ask_count: 16,
     }
-    const response: Response = await fetch(`https://poa-api.bandchain.org/oracle/request_prices`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    }).then((res) => res.json())
+    const response: Response = await fetch(
+      'https://terra-lcd.bandchain.org/oracle/request_prices',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      }
+    ).then((res) => res.json())
 
     if (!response || !response.result || !response.height) {
       logger.error(
