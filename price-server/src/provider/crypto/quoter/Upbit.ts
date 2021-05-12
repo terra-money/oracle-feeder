@@ -70,7 +70,7 @@ export class Upbit extends WebSocketQuoter {
     const symbols = this.symbols
       .map((symbol) => `"${getQuoteCurrency(symbol)}-${getBaseCurrency(symbol)}"`)
       .join(',')
-    this.ws.send(`[{"ticket":"UNIQUE_TICKET"},{"type":"trade","codes":[${symbols}]}]}`)
+    this.ws.send(`[{"ticket":"UNIQUE_TICKET"},{"type":"trade","codes":[${symbols}]}]`)
   }
 
   protected onData(data: CandlestickStreamData): void {
