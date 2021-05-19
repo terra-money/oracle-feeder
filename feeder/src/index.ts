@@ -26,14 +26,14 @@ function registerCommands(parser: ArgumentParser): void {
     action: 'store',
     help: 'lcd address',
     dest: 'lcdAddress',
-    required: true,
+    required: false,
   })
 
   voteCommand.addArgument([`-c`, `--chain-id`], {
     action: `store`,
     help: `chain ID`,
     dest: `chainID`,
-    required: true,
+    required: false,
   })
 
   voteCommand.addArgument([`--validator`], {
@@ -45,7 +45,7 @@ function registerCommands(parser: ArgumentParser): void {
   voteCommand.addArgument([`-s`, `--source`], {
     action: `append`,
     help: `Append price data source(It can handle multiple sources)`,
-    required: true,
+    required: false,
   })
 
   voteCommand.addArgument([`-p`, `--password`], {
@@ -86,7 +86,7 @@ function registerCommands(parser: ArgumentParser): void {
 
 async function main(): Promise<void> {
   const parser = new ArgumentParser({
-    version: `0.2.0`,
+    version: `1.3.12`,
     addHelp: true,
     description: `Terra oracle voter`,
   })
