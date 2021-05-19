@@ -247,7 +247,7 @@ async function validateTx(
   let height = 0
 
   // wait 3 blocks
-  const maxBlockHeight = nextBlockHeight + 2
+  const maxBlockHeight = nextBlockHeight + 10
 
   // current block height
   let lastCheckHeight = nextBlockHeight - 1
