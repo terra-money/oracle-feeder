@@ -12,6 +12,7 @@ import {
   MsgAggregateExchangeRateVote,
   isTxError,
   StdFee,
+  TxBroadcastResult,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 
@@ -208,31 +209,51 @@ export async function processVote(
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
   // Build Exchange Rate Prevote Msgs
+  const isPrevoteOnlyTx = previousVoteMsgs.length === 0
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
   const tx = await wallet.createAndSignTx({
     msgs,
-    fee: new StdFee(msgs.length * 100000, []),
+    fee: new StdFee((1 + msgs.length) * 50000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
-  const res = await client.tx.broadcastAsync(tx).catch((err) => {
-    console.error(tx.toJSON())
-    throw err
-  })
+  let txhash: string
+  if (isPrevoteOnlyTx) {
+    const res = await client.tx.broadcastSync(tx).catch((err) => {
+      console.error(tx.toJSON())
+      throw err
+    })
 
-  // async do not conduct check tx
-  // if (isTxError(res)) {
-  //   console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
-  //   return
-  // }
+    if (isTxError(res)) {
+      console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
+      return
+    }
 
-  const height = await validateTx(client, nextBlockHeight, res.txhash)
-  if (height == 0) {
-    console.error(`broadcast error: txhash not found: ${res.txhash}`)
-    return
+    txhash = res.txhash
+  } else {
+    const res = await client.tx.broadcastAsync(tx).catch((err) => {
+      console.error(tx.toJSON())
+      throw err
+    })
+
+    txhash = res.txhash
   }
 
-  console.log(`broadcast success: txhash: ${res.txhash}`)
+  const height = await validateTx(
+    client,
+    nextBlockHeight,
+    txhash,
+    // if only prevote exist, then wait 2 * vote_period blocks,
+    // else wait left blocks in the current vote_period
+    isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod
+  )
+
+  if (height == 0) {
+    console.error(tx.toJSON())
+    throw `broadcast error: txhash not found: ${txhash}`
+  }
+
+  console.log(`broadcast success: txhash: ${txhash}`)
 
   // Update last success VotePeriod
   previousVotePeriod = Math.floor(height / oracleVotePeriod)
@@ -242,12 +263,13 @@ export async function processVote(
 async function validateTx(
   client: LCDClient,
   nextBlockHeight: number,
-  txhash: string
+  txhash: string,
+  timeoutHeight: number
 ): Promise<number> {
   let height = 0
 
   // wait 3 blocks
-  const maxBlockHeight = nextBlockHeight + 10
+  const maxBlockHeight = nextBlockHeight + timeoutHeight
 
   // current block height
   let lastCheckHeight = nextBlockHeight - 1
@@ -323,10 +345,14 @@ export async function vote(args: VoteArgs): Promise<void> {
         console.error(err.message)
       }
 
-      previousVotePeriod = 0
-      previousVoteMsgs = []
+      resetPrevote()
     })
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
+}
+
+function resetPrevote() {
+  previousVotePeriod = 0
+  previousVoteMsgs = []
 }
