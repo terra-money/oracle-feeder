@@ -12,7 +12,6 @@ import {
   MsgAggregateExchangeRateVote,
   isTxError,
   StdFee,
-  TxBroadcastResult,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 
@@ -37,9 +36,7 @@ async function initKey(keyPath: string, password?: string): Promise<RawKey> {
   return new RawKey(Buffer.from(plainEntity.privateKey, 'hex'))
 }
 
-async function loadOracleParams(
-  client: LCDClient
-): Promise<{
+async function loadOracleParams(client: LCDClient): Promise<{
   oracleVotePeriod: number
   oracleWhitelist: string[]
   currentVotePeriod: number
@@ -72,8 +69,7 @@ interface Price {
 }
 
 async function getPrices(sources: string[]): Promise<Price[]> {
-  console.info(`timestamp: ${new Date().toUTCString()}`)
-  console.info(`getting price data from`, sources)
+  console.info(`getPrices: source: ${sources.join(',')}`)
 
   const results = await Bluebird.some(
     sources.map((s) => ax.get(s)),
@@ -85,13 +81,13 @@ async function getPrices(sources: string[]): Promise<Price[]> {
         !Array.isArray(data.prices) ||
         !data.prices.length
       ) {
-        console.error('invalid price response')
+        console.error('getPrices: invalid response')
         return false
       }
 
       // Ignore prices older than 60 seconds ago
       if (Date.now() - new Date(data.created_at).getTime() > 60 * 1000) {
-        console.info('price is too old')
+        console.error('getPrices: too old')
         return false
       }
 
@@ -201,6 +197,9 @@ export async function processVote(
     throw new Error('Failed to Reveal Exchange Rates; reset to prevote')
   }
 
+  // Print timestamp before start
+  console.info(`timestamp: ${new Date().toUTCString()}`)
+
   // Removes non-whitelisted currencies and abstain vote for currencies that are not in denoms parameter
   // Abstain for not fetched currencies
   const prices = filterPrices(await getPrices(priceURLs), oracleWhitelist, denoms)
@@ -217,27 +216,18 @@ export async function processVote(
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
-  let txhash: string
-  if (isPrevoteOnlyTx) {
-    const res = await client.tx.broadcastSync(tx).catch((err) => {
-      console.error(tx.toJSON())
-      throw err
-    })
+  const res = await client.tx.broadcastSync(tx).catch((err) => {
+    console.error(`broadcast error: ${err.message}`, tx.toJSON())
+    throw err
+  })
 
-    if (isTxError(res)) {
-      console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
-      return
-    }
-
-    txhash = res.txhash
-  } else {
-    const res = await client.tx.broadcastAsync(tx).catch((err) => {
-      console.error(tx.toJSON())
-      throw err
-    })
-
-    txhash = res.txhash
+  if (isTxError(res)) {
+    console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
+    return
   }
+
+  const txhash = res.txhash
+  console.info(`broadcast success: txhash: ${txhash}`)
 
   const height = await validateTx(
     client,
@@ -247,13 +237,6 @@ export async function processVote(
     // else wait left blocks in the current vote_period
     isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod
   )
-
-  if (height == 0) {
-    console.error(tx.toJSON())
-    throw `broadcast error: txhash not found: ${txhash}`
-  }
-
-  console.log(`broadcast success: txhash: ${txhash}`)
 
   // Update last success VotePeriod
   previousVotePeriod = Math.floor(height / oracleVotePeriod)
@@ -279,6 +262,7 @@ async function validateTx(
 
     const lastBlock = await client.tendermint.blockInfo()
     const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
+
     if (latestBlockHeight <= lastCheckHeight) {
       continue
     }
@@ -295,7 +279,7 @@ async function validateTx(
         if (!txinfo.code) {
           height = txinfo.height
         } else {
-          console.error(txinfo.raw_log)
+          throw new Error(`validateTx: failed tx: code: ${txinfo.code}, raw_log: ${txinfo.raw_log}`)
         }
       })
       .catch((err) => {
@@ -308,6 +292,11 @@ async function validateTx(
       })
   }
 
+  if (!height) {
+    throw new Error('validateTx: timeout')
+  }
+
+  console.info(`validateTx: height: ${height}`)
   return height
 }
 
