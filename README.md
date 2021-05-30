@@ -30,7 +30,7 @@ You can easily modify the logic for how LUNA exchange rates are computed by eith
 1. Clone this repository
 
 ```sh
-git clone https://github.com/terra-project/oracle-feeder
+git clone https://github.com/terra-money/oracle-feeder
 cd oracle-feeder
 ```
 
