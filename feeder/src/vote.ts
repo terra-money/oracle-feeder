@@ -103,33 +103,11 @@ async function getPrices(sources: string[]): Promise<Price[]> {
 }
 
 /**
- * fillAbstainPrices returns abstain prices array for denoms that can be found in oracle whitelist
- * but not in the prices
+ * preparePrices treverses prices array for following logics:
+ * 1. Removes price that cannot be found in oracle whitelist
+ * 2. Fill abstain prices for prices that cannot be found in price source but in oracle whitelist
  */
-function fillAbstainPrices(prices: Price[], oracleWhitelist: string[]) {
-  const abstainPrices: Price[] = []
-
-  oracleWhitelist.forEach((denom) => {
-    const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
-
-    if (!found) {
-      abstainPrices.push({
-        currency: denom.slice(1).toUpperCase(),
-        price: '0.000000000000000000',
-      })
-    }
-  })
-
-  return abstainPrices
-}
-
-/**
- * filterPrices treverses prices array for following logics:
- * 1. Removes price that cannot be found in oracle white list
- * 2. Mutates price with 0.00 for abstaining vote which are not listed in denoms parameter
- * 3. Fill abstain prices
- */
-function filterPrices(prices: Price[], oracleWhitelist: string[], denoms: string[]): Price[] {
+function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
   const newPrices = prices
     .map((price) => {
       const { currency } = price
@@ -138,15 +116,22 @@ function filterPrices(prices: Price[], oracleWhitelist: string[], denoms: string
         return
       }
 
-      if (denoms.indexOf(currency.toLowerCase()) === -1) {
-        return { currency, price: '0.000000000000000000' }
-      }
-
       return price
     })
     .filter(Boolean) as Price[]
 
-  return newPrices.concat(fillAbstainPrices(newPrices, oracleWhitelist))
+  oracleWhitelist.forEach((denom) => {
+    const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
+
+    if (!found) {
+      newPrices.push({
+        currency: denom.slice(1).toUpperCase(),
+        price: '0.000000000000000000',
+      })
+    }
+  })
+
+  return newPrices
 }
 
 function buildVoteMsgs(
@@ -171,8 +156,7 @@ export async function processVote(
   wallet: Wallet,
   priceURLs: string[],
   valAddrs: string[],
-  voterAddr: string,
-  denoms: string[]
+  voterAddr: string
 ): Promise<void> {
   const {
     oracleVotePeriod,
@@ -200,9 +184,8 @@ export async function processVote(
   // Print timestamp before start
   console.info(`timestamp: ${new Date().toUTCString()}`)
 
-  // Removes non-whitelisted currencies and abstain vote for currencies that are not in denoms parameter
-  // Abstain for not fetched currencies
-  const prices = filterPrices(await getPrices(priceURLs), oracleWhitelist, denoms)
+  // Removes non-whitelisted currencies and abstain for not fetched currencies
+  const prices = preparePrices(await getPrices(priceURLs), oracleWhitelist)
 
   // Build Exchange Rate Vote Msgs
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
@@ -307,7 +290,6 @@ interface VoteArgs {
   validator: string[]
   source: string[]
   password: string
-  denoms: string
   keyPath: string
   gasPrices: string
 }
@@ -321,13 +303,12 @@ export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
   const valAddrs = args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
-  const denoms = args.denoms.split(',').map((s) => s.toLowerCase())
   const wallet = new Wallet(client, rawKey)
 
   while (true) {
     const startTime = Date.now()
 
-    await processVote(client, wallet, args.source, valAddrs, voterAddr, denoms).catch((err) => {
+    await processVote(client, wallet, args.source, valAddrs, voterAddr).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {

@@ -12,7 +12,7 @@ function registerCommands(parser: ArgumentParser): void {
   // Voting command
   const voteCommand = subparsers.addParser(`vote`, {
     addHelp: true,
-    description: `Get price data from sources, vote for all denoms in data`,
+    description: `Fetch price and broadcast oracle messages`,
   })
 
   voteCommand.addArgument([`--ledger`], {
@@ -53,12 +53,6 @@ function registerCommands(parser: ArgumentParser): void {
     help: `voter password`,
   })
 
-  voteCommand.addArgument([`-d`, `--denoms`], {
-    action: `store`,
-    help: `denom list to vote (ex: "all" or "krw,eur,usd")`,
-    defaultValue: `all`,
-  })
-
   voteCommand.addArgument([`-k`, `--key-path`, `--keystore`], {
     action: `store`,
     help: `key store path to save encrypted key`,
@@ -73,11 +67,15 @@ function registerCommands(parser: ArgumentParser): void {
     defaultValue: `169.77ukrw`,
   })
 
+  voteCommand.addArgument([`-d`, `--denoms`], {
+    action: `help`,
+    help: '🚨***DEPRECATED***🚨 remove this parameter from command line',
+  })
+
   // Updating Key command
   const keyCommand = subparsers.addParser(`update-key`, { addHelp: true })
 
   keyCommand.addArgument([`-k`, `--keypath`], {
-    action: `store`,
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
     defaultValue: `voter.json`,
