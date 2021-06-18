@@ -285,7 +285,7 @@ async function validateTx(
 
 interface VoteArgs {
   ledgerMode: boolean
-  lcdAddress: string
+  lcdAddress: string[]
   chainID: string
   validator: string[]
   source: string[]
@@ -314,18 +314,11 @@ export async function vote(args: VoteArgs): Promise<void> {
 
     if (switchLCD) {
       switchLCD = false
-      if (++currentLCDIndex > maxLCDIndex) {
-        currentLCDIndex = 0
-      }
-      client = new LCDClient({
-        URL: args.lcdAddress[currentLCDIndex],
-        chainID: args.chainID,
-        gasPrices: args.gasPrices,
-      })
-      wallet = new Wallet(client, rawKey)
-      console.log(
-        'Switched to LCD address ' + currentLCDIndex + '(' + args.lcdAddress[currentLCDIndex] + ')'
-      )
+      ;({
+        client,
+        wallet,
+        newIndex: currentLCDIndex,
+      } = rotateLCD(currentLCDIndex, maxLCDIndex, args, rawKey))
     }
 
     try {
@@ -336,6 +329,32 @@ export async function vote(args: VoteArgs): Promise<void> {
     }
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
+  }
+}
+
+function rotateLCD(
+  currentLCDIndex: number,
+  maxLCDIndex: number,
+  args: VoteArgs,
+  rawKey: RawKey
+): { client: LCDClient; wallet: Wallet; newIndex: number } {
+  if (++currentLCDIndex > maxLCDIndex) {
+    currentLCDIndex = 0
+  }
+  const client = new LCDClient({
+    URL: args.lcdAddress[currentLCDIndex],
+    chainID: args.chainID,
+    gasPrices: args.gasPrices,
+  })
+  const wallet = new Wallet(client, rawKey)
+  console.log(
+    'Switched to LCD address ' + currentLCDIndex + '(' + args.lcdAddress[currentLCDIndex] + ')'
+  )
+
+  return {
+    client,
+    wallet,
+    newIndex: currentLCDIndex,
   }
 }
 
