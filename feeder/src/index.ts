@@ -23,7 +23,7 @@ function registerCommands(parser: ArgumentParser): void {
   })
 
   voteCommand.addArgument(['-l', '--lcd'], {
-    action: 'store',
+    action: 'append',
     help: 'lcd address',
     dest: 'lcdAddress',
     required: true,

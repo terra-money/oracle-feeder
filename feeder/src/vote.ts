@@ -295,31 +295,67 @@ interface VoteArgs {
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
-  const client = new LCDClient({
-    URL: args.lcdAddress,
+  const maxLCDIndex = args.lcdAddress.length - 1
+  let currentLCDIndex = 0
+
+  let client = new LCDClient({
+    URL: args.lcdAddress[currentLCDIndex],
     chainID: args.chainID,
     gasPrices: args.gasPrices,
   })
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
   const valAddrs = args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
-  const wallet = new Wallet(client, rawKey)
+  let wallet = new Wallet(client, rawKey)
+  let switchLCD = false
 
   while (true) {
     const startTime = Date.now()
 
-    await processVote(client, wallet, args.source, valAddrs, voterAddr).catch((err) => {
-      if (err.isAxiosError && err.response) {
-        console.error(err.message, err.response.data)
-      } else {
-        console.error(err.message)
+    if (switchLCD) {
+      switchLCD = false
+      if (++currentLCDIndex > maxLCDIndex) {
+        currentLCDIndex = 0
       }
+      client = new LCDClient({
+        URL: args.lcdAddress[currentLCDIndex],
+        chainID: args.chainID,
+        gasPrices: args.gasPrices,
+      })
+      wallet = new Wallet(client, rawKey)
+      console.log(
+        'Switched to LCD address ' + currentLCDIndex + '(' + args.lcdAddress[currentLCDIndex] + ')'
+      )
+    }
 
-      resetPrevote()
-    })
+    try {
+      await processVote(client, wallet, args.source, valAddrs, voterAddr)
+    } catch (err) {
+      console.log('error occured while calling lcd client, will switch next round if possible')
+      switchLCD = true
+    }
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
+}
+
+async function voteWithLCD(
+  client: LCDClient,
+  wallet: Wallet,
+  priceURLs: string[],
+  valAddrs: string[],
+  voterAddr: string
+) {
+  await processVote(client, wallet, priceURLs, valAddrs, voterAddr).catch((err) => {
+    if (err.isAxiosError && err.response) {
+      console.error(err.message, err.response.data)
+    } else {
+      console.error(err.message)
+    }
+
+    resetPrevote()
+    throw err
+  })
 }
 
 function resetPrevote() {
