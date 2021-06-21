@@ -307,25 +307,19 @@ export async function vote(args: VoteArgs): Promise<void> {
   const valAddrs = args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
   let wallet = new Wallet(client, rawKey)
-  let switchLCD = false
 
   while (true) {
     const startTime = Date.now()
-
-    if (switchLCD) {
-      switchLCD = false
-      ;({
-        client,
-        wallet,
-        newIndex: currentLCDIndex,
-      } = rotateLCD(currentLCDIndex, maxLCDIndex, args, rawKey))
-    }
 
     try {
       await processVote(client, wallet, args.source, valAddrs, voterAddr)
     } catch (err) {
       console.log('error occured while calling lcd client, will switch next round if possible')
-      switchLCD = true
+      ;({
+        client,
+        wallet,
+        newIndex: currentLCDIndex,
+      } = rotateLCD(currentLCDIndex, maxLCDIndex, args, rawKey))
     }
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
