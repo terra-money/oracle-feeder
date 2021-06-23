@@ -314,7 +314,7 @@ export async function vote(args: VoteArgs): Promise<void> {
     try {
       await processVote(client, wallet, args.source, valAddrs, voterAddr)
     } catch (err) {
-      console.log('error occured while calling lcd client, will switch next round if possible')
+      console.log(`vote: lcd client unavailable, rotating to next lcd client: ${err}`)
       ;({
         client,
         wallet,
