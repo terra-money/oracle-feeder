@@ -3,10 +3,10 @@ import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
 import { num } from 'lib/num'
 import { Quoter } from 'provider/base'
+import { URL } from 'url'
 
 interface Response {
-  height: boolean
-  result: [
+  price_results: [
     {
       symbol: string
       multiplier: number
@@ -21,23 +21,16 @@ interface Response {
 export class BandProtocol extends Quoter {
   private async updateLastPrice(): Promise<void> {
     const symbolsUSD = this.symbols.map((symbol) => (symbol === 'KRW/USD' ? 'KRW' : symbol))
-    const params = {
-      symbols: symbolsUSD.map((symbol) =>
-        symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')
-      ),
-      min_count: 10,
-      ask_count: 16,
-    }
-    const response: Response = await fetch(
-      'https://terra-lcd.bandchain.org/oracle/request_prices',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params),
-      }
-    ).then((res) => res.json())
 
-    if (!response || !response.result || !response.height) {
+    const url = new URL('https://terra-lcd-poa.bandchain.org/oracle/v1/request_prices')
+    symbolsUSD.map((symbol) =>
+      url.searchParams.append('symbols', symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', ''))
+    )
+    url.searchParams.append('min_count', '3')
+    url.searchParams.append('ask_count', '4')
+
+    const response: Response = await fetch(url).then((res) => res.json())
+    if (!response || !response.price_results) {
       logger.error(
         `${this.constructor.name}: wrong api response`,
         response ? JSON.stringify(response) : 'empty'
@@ -46,10 +39,10 @@ export class BandProtocol extends Quoter {
     }
 
     // convert to KRW prices & update last trades
-    const krwPrice = response.result.find((res) => res.symbol === 'KRW')
+    const krwPrice = response.price_results.find((res) => res.symbol === 'KRW')
     const krwRate = num(1).div(krwPrice ? num(krwPrice.multiplier).div(krwPrice.px) : 1)
 
-    for (const price of response.result) {
+    for (const price of response.price_results) {
       if (price.symbol === 'KRW') {
         this.setPrice('KRW/USD', krwRate)
         continue
