@@ -62,9 +62,9 @@ npm start update-key
 npm start vote -- \
    --source http://localhost:8532/latest \
    --lcd https://lcd.terra.dev \
-   --chain-id columbus-3 \
-   --denoms sdr,krw,usd,mnt,eur,cny,jpy,gbp,inr,cad,chf,hkd,aud,sgd \
-   --validator <terravloper...> \
-   --password "<password>" \
-   --gas-prices 169.77ukrw
+   --chain-id columbus-4 \
+   --validator terravaloper1xx \
+   --validator terravaloper1yy \
+   --gas-prices 169.77ukrw \
+   --password "<password>"
 ```
