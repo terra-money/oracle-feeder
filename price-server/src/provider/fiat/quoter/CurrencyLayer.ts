@@ -15,9 +15,9 @@ export class CurrencyLayer extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
       access_key: this.options.apiKey,
-      source: 'KRW',
+      source: 'USD',
       currencies: this.symbols
-        .map((symbol) => (symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')))
+        .map((symbol) => (symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', '')))
         .join(','),
     }
 
@@ -38,9 +38,9 @@ export class CurrencyLayer extends Quoter {
 
     // update last trades
     for (const symbol of Object.keys(response.quotes)) {
-      const convertedSymbol = symbol.replace('KRW', 'KRW/')
+      const convertedSymbol = symbol.replace('USD', 'USD/')
       this.setPrice(
-        convertedSymbol === 'KRW/XDR' ? 'KRW/SDR' : convertedSymbol,
+        convertedSymbol === 'USD/XDR' ? 'USD/SDR' : convertedSymbol,
         num(response.quotes[symbol])
       )
     }

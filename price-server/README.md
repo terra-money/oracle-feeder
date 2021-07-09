@@ -32,18 +32,21 @@ You can find the sample configuration at: `config/default.sample.js`. Oracle Pri
 
 ```js
 const fiatSymbols = [
-  'KRW/SDR',
-  'KRW/USD',
-  'KRW/MNT',
-  'KRW/EUR',
-  'KRW/CNY',
-  'KRW/JPY',
-  'KRW/GBP',
-  'KRW/INR',
-  'KRW/CAD',
-  'KRW/CHF',
-  'KRW/HKD',
-  'KRW/AUD',
+  'USD/SDR',
+  'USD/KRW',
+  'USD/MNT',
+  'USD/EUR',
+  'USD/CNY',
+  'USD/JPY',
+  'USD/GBP',
+  'USD/INR',
+  'USD/CAD',
+  'USD/CHF',
+  'USD/HKD',
+  'USD/AUD',
+  'USD/SGD',
+  'USD/THB',
+  'USD/SEK',
 ]
 
 module.exports = {
@@ -55,17 +58,12 @@ module.exports = {
     url: '',
   },
   lunaProvider: {
-    adjustTvwapSymbols: ['LUNA/KRW', 'LUNA/USDT'],
-    bithumb: { symbols: ['LUNA/KRW'] },
-    coinone: { symbols: ['LUNA/KRW'] },
-    huobi: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
-    binance: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
+    adjustTvwapSymbols: ['LUNA/USDT'],
+    huobi: { symbols: ['LUNA/USDT'] },
+    binance: { symbols: ['LUNA/USDT'] },
   },
   cryptoProvider: {
-    adjustTvwapSymbols: ['BTC/KRW', 'USDT/USD'],
-    upbit: { symbols: ['BTC/KRW'] },
-    bithumb: { symbols: ['BTC/KRW'] },
-    binance: { symbols: ['BTC/USDT'] },
+    adjustTvwapSymbols: ['USDT/USD'],
     huobi: { symbols: ['LUNA/USDT'] },
     bitfinex: { symbols: ['USDT/USD'] },
     kraken: { symbols: ['USDT/USD'] },
@@ -78,6 +76,18 @@ module.exports = {
       // https://currencylayer.com/product
       // recommend: business subscription(60second Updates): $79.99/month
       apiKey: '', // necessary
+    },
+    bandprotocol: {
+      symbols: fiatSymbols,
+      interval: 60 * 1000,
+      timeout: 5000,
+      // https://data.bandprotocol.com/
+    },
+    exchangerate: {
+      symbols: fiatSymbols,
+      interval: 60 * 1000,
+      timeout: 5000,
+      // https://exchangerate.host/
     },
     // fixer: {
     //   symbols: fiatSymbols,
