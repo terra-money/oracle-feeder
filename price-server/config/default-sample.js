@@ -28,6 +28,7 @@ module.exports = {
     adjustTvwapSymbols: ['LUNA/USDT'],
     huobi: { symbols: ['LUNA/USDT'] },
     binance: { symbols: ['LUNA/USDT'] },
+    kucoin: { symbols: ['LUNA/USDT'] },
   },
   cryptoProvider: {
     adjustTvwapSymbols: ['USDT/USD'],
