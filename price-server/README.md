@@ -47,6 +47,8 @@ const fiatSymbols = [
   'USD/SGD',
   'USD/THB',
   'USD/SEK',
+  'USD/NOK',
+  'USD/DKK',
 ]
 
 module.exports = {
@@ -79,7 +81,7 @@ module.exports = {
       apiKey: '', // necessary
     },
     bandprotocol: {
-      symbols: fiatSymbols,
+      symbols: fiatSymbols.filter(v => !v.includes('DKK')),
       interval: 60 * 1000,
       timeout: 5000,
       // https://data.bandprotocol.com/
@@ -110,11 +112,11 @@ module.exports = {
 }
 ```
 
-| Key | Type | Description |
-| - | - | - | 
-| `port` | number | Port number to expose the price server. | 
-| `sentry` | string | URL for [sentry.io](https://sentry.io) error reporting |
-| `slack` | object | Slack webhook notification configuration |
-| `lunaProvider` | object | Configuration for LUNA data provider. Current supported providers are `bithumb`, `coinone`, `huobi`, and `binance`. |
+| Key              | Type   | Description                                                                                                                                       |
+| ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `port`           | number | Port number to expose the price server.                                                                                                           |
+| `sentry`         | string | URL for [sentry.io](https://sentry.io) error reporting                                                                                            |
+| `slack`          | object | Slack webhook notification configuration                                                                                                          |
+| `lunaProvider`   | object | Configuration for LUNA data provider. Current supported providers are `bithumb`, `coinone`, `huobi`, and `binance`.                               |
 | `cryptoProvider` | object | Configuration for cryptocurrency data provider. Current supported providers are `upbit`, `bithumb`, `binance`, `huobi`, `bitfinex`, and `kraken`. |
-| `fiatProvider` | object | Configuration for fiat currency data providers. Current supported providers are `currencylayer`, `fixer`, and `alphavantage`. |
+| `fiatProvider`   | object | Configuration for fiat currency data providers. Current supported providers are `currencylayer`, `fixer`, and `alphavantage`.                     |

@@ -14,6 +14,8 @@ const fiatSymbols = [
   'USD/SGD',
   'USD/THB',
   'USD/SEK',
+  'USD/NOK',
+  'USD/DKK',
 ]
 
 module.exports = {
@@ -46,7 +48,8 @@ module.exports = {
       apiKey: '', // necessary
     },
     bandprotocol: {
-      symbols: fiatSymbols,
+      // DKK is not supported for bandprotocol
+      symbols: fiatSymbols.filter(v => !v.includes('DKK')),
       interval: 60 * 1000,
       timeout: 5000,
       // https://data.bandprotocol.com/
@@ -66,7 +69,7 @@ module.exports = {
       apiKey: '', // necessary
     },
     alphavantage: {
-      symbols: fiatSymbols.filter((symbol) => !symbol.includes('MNT')),
+      symbols: fiatSymbols,
       interval: 60 * 1000,
       timeout: 5000,
       // https://www.alphavantage.co/premium/
