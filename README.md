@@ -1,7 +1,5 @@
 # Terra Oracle Feeder
 
-**NOTE:** This is intended to be used with mainnet Columbus-4 and Tequila testnet.
-
 This contains the Oracle feeder software that is used internally by Terraform Labs' validator nodes for periodically submitting oracle votes for the exchange rate of LUNA. This implementation can be used as-is, but also can serve as a reference for creating your own custom oracle feeder. For more information regarding the oracle process, please refer to the [oracle module specs](https://docs.terra.money/dev/spec-oracle).
 
 ## Overview
