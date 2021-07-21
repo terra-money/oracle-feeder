@@ -296,19 +296,20 @@ interface VoteArgs {
 
 export async function vote(args: VoteArgs): Promise<void> {
   const client = new LCDClient({
-    URL: args.lcdAddress,
-    chainID: args.chainID,
-    gasPrices: args.gasPrices,
+    URL: args.lcdAddress || process.env['LCD_ADDRESS'],
+    chainID: args.chainID || process.env['CHAIN_ID'],
+    gasPrices: args.gasPrices || process.env['GAS_PRICE'],
   })
-  const rawKey: RawKey = await initKey(args.keyPath, args.password)
-  const valAddrs = args.validator || [rawKey.valAddress]
+  const rawKey: RawKey = await initKey(process.env['KEY_PATH'] || args.keyPath, process.env['PASSPHRASE'] || args.password)
+  const valAddrs = (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(',')) || args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
   const wallet = new Wallet(client, rawKey)
+  const source = (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || args.source
 
   while (true) {
     const startTime = Date.now()
 
-    await processVote(client, wallet, args.source, valAddrs, voterAddr).catch((err) => {
+    await processVote(client, wallet, source, valAddrs, voterAddr).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {
