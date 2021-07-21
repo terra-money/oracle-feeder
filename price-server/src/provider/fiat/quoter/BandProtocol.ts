@@ -20,13 +20,13 @@ interface Response {
 
 export class BandProtocol extends Quoter {
   private async updateLastPrice(): Promise<void> {
-    const symbolsUSD = this.symbols.map((symbol) => (symbol === 'KRW/USD' ? 'KRW' : symbol))
-
     const url = new URL('https://terra-lcd-poa.bandchain.org/oracle/v1/request_prices')
-    symbolsUSD.map((symbol) =>
-      url.searchParams.append('symbols', symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', ''))
+    this.symbols.map((symbol) =>
+      url.searchParams.append('symbols', symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', ''))
     )
+    // min_count: the minimum number of validators that actually respond to the request for the data reported by the validators responding to be aggregated
     url.searchParams.append('min_count', '3')
+    // ask_count: The number of validators that you want to request to respond to this request
     url.searchParams.append('ask_count', '4')
 
     const response: Response = await fetch(url).then((res) => res.json())
@@ -38,19 +38,11 @@ export class BandProtocol extends Quoter {
       throw new Error('Invalid response from BandProtocol')
     }
 
-    // convert to KRW prices & update last trades
-    const krwPrice = response.price_results.find((res) => res.symbol === 'KRW')
-    const krwRate = num(1).div(krwPrice ? num(krwPrice.multiplier).div(krwPrice.px) : 1)
-
     for (const price of response.price_results) {
-      if (price.symbol === 'KRW') {
-        this.setPrice('KRW/USD', krwRate)
-        continue
-      }
-
-      const usdPrice = num(price.multiplier).div(price.px)
-      const adjusted = usdPrice.multipliedBy(krwRate)
-      this.setPrice(price.symbol === 'XDR' ? 'KRW/SDR' : `KRW/${price.symbol}`, adjusted)
+      this.setPrice(
+        price.symbol === 'XDR' ? 'USD/SDR' : `USD/${price.symbol}`,
+        num(price.multiplier).div(price.px)
+      )
     }
   }
 

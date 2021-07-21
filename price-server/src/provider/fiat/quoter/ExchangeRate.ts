@@ -14,9 +14,9 @@ interface Response {
 export class ExchangeRate extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
-      base: 'KRW',
+      base: 'USD',
       symbols: this.symbols
-        .map((symbol) => (symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')))
+        .map((symbol) => (symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', '')))
         .join(','),
     }
 
@@ -37,9 +37,9 @@ export class ExchangeRate extends Quoter {
 
     // update last trades
     for (const symbol of Object.keys(response.rates)) {
-      const convertedSymbol = symbol.replace(symbol, 'KRW/' + symbol)
+      const convertedSymbol = symbol.replace(symbol, 'USD/' + symbol)
       this.setPrice(
-        convertedSymbol === 'KRW/XDR' ? 'KRW/SDR' : convertedSymbol,
+        convertedSymbol === 'USD/XDR' ? 'USD/SDR' : convertedSymbol,
         num(response.rates[symbol])
       )
     }
