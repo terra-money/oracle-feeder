@@ -77,4 +77,5 @@ module.exports = {
       apiKey: '', // necessary
     },
   },
+  fiatSymbols
 }
