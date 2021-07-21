@@ -50,7 +50,7 @@ export class GateIO extends Quoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-          this.calculateKRWPrice(symbol)
+          // this.calculateKRWPrice(symbol)
         })
         .catch(errorHandler)
     }

@@ -32,18 +32,23 @@ You can find the sample configuration at: `config/default.sample.js`. Oracle Pri
 
 ```js
 const fiatSymbols = [
-  'KRW/SDR',
-  'KRW/USD',
-  'KRW/MNT',
-  'KRW/EUR',
-  'KRW/CNY',
-  'KRW/JPY',
-  'KRW/GBP',
-  'KRW/INR',
-  'KRW/CAD',
-  'KRW/CHF',
-  'KRW/HKD',
-  'KRW/AUD',
+  'USD/SDR',
+  'USD/KRW',
+  'USD/MNT',
+  'USD/EUR',
+  'USD/CNY',
+  'USD/JPY',
+  'USD/GBP',
+  'USD/INR',
+  'USD/CAD',
+  'USD/CHF',
+  'USD/HKD',
+  'USD/AUD',
+  'USD/SGD',
+  'USD/THB',
+  'USD/SEK',
+  'USD/NOK',
+  'USD/DKK',
 ]
 
 module.exports = {
@@ -55,22 +60,18 @@ module.exports = {
     url: '',
   },
   lunaProvider: {
-    adjustTvwapSymbols: ['LUNA/KRW', 'LUNA/USDT'],
-    bithumb: { symbols: ['LUNA/KRW'] },
-    coinone: { symbols: ['LUNA/KRW'] },
-    huobi: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
-    binance: { symbols: ['LUNA/USDT'], krwPriceFrom: 'USDT' },
+    adjustTvwapSymbols: ['LUNA/USDT'],
+    huobi: { symbols: ['LUNA/USDT'] },
+    binance: { symbols: ['LUNA/USDT'] },
+    kucoin: { symbols: ['LUNA/USDT'] },
   },
   cryptoProvider: {
-    adjustTvwapSymbols: ['BTC/KRW', 'USDT/USD'],
-    upbit: { symbols: ['BTC/KRW'] },
-    bithumb: { symbols: ['BTC/KRW'] },
-    binance: { symbols: ['BTC/USDT'] },
-    huobi: { symbols: ['LUNA/USDT'] },
+    adjustTvwapSymbols: ['USDT/USD'],
     bitfinex: { symbols: ['USDT/USD'] },
     kraken: { symbols: ['USDT/USD'] },
   },
   fiatProvider: { // at least one fiatprovider should be set
+    fallbackPriority: ['currenctylayer', 'exchangerate', 'bandprotocol'],
     currencylayer: {
       symbols: fiatSymbols,
       interval: 60 * 1000,
@@ -78,6 +79,18 @@ module.exports = {
       // https://currencylayer.com/product
       // recommend: business subscription(60second Updates): $79.99/month
       apiKey: '', // necessary
+    },
+    bandprotocol: {
+      symbols: fiatSymbols.filter(v => !v.includes('DKK')),
+      interval: 60 * 1000,
+      timeout: 5000,
+      // https://data.bandprotocol.com/
+    },
+    exchangerate: {
+      symbols: fiatSymbols,
+      interval: 60 * 1000,
+      timeout: 5000,
+      // https://exchangerate.host/
     },
     // fixer: {
     //   symbols: fiatSymbols,
@@ -99,11 +112,11 @@ module.exports = {
 }
 ```
 
-| Key | Type | Description |
-| - | - | - | 
-| `port` | number | Port number to expose the price server. | 
-| `sentry` | string | URL for [sentry.io](https://sentry.io) error reporting |
-| `slack` | object | Slack webhook notification configuration |
-| `lunaProvider` | object | Configuration for LUNA data provider. Current supported providers are `bithumb`, `coinone`, `huobi`, and `binance`. |
+| Key              | Type   | Description                                                                                                                                       |
+| ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `port`           | number | Port number to expose the price server.                                                                                                           |
+| `sentry`         | string | URL for [sentry.io](https://sentry.io) error reporting                                                                                            |
+| `slack`          | object | Slack webhook notification configuration                                                                                                          |
+| `lunaProvider`   | object | Configuration for LUNA data provider. Current supported providers are `bithumb`, `coinone`, `huobi`, and `binance`.                               |
 | `cryptoProvider` | object | Configuration for cryptocurrency data provider. Current supported providers are `upbit`, `bithumb`, `binance`, `huobi`, `bitfinex`, and `kraken`. |
-| `fiatProvider` | object | Configuration for fiat currency data providers. Current supported providers are `currencylayer`, `fixer`, and `alphavantage`. |
+| `fiatProvider`   | object | Configuration for fiat currency data providers. Current supported providers are `currencylayer`, `fixer`, and `alphavantage`.                     |

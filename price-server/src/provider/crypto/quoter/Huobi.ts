@@ -45,7 +45,7 @@ export class Huobi extends WebSocketQuoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-          this.calculateKRWPrice(symbol)
+          // this.calculateKRWPrice(symbol)
         })
         .catch(errorHandler)
     }
@@ -87,7 +87,7 @@ export class Huobi extends WebSocketQuoter {
     } else if (streamData.ch?.indexOf('market.') === 0) {
       const data = streamData as CandlestickStreamData
 
-      const ch = data.ch!.replace('market.', '').replace('.kline.1min', '').toUpperCase()
+      const ch = data.ch?.replace('market.', '').replace('.kline.1min', '').toUpperCase()
       const symbol = this.symbols.find((symbol) => symbol.replace('/', '') === ch)
       if (!symbol) {
         return
@@ -99,7 +99,7 @@ export class Huobi extends WebSocketQuoter {
 
       this.setTrade(symbol, timestamp, price, volume, true)
       this.setPrice(symbol, price)
-      this.calculateKRWPrice(symbol)
+      // this.calculateKRWPrice(symbol)
 
       this.isUpdated = true
     } else {

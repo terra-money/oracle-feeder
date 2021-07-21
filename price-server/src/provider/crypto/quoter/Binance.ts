@@ -48,7 +48,7 @@ export class Binance extends WebSocketQuoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-          this.calculateKRWPrice(symbol)
+          // this.calculateKRWPrice(symbol)
         })
         .catch(errorHandler)
     }
@@ -79,7 +79,7 @@ export class Binance extends WebSocketQuoter {
 
     this.setTrade(symbol, timestamp, price, volume, true)
     this.setPrice(symbol, price)
-    this.calculateKRWPrice(symbol)
+    // this.calculateKRWPrice(symbol)
 
     this.isUpdated = true
   }

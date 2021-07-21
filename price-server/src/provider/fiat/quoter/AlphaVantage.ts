@@ -13,10 +13,10 @@ interface Response {
 
 export class AlphaVantage extends Quoter {
   private async updateLastPrice(symbol: string): Promise<void> {
-    const quote = symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')
+    const quote = symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', '')
     const params = {
       function: 'CURRENCY_EXCHANGE_RATE',
-      from_currency: 'KRW',
+      from_currency: 'USD',
       to_currency: quote,
       apikey: this.options.apiKey,
     }

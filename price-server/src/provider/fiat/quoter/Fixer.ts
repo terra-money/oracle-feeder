@@ -15,11 +15,11 @@ export class Fixer extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
       access_key: this.options.apiKey,
-      // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription
+      // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription, default: EUR
       symbols:
         this.symbols
-          .map((symbol) => (symbol === 'KRW/SDR' ? 'XDR' : symbol.replace('KRW/', '')))
-          .join(',') + ',KRW',
+          .map((symbol) => (symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', '')))
+          .join(',') + ',USD',
     }
 
     const response: Response = await fetch(
@@ -35,20 +35,20 @@ export class Fixer extends Quoter {
       throw new Error('Invalid response from Fixer')
     }
 
-    if (!response.rates.KRW) {
-      throw new Error('there is no KRW price')
+    if (!response.rates.USD) {
+      throw new Error('there is no USD price')
     }
 
-    // convert to KRW prices
-    const krwRate = 1 / +response.rates.KRW
-    delete response.rates.KRW
+    // convert to USD prices
+    const usdRate = 1 / +response.rates.USD
+    delete response.rates.USD
     for (const quote of Object.keys(response.rates)) {
-      response.rates[quote] *= krwRate
+      response.rates[quote] *= usdRate
     }
 
     // update last trades
     for (const quote of Object.keys(response.rates)) {
-      this.setPrice(quote === 'XDR' ? 'KRW/SDR' : `KRW/${quote}`, num(response.rates[quote]))
+      this.setPrice(quote === 'XDR' ? 'USD/SDR' : `USD/${quote}`, num(response.rates[quote]))
     }
   }
 
