@@ -5,7 +5,9 @@ import { CurrencyLayer, AlphaVantage, Fixer, BandProtocol, ExchangeRate } from '
 class FiatProvider extends Provider {
   constructor(options: ProviderOptions) {
     super(options)
+  }
 
+  public async initialize(): Promise<void> {
     const { fallbackPriority } = config.fiatProvider
 
     // sort by fallback priority
@@ -21,9 +23,7 @@ class FiatProvider extends Provider {
       name === 'bandprotocol' && this.quoters.push(new BandProtocol(option))
       name === 'exchangerate' && this.quoters.push(new ExchangeRate(option))
     }
-  }
 
-  public async initialize(): Promise<void> {
     await super.initialize()
 
     await this.tick(Date.now())
