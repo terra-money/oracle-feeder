@@ -24,10 +24,6 @@ module.exports = {
       symbols: process.env.LUNA_PROVIDER_BINANCE_SYMBOLS.split(',') || [],
       krwPriceFrom: process.env.LUNA_PROVIDER_BINANCE_KRW_PRICE_FROM || undefined,
     },
-    gateio: process.env.LUNA_PROVIDER_GATEIO_SYMBOLS && {
-      symbols: process.env.LUNA_PROVIDER_GATEIO_SYMBOLS.split(',') || [],
-      krwPriceFrom: process.env.LUNA_PROVIDER_GATEIO_KRW_PRICE_FROM || undefined,
-    },
   },
   cryptoProvider: {
     adjustTvwapSymbols: process.env.CRYPTO_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || [],

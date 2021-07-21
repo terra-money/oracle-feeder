@@ -14,7 +14,7 @@ export class WebSocketQuoter extends Quoter {
     this.options.interval = 100
   }
 
-  public connect(wsUrl: string): void {
+  public async connect(wsUrl: string): Promise<void> {
     this.disconnect()
 
     this.ws = new WebSocket(wsUrl)
