@@ -19,7 +19,6 @@ async function convertOldConfig() {
 
   logger.warn('Config is outdated. Proceeding auto-convert (config/default.js will be overwritten)')
 
-  config.fiatProvider.fallbackPriority = ['currencylayer', 'exchangerate', 'bandprotocol']
   config.lunaProvider = {
     adjustTvwapSymbols: ['LUNA/USDT'],
     huobi: { symbols: ['LUNA/USDT'] },
@@ -32,17 +31,24 @@ async function convertOldConfig() {
     kraken: { symbols: ['USDT/USD'] },
   }
 
-  Object.keys(config.fiatProvider).forEach((providerName) => {
-    if (
-      typeof config.fiatProvider[providerName] !== 'object' ||
-      Array.isArray(config.fiatProvider[providerName])
-    ) {
-      return
-    }
+  const fallbackPriority: string[] = ['exchangerate', 'bandprotocol']
 
-    const provider = config.fiatProvider[providerName]
-    provider.symbols = defaultConfig.fiatSymbols
-  })
+  Object.keys(config.fiatProvider)
+    .filter(
+      (name) =>
+        typeof config.fiatProvider[name] === 'object' && !Array.isArray(config.fiatProvider[name])
+    )
+    .forEach((name) => {
+      const provider = config.fiatProvider[name]
+
+      provider.symbols = defaultConfig.fiatSymbols
+
+      if (provider.apiKey) {
+        fallbackPriority.unshift(name)
+      }
+    })
+
+  config.fiatProvider.fallbackPriority = fallbackPriority
 
   await promises.writeFile(
     path.resolve(__dirname, '..', 'config', 'default.js'),
