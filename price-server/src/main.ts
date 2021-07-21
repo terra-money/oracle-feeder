@@ -19,7 +19,7 @@ async function convertOldConfig() {
 
   logger.warn('Config is outdated. Proceeding auto-convert (config/default.js will be overwritten)')
 
-  config.fiatProvider.fallbackPriority = ['currenctylayer', 'exchangerate', 'bandprotocol']
+  config.fiatProvider.fallbackPriority = ['currencylayer', 'exchangerate', 'bandprotocol']
   config.lunaProvider = {
     adjustTvwapSymbols: ['LUNA/USDT'],
     huobi: { symbols: ['LUNA/USDT'] },

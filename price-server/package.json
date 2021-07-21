@@ -1,6 +1,6 @@
 {
   "name": "@terra-money/price-server",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "main": "src/main.ts",
   "license": "Apache-2.0",
   "scripts": {

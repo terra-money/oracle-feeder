@@ -38,7 +38,7 @@ module.exports = {
     kraken: { symbols: ['USDT/USD'] },
   },
   fiatProvider: {
-    fallbackPriority: ['currenctylayer', 'exchangerate', 'bandprotocol'],
+    fallbackPriority: ['currencylayer', 'exchangerate', 'bandprotocol'],
     currencylayer: {
       symbols: fiatSymbols,
       interval: 60 * 1000,
