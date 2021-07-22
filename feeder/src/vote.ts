@@ -297,7 +297,7 @@ interface VoteArgs {
 export async function vote(args: VoteArgs): Promise<void> {
   let lcdAddress:string = args.lcdAddress || process.env['LCD_ADDRESS'] || ''
   let chainID:string    = args.chainID    || process.env['CHAIN_ID']    || ''
-  let gasPrices:string  = args.gasPrices  || process.env['GAS_PRICE']   || ''
+  let gasPrices:string  = args.gasPrices  || process.env['GAS_PRICE']   || '169.77ukrw'
   if (lcdAddress == '' || chainID == '' || gasPrices == '')
   {
     console.error('Missing --lcd, --chain or --gas-prices')
@@ -305,7 +305,7 @@ export async function vote(args: VoteArgs): Promise<void> {
   }
   const client = new LCDClient({ URL: lcdAddress, chainID: chainID, gasPrices: gasPrices, })
 
-  let keyPath:string    = args.keyPath || process.env['KEY_PATH'] || ''
+  let keyPath:string    = args.keyPath || process.env['KEY_PATH'] || 'voter.json'
   let passphrase:string = args.password || process.env['PASSPHRASE'] || ''
   if (keyPath == '' || passphrase == '')
   {
@@ -317,7 +317,7 @@ export async function vote(args: VoteArgs): Promise<void> {
   const valAddrs = args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(',')) || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
   const wallet = new Wallet(client, rawKey)
-  const source = (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || args.source
+  const source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(','))
 
   while (true) {
     const startTime = Date.now()

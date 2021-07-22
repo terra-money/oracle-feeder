@@ -57,14 +57,14 @@ function registerCommands(parser: ArgumentParser): void {
     action: `store`,
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
-    defaultValue: `voter.json`,
+    required: false,
   })
 
   voteCommand.addArgument([`-g`, `--gas-prices`], {
     action: `store`,
     help: `gas prices (default 169.77ukrw)`,
     dest: `gasPrices`,
-    defaultValue: `169.77ukrw`,
+    required: false,
   })
 
   voteCommand.addArgument([`-d`, `--denoms`], {
