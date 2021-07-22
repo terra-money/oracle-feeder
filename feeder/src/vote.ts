@@ -295,13 +295,26 @@ interface VoteArgs {
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
-  const client = new LCDClient({
-    URL: args.lcdAddress || process.env['LCD_ADDRESS'],
-    chainID: args.chainID || process.env['CHAIN_ID'],
-    gasPrices: args.gasPrices || process.env['GAS_PRICE'],
-  })
-  const rawKey: RawKey = await initKey(process.env['KEY_PATH'] || args.keyPath, process.env['PASSPHRASE'] || args.password)
-  const valAddrs = (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(',')) || args.validator || [rawKey.valAddress]
+  let lcdAddress:string = args.lcdAddress || process.env['LCD_ADDRESS'] || ''
+  let chainID:string    = args.chainID    || process.env['CHAIN_ID']    || ''
+  let gasPrices:string  = args.gasPrices  || process.env['GAS_PRICE']   || ''
+  if (lcdAddress == '' || chainID == '' || gasPrices == '')
+  {
+    console.error('Missing --lcd, --chain or --gas-prices')
+    return
+  }
+  const client = new LCDClient({ URL: lcdAddress, chainID: chainID, gasPrices: gasPrices, })
+
+  let keyPath:string    = args.keyPath || process.env['KEY_PATH'] || ''
+  let passphrase:string = args.password || process.env['PASSPHRASE'] || ''
+  if (keyPath == '' || passphrase == '')
+  {
+    console.error('Missing either --keypath or --password')
+    return
+  }
+  const rawKey: RawKey = await initKey(keyPath, passphrase)
+
+  const valAddrs = args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(',')) || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
   const wallet = new Wallet(client, rawKey)
   const source = (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || args.source
