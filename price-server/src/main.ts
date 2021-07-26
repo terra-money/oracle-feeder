@@ -7,6 +7,7 @@ import { init as initErrorHandler, errorHandler } from 'lib/error'
 import { initialize as initializeProviders, tick } from 'provider'
 import { createServer } from './server'
 import * as defaultConfig from '../config/default-sample'
+import { setupMetricsServer } from 'lib/metrics'
 
 bluebird.config({ longStackTraces: true })
 global.Promise = bluebird
@@ -63,6 +64,7 @@ async function main(): Promise<void> {
   initErrorHandler({ sentry: config.sentry })
 
   await convertOldConfig()
+  await setupMetricsServer()
   await initializeProviders()
   await createServer()
 
