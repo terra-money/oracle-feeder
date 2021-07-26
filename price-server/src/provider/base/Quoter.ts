@@ -3,6 +3,7 @@ import * as logger from 'lib/logger'
 import { sendSlack } from 'lib/slack'
 import { TradesBySymbol, Trades, PriceBySymbol } from './types'
 import { format } from 'date-fns'
+import { setQuoterAlive } from 'lib/metrics'
 
 export interface QuoterOptions {
   symbols: string[] // support symbols
@@ -178,6 +179,7 @@ export class Quoter {
 
       this.isAlive = false
     }
+    setQuoterAlive(this.constructor.name, this.isAlive)
   }
 
   printTrades(symbol: string): void {

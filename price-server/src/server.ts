@@ -6,12 +6,15 @@ import * as config from 'config'
 import * as logger from 'lib/logger'
 import { getQuoteCurrency } from 'lib/currency'
 import { getLunaPrices } from 'prices'
+import { countAllRequests } from 'lib/metrics'
 
 bluebird.config({ longStackTraces: true })
 global.Promise = bluebird
 
 export async function createServer(): Promise<http.Server> {
   const app = polka({})
+
+  app.use(countAllRequests())
 
   app.get('/health', (req, res) => {
     res.end('OK')
