@@ -296,9 +296,9 @@ interface VoteArgs {
 
 export async function vote(args: VoteArgs): Promise<void> {
   const maxLCDIndex = args.lcdAddress.length - 1
-  let currentLCDIndex = 0
+  const currentLCDIndex = 0
 
-  let client = new LCDClient({
+  const client = new LCDClient({
     URL: args.lcdAddress[currentLCDIndex],
     chainID: args.chainID,
     gasPrices: args.gasPrices,
@@ -306,50 +306,42 @@ export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
   const valAddrs = args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
-  let wallet = new Wallet(client, rawKey)
+  const wallet = new Wallet(client, rawKey)
 
   while (true) {
     const startTime = Date.now()
 
-    try {
-      await processVote(client, wallet, args.source, valAddrs, voterAddr)
-    } catch (err) {
-      console.log(`vote: lcd client unavailable, rotating to next lcd client: ${err}`)
-      ;({
-        client,
-        wallet,
-        newIndex: currentLCDIndex,
-      } = rotateLCD(currentLCDIndex, maxLCDIndex, args, rawKey))
-    }
+    await processVote(client, wallet, args.source, valAddrs, voterAddr).catch((err) => {
+      if (err.isAxiosError && err.response) {
+        console.error(err.message, err.response.data)
+      } else {
+        console.error(err.message)
+      }
+
+      console.log('vote: lcd client unavailable, rotating to next lcd client.')
+      rotateLCD(client, currentLCDIndex, maxLCDIndex, args)
+      resetPrevote()
+    })
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
 }
 
 function rotateLCD(
+  client: LCDClient,
   currentLCDIndex: number,
   maxLCDIndex: number,
-  args: VoteArgs,
-  rawKey: RawKey
-): { client: LCDClient; wallet: Wallet; newIndex: number } {
+  args: VoteArgs
+) {
   if (++currentLCDIndex > maxLCDIndex) {
     currentLCDIndex = 0
   }
-  const client = new LCDClient({
-    URL: args.lcdAddress[currentLCDIndex],
-    chainID: args.chainID,
-    gasPrices: args.gasPrices,
-  })
-  const wallet = new Wallet(client, rawKey)
+  client.config.URL = args.lcdAddress[currentLCDIndex]
   console.log(
     'Switched to LCD address ' + currentLCDIndex + '(' + args.lcdAddress[currentLCDIndex] + ')'
   )
 
-  return {
-    client,
-    wallet,
-    newIndex: currentLCDIndex,
-  }
+  return
 }
 
 async function voteWithLCD(
