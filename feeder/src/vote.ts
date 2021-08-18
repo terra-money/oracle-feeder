@@ -344,25 +344,6 @@ function rotateLCD(
   return
 }
 
-async function voteWithLCD(
-  client: LCDClient,
-  wallet: Wallet,
-  priceURLs: string[],
-  valAddrs: string[],
-  voterAddr: string
-) {
-  await processVote(client, wallet, priceURLs, valAddrs, voterAddr).catch((err) => {
-    if (err.isAxiosError && err.response) {
-      console.error(err.message, err.response.data)
-    } else {
-      console.error(err.message)
-    }
-
-    resetPrevote()
-    throw err
-  })
-}
-
 function resetPrevote() {
   previousVotePeriod = 0
   previousVoteMsgs = []
