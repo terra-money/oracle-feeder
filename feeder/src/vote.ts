@@ -292,14 +292,12 @@ interface VoteArgs {
   source: string[]
   password: string
   keyPath: string
-  gasPrices: string
 }
 
 function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig {
   return {
     URL: args.lcdAddress[lcdIndex],
     chainID: args.chainID,
-    gasPrices: args.gasPrices,
   }
 }
 
