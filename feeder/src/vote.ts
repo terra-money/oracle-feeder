@@ -12,6 +12,7 @@ import {
   MsgAggregateExchangeRateVote,
   isTxError,
   StdFee,
+  LCDClientConfig,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 
@@ -103,7 +104,7 @@ async function getPrices(sources: string[]): Promise<Price[]> {
 }
 
 /**
- * preparePrices treverses prices array for following logics:
+ * preparePrices traverses prices array for following logics:
  * 1. Removes price that cannot be found in oracle whitelist
  * 2. Fill abstain prices for prices that cannot be found in price source but in oracle whitelist
  */
@@ -294,32 +295,46 @@ interface VoteArgs {
   gasPrices: string
 }
 
-export async function vote(args: VoteArgs): Promise<void> {
-  const maxLCDIndex = args.lcdAddress.length - 1
-  const currentLCDIndex = 0
-
-  const client = new LCDClient({
-    URL: args.lcdAddress[currentLCDIndex],
+function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig {
+  return {
+    URL: args.lcdAddress[lcdIndex],
     chainID: args.chainID,
     gasPrices: args.gasPrices,
-  })
+  }
+}
+
+export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
   const valAddrs = args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
-  const wallet = new Wallet(client, rawKey)
+
+  const lcdRotate = {
+    client: new LCDClient(buildLCDClientConfig(args, 0)),
+    current: 0,
+    max: args.lcdAddress.length - 1,
+  }
 
   while (true) {
     const startTime = Date.now()
 
-    await processVote(client, wallet, args.source, valAddrs, voterAddr).catch((err) => {
+    await processVote(
+      lcdRotate.client,
+      lcdRotate.client.wallet(rawKey),
+      args.source,
+      valAddrs,
+      voterAddr
+    ).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {
         console.error(err.message)
       }
 
-      console.log('vote: lcd client unavailable, rotating to next lcd client.')
-      rotateLCD(client, currentLCDIndex, maxLCDIndex, args)
+      if (err.isAxiosError) {
+        console.info('vote: lcd client unavailable, rotating to next lcd client.')
+        rotateLCD(args, lcdRotate)
+      }
+
       resetPrevote()
     })
 
@@ -327,18 +342,14 @@ export async function vote(args: VoteArgs): Promise<void> {
   }
 }
 
-function rotateLCD(
-  client: LCDClient,
-  currentLCDIndex: number,
-  maxLCDIndex: number,
-  args: VoteArgs
-) {
-  if (++currentLCDIndex > maxLCDIndex) {
-    currentLCDIndex = 0
+function rotateLCD(args: VoteArgs, lcdRotate: { client: LCDClient; current: number; max: number }) {
+  if (++lcdRotate.current > lcdRotate.max) {
+    lcdRotate.current = 0
   }
-  client.config.URL = args.lcdAddress[currentLCDIndex]
-  console.log(
-    'Switched to LCD address ' + currentLCDIndex + '(' + args.lcdAddress[currentLCDIndex] + ')'
+
+  lcdRotate.client = new LCDClient(buildLCDClientConfig(args, lcdRotate.current))
+  console.info(
+    'Switched to LCD address ' + lcdRotate.current + '(' + args.lcdAddress[lcdRotate.current] + ')'
   )
 
   return
