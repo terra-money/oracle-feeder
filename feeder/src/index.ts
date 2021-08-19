@@ -1,6 +1,7 @@
 import { ArgumentParser } from 'argparse'
 import { vote } from './vote'
 import { updateKey } from './updateKey'
+import * as packageInfo from '../package.json'
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
@@ -23,17 +24,17 @@ function registerCommands(parser: ArgumentParser): void {
   })
 
   voteCommand.addArgument(['-l', '--lcd'], {
-    action: 'store',
+    action: 'append',
     help: 'lcd address',
     dest: 'lcdAddress',
-    required: true,
+    required: false,
   })
 
   voteCommand.addArgument([`-c`, `--chain-id`], {
     action: `store`,
     help: `chain ID`,
     dest: `chainID`,
-    required: true,
+    required: false,
   })
 
   voteCommand.addArgument([`--validator`], {
@@ -45,7 +46,7 @@ function registerCommands(parser: ArgumentParser): void {
   voteCommand.addArgument([`-s`, `--source`], {
     action: `append`,
     help: `Append price data source(It can handle multiple sources)`,
-    required: true,
+    required: false,
   })
 
   voteCommand.addArgument([`-p`, `--password`], {
@@ -57,14 +58,7 @@ function registerCommands(parser: ArgumentParser): void {
     action: `store`,
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
-    defaultValue: `voter.json`,
-  })
-
-  voteCommand.addArgument([`-g`, `--gas-prices`], {
-    action: `store`,
-    help: `gas prices (default 169.77ukrw)`,
-    dest: `gasPrices`,
-    defaultValue: `169.77ukrw`,
+    required: false,
   })
 
   voteCommand.addArgument([`-d`, `--denoms`], {
@@ -75,7 +69,7 @@ function registerCommands(parser: ArgumentParser): void {
   // Updating Key command
   const keyCommand = subparsers.addParser(`update-key`, { addHelp: true })
 
-  keyCommand.addArgument([`-k`, `--keypath`], {
+  keyCommand.addArgument([`-k`, `--key-path`], {
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
     defaultValue: `voter.json`,
@@ -84,7 +78,7 @@ function registerCommands(parser: ArgumentParser): void {
 
 async function main(): Promise<void> {
   const parser = new ArgumentParser({
-    version: `0.2.0`,
+    version: packageInfo.version,
     addHelp: true,
     description: `Terra oracle voter`,
   })
@@ -93,6 +87,26 @@ async function main(): Promise<void> {
   const args = parser.parseArgs()
 
   if (args.subparser_name === `vote`) {
+    args.lcdAddress =
+      args.lcdAddress || (process.env['LCD_ADDRESS'] && process.env['LCD_ADDRESS'].split(',')) || []
+    args.source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || []
+    args.chainID = args.chainID || process.env['CHAIN_ID'] || ''
+    if (args.lcdAddress.length === 0 || args.source.length === 0 || args.chainID === '') {
+      console.error('Missing --lcd, --chain-id or --source')
+      return
+    }
+
+    args.keyPath = args.keyPath || process.env['KEY_PATH'] || 'voter.json'
+    args.password = args.password || process.env['PASSPHRASE'] || ''
+    if (args.keyPath === '' || args.passphrase === '') {
+      console.error('Missing either --key-path or --password')
+      return
+    }
+
+    // validator is skippable and default value will be extracted from the key
+    args.validator =
+      args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(','))
+
     await vote(args)
   } else if (args.subparser_name === `update-key`) {
     await updateKey(args.keyPath)

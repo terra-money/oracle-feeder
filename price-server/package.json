@@ -1,6 +1,6 @@
 {
   "name": "@terra-money/price-server",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "main": "src/main.ts",
   "license": "Apache-2.0",
   "scripts": {
@@ -9,6 +9,7 @@
     "lint": "eslint '*/**/*.{js,ts,tsx}' --fix"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.0.2",
     "@opentelemetry/exporter-prometheus": "^0.23.0",
     "@opentelemetry/metrics": "^0.23.0",
     "@polka/send-type": "^0.5.2",

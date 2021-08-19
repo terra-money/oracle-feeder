@@ -35,22 +35,33 @@ saved!
 
 Make sure the Price Server is running.
 
-```
-npm start vote -- \
-   --source http://localhost:8532/latest \
-   --lcd https://lcd.terra.dev \
-   --chain-id columbus-4 \
-   --validator terravaloper1xx \
-   --validator terravaloper1yy \
-   --gas-prices 169.77ukrw \
-   --password "<password>"
-```
+You can start feeder with arguments or env.
 
-| Argument    | Description                                      | Example                      |
-| -           | -                                                | -                            |
-| `source`    | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | LCD server URL.                                  | https://lcd.terra.dev        |
-| `chain-id`  | Chain ID.                                        | `columbus-4`                 |
-| `validator` | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
-| `password`  | Password for mnemonic (assigned in step #2)      |                              |
-| `gas-prices`| Gas Price (default 169.77ukrw, use 178.05ukrw for tequila-0004) |                |
+* Arguments
+   ``` shell
+   $ npm start vote -- \
+      --source http://localhost:8532/latest \
+      --lcd https://lcd-1.terra.dev \
+      --lcd https://lcd-2.terra.dev \
+      --chain-id columbus-5 \
+      --validator terravaloper1xx \
+      --validator terravaloper1yy \
+      --gas-prices 169.77ukrw \
+      --password "<password>"
+   ```
+
+* Env
+   ```shell
+   # set your env vars 
+   $ npm start vote
+   ```
+
+
+| Argument    | Env           | Description                                      | Example                      |
+| ----------- | ------------- | ------------------------------------------------ | ---------------------------- |
+| `source`    | `SOURCE`      | Price server URL.                                | http://localhost:8532/latest |
+| `lcd`       | `LCD_ADDRESS` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
+| `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
+| `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
+| `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
+| `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |

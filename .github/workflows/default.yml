@@ -10,7 +10,7 @@ jobs:
   integration:
     runs-on: ubuntu-latest
 
-    container: "node:13"
+    container: "node:14"
 
     steps:
       - uses: actions/checkout@v2
