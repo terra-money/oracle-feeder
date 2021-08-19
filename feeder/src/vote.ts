@@ -303,7 +303,7 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig
 
 export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
-  const valAddrs = args.validator ||  [rawKey.valAddress]
+  const valAddrs = args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
 
   const lcdRotate = {
