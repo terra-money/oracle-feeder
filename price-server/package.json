@@ -9,6 +9,8 @@
     "lint": "eslint '*/**/*.{js,ts,tsx}' --fix"
   },
   "dependencies": {
+    "@opentelemetry/exporter-prometheus": "^0.23.0",
+    "@opentelemetry/metrics": "^0.23.0",
     "@polka/send-type": "^0.5.2",
     "@sentry/node": "^6.0.2",
     "bignumber.js": "^9.0.1",

@@ -16,10 +16,13 @@ const fiatSymbols = [
   'USD/SEK',
   'USD/NOK',
   'USD/DKK',
+  'USD/IDR',
+  'USD/PHP',
 ]
 
 module.exports = {
   port: 8532,
+  metricsPort: 8533,
   sentry: '', // sentry dsn (https://sentry.io/ - error reporting service)
   slack: {
     // for incident alarm (e.g. exchange shutdown)
@@ -49,7 +52,7 @@ module.exports = {
     },
     bandprotocol: {
       // DKK is not supported for bandprotocol
-      symbols: fiatSymbols.filter(v => !v.includes('DKK')),
+      symbols: fiatSymbols.filter(v => !v.includes('DKK') && !v.includes('PHP')),
       interval: 60 * 1000,
       timeout: 5000,
       // https://data.bandprotocol.com/
