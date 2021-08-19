@@ -41,7 +41,8 @@ We have two ways to start feeder with configs.
    ``` shell
    $ npm start vote -- \
       --source http://localhost:8532/latest \
-      --lcd https://lcd.terra.dev \
+      --lcd https://lcd-1.terra.dev \
+      --lcd https://lcd-2.terra.dev \
       --chain-id columbus-5 \
       --validator terravaloper1xx \
       --validator terravaloper1yy \
@@ -63,9 +64,8 @@ We have two ways to start feeder with configs.
 | Argument    | Env           | Description                                      | Example                      |
 | ----------- | ------------- | ------------------------------------------------ | ---------------------------- |
 | `source`    | `SOURCE`      | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | `LCD_ADDRESS` | LCD server URL.                                  | https://lcd.terra.dev        |
+| `lcd`       | `LCD_ADDRESS` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
 | `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
 | `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
 | `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
 | `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |
-

@@ -1,4 +1,4 @@
-require("dotenv").config();
+require('dotenv').config()
 
 import { ArgumentParser } from 'argparse'
 import { vote } from './vote'
@@ -26,7 +26,7 @@ function registerCommands(parser: ArgumentParser): void {
   })
 
   voteCommand.addArgument(['-l', '--lcd'], {
-    action: 'store',
+    action: 'append',
     help: 'lcd address',
     dest: 'lcdAddress',
     required: false,
@@ -89,10 +89,12 @@ async function main(): Promise<void> {
   const args = parser.parseArgs()
 
   if (args.subparser_name === `vote`) {
-    args.lcdAddress = args.lcdAddress || process.env['LCD_ADDRESS'] || ''
+    args.lcdAddress =
+      args.lcdAddress || (process.env['LCD_ADDRESS'] && process.env['LCD_ADDRESS'].split(',')) || []
+    args.source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || []
     args.chainID = args.chainID || process.env['CHAIN_ID'] || ''
-    if (args.lcdAddress === '' || args.chainID === '') {
-      console.error('Missing --lcd or --chain-id')
+    if (args.lcdAddress.length === 0 || args.source.length === 0 || args.chainID === '') {
+      console.error('Missing --lcd, --chain-id or --source')
       return
     }
 
@@ -102,9 +104,10 @@ async function main(): Promise<void> {
       console.error('Missing either --key-path or --password')
       return
     }
-    
-    args.validator = args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(','))
-    args.source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(','))
+
+    // validator is skippable and default value will be extracted from the key
+    args.validator =
+      args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(','))
 
     await vote(args)
   } else if (args.subparser_name === `update-key`) {
