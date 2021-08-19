@@ -1,5 +1,3 @@
-require('dotenv').config()
-
 import { ArgumentParser } from 'argparse'
 import { vote } from './vote'
 import { updateKey } from './updateKey'

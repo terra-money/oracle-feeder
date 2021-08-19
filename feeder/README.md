@@ -52,11 +52,7 @@ You can start feeder with arguments or env.
 
 * Env
    ```shell
-   $ cp ./.env_example ./.env
-
-   # fill your infos
-   $ nano ./.env
-
+   # set your env vars 
    $ npm start vote
    ```
 
