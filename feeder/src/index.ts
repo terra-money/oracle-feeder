@@ -1,6 +1,9 @@
+require("dotenv").config();
+
 import { ArgumentParser } from 'argparse'
 import { vote } from './vote'
 import { updateKey } from './updateKey'
+import * as packageInfo from '../package.json'
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
@@ -60,13 +63,6 @@ function registerCommands(parser: ArgumentParser): void {
     required: false,
   })
 
-  voteCommand.addArgument([`-g`, `--gas-prices`], {
-    action: `store`,
-    help: `gas prices (default 169.77ukrw)`,
-    dest: `gasPrices`,
-    required: false,
-  })
-
   voteCommand.addArgument([`-d`, `--denoms`], {
     action: `help`,
     help: '🚨***DEPRECATED***🚨 remove this parameter from command line',
@@ -75,7 +71,7 @@ function registerCommands(parser: ArgumentParser): void {
   // Updating Key command
   const keyCommand = subparsers.addParser(`update-key`, { addHelp: true })
 
-  keyCommand.addArgument([`-k`, `--keypath`], {
+  keyCommand.addArgument([`-k`, `--key-path`], {
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
     defaultValue: `voter.json`,
@@ -84,7 +80,7 @@ function registerCommands(parser: ArgumentParser): void {
 
 async function main(): Promise<void> {
   const parser = new ArgumentParser({
-    version: `1.4.5`,
+    version: packageInfo.version,
     addHelp: true,
     description: `Terra oracle voter`,
   })
@@ -93,6 +89,23 @@ async function main(): Promise<void> {
   const args = parser.parseArgs()
 
   if (args.subparser_name === `vote`) {
+    args.lcdAddress = args.lcdAddress || process.env['LCD_ADDRESS'] || ''
+    args.chainID = args.chainID || process.env['CHAIN_ID'] || ''
+    if (args.lcdAddress === '' || args.chainID === '') {
+      console.error('Missing --lcd or --chain-id')
+      return
+    }
+
+    args.keyPath = args.keyPath || process.env['KEY_PATH'] || 'voter.json'
+    args.password = args.password || process.env['PASSPHRASE'] || ''
+    if (args.keyPath === '' || args.passphrase === '') {
+      console.error('Missing either --key-path or --password')
+      return
+    }
+    
+    args.validator = args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(','))
+    args.source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(','))
+
     await vote(args)
   } else if (args.subparser_name === `update-key`) {
     await updateKey(args.keyPath)

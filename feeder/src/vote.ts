@@ -291,38 +291,23 @@ interface VoteArgs {
   source: string[]
   password: string
   keyPath: string
-  gasPrices: string
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
-  let lcdAddress:string = args.lcdAddress || process.env['LCD_ADDRESS'] || ''
-  let chainID:string    = args.chainID    || process.env['CHAIN_ID']    || ''
-  let gasPrices:string  = args.gasPrices  || process.env['GAS_PRICE']   || '169.77ukrw'
-  if (lcdAddress == '' || chainID == '' || gasPrices == '')
-  {
-    console.error('Missing --lcd, --chain or --gas-prices')
-    return
-  }
-  const client = new LCDClient({ URL: lcdAddress, chainID: chainID, gasPrices: gasPrices, })
+  const client = new LCDClient({
+    URL: args.lcdAddress,
+    chainID: args.chainID,
+  })
 
-  let keyPath:string    = args.keyPath || process.env['KEY_PATH'] || 'voter.json'
-  let passphrase:string = args.password || process.env['PASSPHRASE'] || ''
-  if (keyPath == '' || passphrase == '')
-  {
-    console.error('Missing either --keypath or --password')
-    return
-  }
-  const rawKey: RawKey = await initKey(keyPath, passphrase)
-
-  const valAddrs = args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(',')) || [rawKey.valAddress]
+  const rawKey: RawKey = await initKey(args.keyPath, args.password)
+  const valAddrs = args.validator ||  [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
   const wallet = new Wallet(client, rawKey)
-  const source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(','))
 
   while (true) {
     const startTime = Date.now()
 
-    await processVote(client, wallet, source, valAddrs, voterAddr).catch((err) => {
+    await processVote(client, wallet, args.source, valAddrs, voterAddr).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {
