@@ -35,7 +35,7 @@ saved!
 
 Make sure the Price Server is running.
 
-We have two ways to start feeder with configs.
+You can start feeder with arguments or env.
 
 * Arguments
    ``` shell
