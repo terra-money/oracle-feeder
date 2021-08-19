@@ -38,7 +38,8 @@ Make sure the Price Server is running.
 ```
 npm start vote -- \
    --source http://localhost:8532/latest \
-   --lcd https://lcd.terra.dev \
+   --lcd https://lcd-1.terra.dev \
+   --lcd https://lcd-2.terra.dev \
    --chain-id columbus-4 \
    --validator terravaloper1xx \
    --validator terravaloper1yy \
@@ -46,11 +47,11 @@ npm start vote -- \
    --password "<password>"
 ```
 
-| Argument    | Description                                      | Example                      |
-| -           | -                                                | -                            |
-| `source`    | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | LCD server URL.                                  | https://lcd.terra.dev        |
-| `chain-id`  | Chain ID.                                        | `columbus-4`                 |
-| `validator` | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
-| `password`  | Password for mnemonic (assigned in step #2)      |                              |
-| `gas-prices`| Gas Price (default 169.77ukrw, use 178.05ukrw for tequila-0004) |                |
+| Argument     | Description                                                     | Example                      |
+| ------------ | --------------------------------------------------------------- | ---------------------------- |
+| `source`     | Price server URL.                                               | http://localhost:8532/latest |
+| `lcd`        | LCD server URL (can be multiple)                                | https://lcd.terra.dev        |
+| `chain-id`   | Chain ID.                                                       | `columbus-4`                 |
+| `validator`  | Validator to submit prices for (can be multiple)                | `terravaloper1xx...`         |
+| `password`   | Password for mnemonic (assigned in step #2)                     |                              |
+| `gas-prices` | Gas Price (default 169.77ukrw, use 178.05ukrw for tequila-0004) |                              |
