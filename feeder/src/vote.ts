@@ -10,7 +10,7 @@ import {
   RawKey,
   Wallet,
   MsgAggregateExchangeRateVote,
-  StdFee,
+  Fee,
   isTxError,
   LCDClientConfig,
 } from '@terra-money/terra.js'
@@ -196,12 +196,12 @@ export async function processVote(
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
   const tx = await wallet.createAndSignTx({
     msgs,
-    fee: new StdFee((1 + msgs.length) * 50000, []),
+    fee: new Fee((1 + msgs.length) * 50000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
   const res = await client.tx.broadcastSync(tx).catch((err) => {
-    console.error(`broadcast error: ${err.message}`, tx.toJSON())
+    console.error(`broadcast error: ${err.message}`, tx.toData())
     throw err
   })
 
