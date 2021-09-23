@@ -46,7 +46,6 @@ You can start feeder with arguments or env.
       --chain-id columbus-5 \
       --validator terravaloper1xx \
       --validator terravaloper1yy \
-      --gas-prices 169.77ukrw \
       --password "<password>"
    ```
 
