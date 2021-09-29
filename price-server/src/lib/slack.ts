@@ -11,7 +11,6 @@ export function sendSlack(message: string): Promise<Response | void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       channel: config.get('slack.channel'),
-      username: 'Oracle PriceServer',
       text: message,
     }),
   })
