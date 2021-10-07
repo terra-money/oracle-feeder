@@ -28,7 +28,7 @@ npm run start
 
 ## Configuration
 
-You can find the sample configuration at: `config/default.sample.js`. Oracle Price Server expects your configuration file at `config/default.js`.
+You can find the sample configuration at: `config/default-sample.js`. Oracle Price Server expects your configuration file at `config/default.js`.
 
 ```js
 const fiatSymbols = [
