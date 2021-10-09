@@ -39,7 +39,7 @@ cd price-server
 npm install
 
 # Copy sample config file
-cp ./config/default.sample.js ./config/default.js
+cp ./config/default-sample.js ./config/default.js
 # make edits
 vim ./config/default.js
 
