@@ -267,10 +267,7 @@ async function validateTx(
         }
       })
       .catch((err) => {
-        // print except for 404 not found error
-        if (err.isAxiosError && err.response && err.response.status !== 404) {
-          console.error(err.response.data)
-        } else if (!err.isAxiosError) {
+        if (!err.isAxiosError) {
           console.error(err.message)
         }
       })
