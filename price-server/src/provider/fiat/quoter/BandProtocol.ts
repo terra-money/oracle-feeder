@@ -20,14 +20,10 @@ interface Response {
 
 export class BandProtocol extends Quoter {
   private async updateLastPrice(): Promise<void> {
-    const url = new URL('https://terra-lcd-poa.bandchain.org/oracle/v1/request_prices')
+    const url = new URL('https://terra-laozi.bandchain.org/api/oracle/v1/request_prices')
     this.symbols.map((symbol) =>
       url.searchParams.append('symbols', symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', ''))
     )
-    // min_count: the minimum number of validators that actually respond to the request for the data reported by the validators responding to be aggregated
-    url.searchParams.append('min_count', '3')
-    // ask_count: The number of validators that you want to request to respond to this request
-    url.searchParams.append('ask_count', '4')
 
     const response: Response = await fetch(url).then((res) => res.json())
     if (!response || !response.price_results) {
@@ -37,7 +33,6 @@ export class BandProtocol extends Quoter {
       )
       throw new Error('Invalid response from BandProtocol')
     }
-
     for (const price of response.price_results) {
       this.setPrice(
         price.symbol === 'XDR' ? 'USD/SDR' : `USD/${price.symbol}`,
