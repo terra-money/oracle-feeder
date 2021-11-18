@@ -51,6 +51,7 @@ const fiatSymbols = [
   'USD/DKK',
   'USD/IDR',
   'USD/PHP',
+  'USD/ZAR',
 ]
 
 module.exports = {
