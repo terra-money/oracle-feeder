@@ -18,6 +18,14 @@ interface Response {
   error?: string | Record<string, unknown>
 }
 
+
+
+type mySymbol            = "USD"
+type myagainstusdlisting = `${mySymbol}/${string}`
+
+
+
+
 export class BandProtocol extends Quoter {
   private async updateLastPrice(): Promise<void> {
     const url = new URL('https://terra-laozi.bandchain.org/api/oracle/v1/request_prices')

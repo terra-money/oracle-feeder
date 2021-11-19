@@ -64,3 +64,23 @@ You can start feeder with arguments or env.
 | `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
 | `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
 | `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |
+
+
+
+
+# Miss Conditions
+
+A VotePeriod during which either of the following events occur is considered a "miss":
+
+1. **The validator fails to submits a vote for Luna exchange rate against each and every denomination specified inWhitelist.**
+
+2. **The validator fails to vote within the reward band around the weighted median for one or more denominations.**
+
+During every [ SlashWindow ](https://docs.terra.money/Reference/Terra-core/Module-specifications/spec-oracle.html#slashwindow), participating validators must maintain a valid vote rate of at least [MinValidPerWindow ( Default: 5%) ](https://docs.terra.money/Reference/Terra-core/Module-specifications/spec-oracle.html#minvalidperwindow), lest they get their stake slashed (currently set to [ 0.01% ](https://docs.terra.money/Reference/Terra-core/Module-specifications/spec-oracle.html#slashfraction)).
+The slashed validator is automatically temporarily "jailed" by the protocol (to protect the funds of delegators), and the operator is expected to fix the discrepancy promptly to resume validator participation.
+
+
+### Reward Band
+
+
+Let $M$ be the weighted median, be the standard deviation of the votes in the ballot, and be the RewardBand parameter. The band around the median is set to be  $\epsilon = max(\sigma, R/2)$. All valid (i.e. bonded and non-jailed) validators that submitted an exchange rate vote in the interval $[M-\epsilon,M+\epsilon]$ should be included in the set of winners, weighted by their relative vote power.

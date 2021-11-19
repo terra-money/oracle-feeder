@@ -300,21 +300,20 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig
 
 export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
-  const valAddrs = args.validator || [rawKey.valAddress]
-  const voterAddr = rawKey.accAddress
+  const valAddrs       = args.validator || [rawKey.valAddress]
+  const voterAddr      = rawKey.accAddress
 
-  const lcdRotate = {
-    client: new LCDClient(buildLCDClientConfig(args, 0)),
+  const lcdRotation = {
+    client : new LCDClient(buildLCDClientConfig(args, 0)),
     current: 0,
-    max: args.lcdAddress.length - 1,
+    max    : args.lcdAddress.length - 1,
   }
 
   while (true) {
     const startTime = Date.now()
-
     await processVote(
-      lcdRotate.client,
-      lcdRotate.client.wallet(rawKey),
+      lcdRotation.client,
+      lcdRotation.client.wallet(rawKey),
       args.source,
       valAddrs,
       voterAddr
@@ -327,7 +326,7 @@ export async function vote(args: VoteArgs): Promise<void> {
 
       if (err.isAxiosError) {
         console.info('vote: lcd client unavailable, rotating to next lcd client.')
-        rotateLCD(args, lcdRotate)
+        rotateLCD(args, lcdRotation)
       }
 
       resetPrevote()
@@ -337,14 +336,13 @@ export async function vote(args: VoteArgs): Promise<void> {
   }
 }
 
-function rotateLCD(args: VoteArgs, lcdRotate: { client: LCDClient; current: number; max: number }) {
-  if (++lcdRotate.current > lcdRotate.max) {
-    lcdRotate.current = 0
+function rotateLCD(args: VoteArgs, lcdRotation: { client: LCDClient; current: number; max: number }) {
+  if (++lcdRotation.current > lcdRotation.max) {
+    lcdRotation.current = 0
   }
-
-  lcdRotate.client = new LCDClient(buildLCDClientConfig(args, lcdRotate.current))
+  lcdRotation.client = new LCDClient(buildLCDClientConfig(args, lcdRotation.current))
   console.info(
-    'Switched to LCD address ' + lcdRotate.current + '(' + args.lcdAddress[lcdRotate.current] + ')'
+    'Switched to LCD address ' + lcdRotation.current + '(' + args.lcdAddress[lcdRotation.current] + ')'
   )
 
   return
