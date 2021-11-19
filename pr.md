@@ -5,7 +5,7 @@ On discussing what's a good task to pick, Jared has pointed out to me that the d
 
 ## I found these few bits of information in the docs (what are the "miss" conditions, how is reward band calculated) to be driving the discovery process:
 
-# Feeder
+#### Feeder
 
 https://docs.terra.money/Reference/Terra-core/Module-specifications/spec-oracle.html#voting-procedure
 
@@ -23,7 +23,7 @@ During every [ SlashWindow ](https://docs.terra.money/Reference/Terra-core/Modul
 The slashed validator is automatically temporarily "jailed" by the protocol (to protect the funds of delegators), and the operator is expected to fix the discrepancy promptly to resume validator participation.
 
 
-### Reward Band
+#### Reward Band
 
 (I think it's a good note to add to the docs for those just starting up)
 
