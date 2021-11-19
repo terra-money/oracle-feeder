@@ -1,5 +1,9 @@
 
-On discussing what's a good task to pick, Jared has pointed out to me that the default version of the oracle is an underserved to look. He directed my attention to https://terra.stake.id/#/
+On discussing what's a good task to pick, Jared has pointed out to me that the default version of the oracle is an underserved place to look into. He directed my attention to https://terra.stake.id/#/. A few high level suggestions are down at the bottom in "What i can contribute section".
+
+
+
+## I found these few bits of information in the docs (what are the "miss" conditions, how is reward band calculated) to be driving the discovery process:
 
 # Feeder
 
@@ -78,6 +82,7 @@ var valid_trading_pair:ValidTradingPairs = "LUNA/HEY"    // OK
 var new_trading_pair:ValidTradingPairs   = "LUNA/OTHER"  //Type '"LUNA/OTHER"' is not assignable to type '"LUNA/HEY" | "LUNA/GM" | "LUNA/MOON"'.ts(2322). Easy to follow up the definition, anywhere in the codebase, less string parsing = less erorrs.
 ```
 
+- A useful time series data is logging posterior reward band deviation as the precommits are revealed, basically to see how far off the median yours land. 
 
 # Some questions that popped up along the way
 
