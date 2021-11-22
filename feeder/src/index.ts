@@ -140,6 +140,9 @@ async function main(): Promise<void> {
 
     // Validator is skippable and default value will be extracted from the key
     args.validator = args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(','))
+    if (args.verbose){
+      process.env.VERBOSE = '1'
+    }
 
     await vote(args)
   } else if (args.subparser_name === `update-key`) {

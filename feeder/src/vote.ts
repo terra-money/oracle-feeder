@@ -16,6 +16,7 @@ import {
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 import { env } from 'process'
+import { AssertionError } from 'assert'
 
 const ax = axios.create({
   httpAgent : new http.Agent({ keepAlive: true }),
@@ -39,11 +40,11 @@ async function initKey(keyPath: string, password?: string): Promise<RawKey> {
 }
 
 async function loadOracleParams(client: LCDClient): Promise<{
-  oracleVotePeriod: number
-  oracleWhitelist: string[]
+  oracleVotePeriod : number
+  oracleWhitelist  : string[]
   currentVotePeriod: number
   indexInVotePeriod: number
-  nextBlockHeight: number
+  nextBlockHeight  : number
 }> {
   const oracleParams = await client.oracle.parameters()
   const oracleVotePeriod = oracleParams.vote_period
@@ -325,12 +326,8 @@ export async function vote(args: VoteArgs): Promise<void> {
   while (true) {
 
     if (process.env.VERBOSE){
-    // console.log("Begun voting process");
-      console.log('%c Begun voting process. ', 'background: #222; color: #bada55');
-
+      console.log("\x1b[36mBegun voting process.\x1b[0m");
     }
-    
-
 
     const startTime = Date.now()
     await processVote(
@@ -340,19 +337,21 @@ export async function vote(args: VoteArgs): Promise<void> {
       valAddrs,
       voterAddr
     ).then(r=>{
-
       console.log("Voted successfully. LCD Responded: ", r);
-      
-
-
     }).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {
         console.error(err.message)
       }
-
       if (err.isAxiosError) {
+        if (process.env.VERBOSE){
+          // console.info(`Rotating to ${}.`)
+          // console.error(`Current LCD${} failed  with error : `, err)
+          console.error(`Current LCD failed  with error : `, err)
+          console.info(`Rotating to next `)
+
+        }
         console.info('vote: lcd client unavailable, rotating to next lcd client.')
         rotateLCD(args, lcdRotation)
       }
@@ -366,16 +365,67 @@ export async function vote(args: VoteArgs): Promise<void> {
 
 
 
+
+interface LCDRotationProfile{
+  config     : LCDClientConfig
+  up_since   : Date
+  uptimes    : Date[][]
+  avg_latency: number
+}
+
+class LCDRotation{
+
+
+  private timeout:number           = 3000  // attempt to switch to another server after [timeout] ms
+  private restore_lead_freq:number = 3000  // Poll current leaders for liveness every  [restore_lead_freq] ms
+
+  public  currentLCD: string[] = []
+
+  readonly clients = {
+
+  }
+
+
+
+
+  constructor(
+
+    LCD_leader_clients : string[],
+    LCD_clients        : string[],
+    leader_re_frequency: number,
+    timeout_threshold  : number){
+
+      if ( [...LCD_leader_clients, ...LCD_clients].length < 1 ){
+        throw 'At least a single LCD client must be specified.'
+      }
+
+
+      // 1.create a config and corresponding profile for every LCD url 
+      // 2.prioritize those in the leader pool
+      // 3.if all leaders are down -- attempt to restore with frequency specified, 
+          // go down the leader list and attempt to reconnect 
+      // 4.for every client, leader or not, ping them every X minutes and record average latency
+      // 4.for the client that becomes active -- record uptime and if it fails -- add uptime to log
+
+  }
+
+
+  rotate():void{
+  }
+
+
+}
+
 function rotateLCD(args: VoteArgs, lcdRotation: { client: LCDClient; current: number; max: number }) {
 
   if (++lcdRotation.current > lcdRotation.max) {
     lcdRotation.current = 0
   }
+
   lcdRotation.client = new LCDClient(buildLCDClientConfig(args, lcdRotation.current))
   console.info(
     'Switched to LCD address ' + lcdRotation.current + '(' + args.lcdAddress[lcdRotation.current] + ')'
   )
-
   return
 }
 

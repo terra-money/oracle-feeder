@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
-    "lib": ["es2020"],
-    "module": "commonjs",
-    "target": "es2019",
-    "allowJs": false,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "lib"                         : ["es2020"],
+    "module"                      : "commonjs",
+    "target"                      : "es2019",
+    "allowJs"                     : false,
+    "emitDecoratorMetadata"       : true,
+    "experimentalDecorators"      : true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
-    "strictNullChecks": true,
-    "sourceMap": true,
-    "outDir": "dist",
-    "baseUrl": "src",
-    "sourceRoot": "src",
-    "resolveJsonModule": true
+    "moduleResolution"            : "node",
+    "skipLibCheck"                : true,
+    "strictNullChecks"            : true,
+    "sourceMap"                   : true,
+    "outDir"                      : "dist",
+    "baseUrl"                     : "src",
+    "sourceRoot"                  : "src",
+    "resolveJsonModule"           : true
   }
 }
