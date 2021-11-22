@@ -40,11 +40,3 @@ export async function createServer(): Promise<http.Server> {
 
   return server
 }
-
-
-type LUNA = "LUNA"
-type WhitelistedSymbols = "HEY" | "GM" | "MOON"
-type  ValidTradingPairs  = `${LUNA}/${WhitelistedSymbols}`
-// {...}
-var new_trading_pair:ValidTradingPairs = "LUNA/OTHER"
-//Type '"LUNA/OTHER"' is not assignable to type '"LUNA/HEY" | "LUNA/GM" | "LUNA/MOON"'.ts(2322)

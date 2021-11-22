@@ -30,3 +30,8 @@ __pycache__/
 
 # log
 yarn-error.log
+
+**/feedermnemonic.txt
+feedermnemonic.txt
+**/notes.md
+notes.md

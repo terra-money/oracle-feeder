@@ -58,12 +58,13 @@ You can start feeder with arguments or env.
 
 | Argument    | Env           | Description                                      | Example                      |
 | ----------- | ------------- | ------------------------------------------------ | ---------------------------- |
-| `source`    | `SOURCE`      | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | `LCD_ADDRESS` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
-| `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
-| `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
-| `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
-| `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |
+| `-s/--source`    | `SOURCE`      | Price server URL.                                | http://localhost:8532/latest |
+| `-l/--lcd`       | `LCD_ADDRESS` | LCD server URL (can be multiple, comma-separated)                 | https://lcd.terra.dev        |
+| `-L/--lcdL`       | `LCD_ADDRESS_LEADER` | LCD server to prioritize return to.  (can be multiple, comma-separated)                 | https://lcd.terra.dev        |
+| `-c/--chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
+| `--validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
+| `-p/--password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
+| `-k/--key-path/--keystore`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |
 
 
 

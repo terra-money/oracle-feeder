@@ -15,12 +15,13 @@ import {
   LCDClientConfig,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
+import { env } from 'process'
 
 const ax = axios.create({
-  httpAgent: new http.Agent({ keepAlive: true }),
+  httpAgent : new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
-  timeout: 10000,
-  headers: {
+  timeout   : 10000,
+  headers   : {
     post: {
       'Content-Type': 'application/json',
     },
@@ -66,7 +67,7 @@ async function loadOracleParams(client: LCDClient): Promise<{
 
 interface Price {
   currency: string
-  price: string
+  price   : string
 }
 
 async function getPrices(sources: string[]): Promise<Price[]> {
@@ -116,19 +117,22 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
       if (oracleWhitelist.indexOf(`u${currency.toLowerCase()}`) === -1) {
         return
       }
-
       return price
     })
     .filter(Boolean) as Price[]
 
+    console.log("Got new prices")
   oracleWhitelist.forEach((denom) => {
     const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
 
     if (!found) {
       newPrices.push({
+
         currency: denom.slice(1).toUpperCase(),
         price: '0.000000000000000000',
+
       })
+
     }
   })
 
@@ -136,10 +140,10 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
 }
 
 function buildVoteMsgs(
-  prices: Price[],
-  valAddrs: string[],
+  prices   : Price[],
+  valAddrs : string[],
   voterAddr: string
-): MsgAggregateExchangeRateVote[] {
+  )        : MsgAggregateExchangeRateVote[] {
   const coins = prices.map(({ currency, price }) => `${price}u${currency.toLowerCase()}`).join(',')
 
   return valAddrs.map((valAddr) => {
@@ -293,16 +297,25 @@ interface VoteArgs {
 
 function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig {
   return {
-    URL: args.lcdAddress[lcdIndex],
+    URL    : args.lcdAddress[lcdIndex],
     chainID: args.chainID,
   }
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
+
+  // Grab and initialize the key
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
   const valAddrs       = args.validator || [rawKey.valAddress]
   const voterAddr      = rawKey.accAddress
 
+
+  console.log('got parsed arguments:', args);
+    
+
+
+  // Create a Terra Lite client from the first argument in the list
+  // ※ This could be cleaner
   const lcdRotation = {
     client : new LCDClient(buildLCDClientConfig(args, 0)),
     current: 0,
@@ -310,6 +323,15 @@ export async function vote(args: VoteArgs): Promise<void> {
   }
 
   while (true) {
+
+    if (process.env.VERBOSE){
+    // console.log("Begun voting process");
+      console.log('%c Begun voting process. ', 'background: #222; color: #bada55');
+
+    }
+    
+
+
     const startTime = Date.now()
     await processVote(
       lcdRotation.client,
@@ -317,7 +339,13 @@ export async function vote(args: VoteArgs): Promise<void> {
       args.source,
       valAddrs,
       voterAddr
-    ).catch((err) => {
+    ).then(r=>{
+
+      console.log("Voted successfully. LCD Responded: ", r);
+      
+
+
+    }).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {
@@ -336,7 +364,10 @@ export async function vote(args: VoteArgs): Promise<void> {
   }
 }
 
+
+
 function rotateLCD(args: VoteArgs, lcdRotation: { client: LCDClient; current: number; max: number }) {
+
   if (++lcdRotation.current > lcdRotation.max) {
     lcdRotation.current = 0
   }

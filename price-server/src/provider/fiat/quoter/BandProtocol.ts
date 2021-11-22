@@ -4,6 +4,7 @@ import * as logger from 'lib/logger'
 import { num } from 'lib/num'
 import { Quoter } from 'provider/base'
 import { URL } from 'url'
+import { UnionType } from 'typescript'
 
 interface Response {
   price_results: [
@@ -17,14 +18,6 @@ interface Response {
   ]
   error?: string | Record<string, unknown>
 }
-
-
-
-type mySymbol            = "USD"
-type myagainstusdlisting = `${mySymbol}/${string}`
-
-
-
 
 export class BandProtocol extends Quoter {
   private async updateLastPrice(): Promise<void> {

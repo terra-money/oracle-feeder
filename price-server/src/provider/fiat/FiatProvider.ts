@@ -11,8 +11,10 @@ class FiatProvider extends Provider {
     const { fallbackPriority } = config.fiatProvider
 
     // sort by fallback priority
+
     for (const name of fallbackPriority) {
       const option = config.fiatProvider[name]
+
       if (!option) {
         continue
       }

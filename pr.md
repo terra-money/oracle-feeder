@@ -31,6 +31,7 @@ type ValidTradingPairs                    = `${LUNA}/${WhitelistedSymbols}`
 // .../src/vote.ts
 var valid_trading_pair:ValidTradingPairs = "LUNA/HEY"    // OK
 var new_trading_pair:ValidTradingPairs   = "LUNA/OTHER"  //Type '"LUNA/OTHER"' is not assignable to type '"LUNA/HEY" | "LUNA/GM" | "LUNA/MOON"'.ts(2322). Easy to follow up the definition, anywhere in the codebase, less string parsing = less erorrs.
+
 ```
 
 
