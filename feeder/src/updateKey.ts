@@ -4,7 +4,6 @@ import * as promptly from 'promptly'
 export async function updateKey(filePath: string): Promise<void> {
   let password = process.env['PASSPHRASE'] || ''
   let mnemonic = process.env['MNEMONIC'] || ''
-
   if (password === '') {
     password = await promptly.password(`Enter a passphrase to encrypt your key to disk:`, {
       replace: `*`,

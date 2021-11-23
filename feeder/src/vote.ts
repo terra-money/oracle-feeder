@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import * as crypto from 'crypto'
 import * as Bluebird from 'bluebird'
 import * as promptly from 'promptly'
@@ -15,8 +16,101 @@ import {
   LCDClientConfig,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
-import { env } from 'process'
-import { AssertionError } from 'assert'
+import { CLIArgs } from 'index'
+import { Completer } from 'readline'
+import { exit } from 'process'
+
+
+
+
+interface LCDRotationProfile{
+  config     : LCDClientConfig
+  up_since   : string
+  uptimes    : string[][]
+  avg_latency: number,
+  priority   : number
+}
+
+class LCDRotation{
+
+    private timeout          : number               ;
+    private restore_lead_freq: number               ;
+    private chainId          : string               ;
+    public  currentLCDC      : LCDClient            ;
+    private clients          : LCDRotationProfile[] = [] ;
+
+
+  constructor(
+
+    /**!-------------------------------------[※]------------------------------------------#
+     * Could do a few small things here possibly in the longer run, of course, like in any failover.
+     * some useful features might include:
+     * - more granular priority modes for leader-lcds cohort. 
+     *  i.e. descdending/roundrobin, but priority over regular lcds/random-sampling
+     * - periodically pinging the set and recording the running average latency, reprioritizing accordingly
+     * - adding new members inflight 
+     * - pruning nodes that have been ded for longer than x
+     */
+
+    LCD_leader_clients : string[],
+    LCD_clients        : string[],
+    // registring this one chainId argument 
+    // even though every LCD Config is able to take potentially different chain ids with different URL
+    // TODO: A suggestion in this case is to add a "registerClient" method that will add each client individually
+    chainID            : string, 
+    leader_re_frequency: number,
+    timeout_threshold  : number){
+
+
+      if ( [...LCD_leader_clients, ...LCD_clients].length < 1 ){
+        throw 'At least a single LCD client must be specified.'
+      }
+
+      this.restore_lead_freq = leader_re_frequency;
+      this.timeout           = timeout_threshold;
+
+      var valn = LCD_leader_clients.length + LCD_clients.length
+
+      LCD_leader_clients.map(url => 
+        this.clients.push({ 
+            priority   : valn--,
+            avg_latency: -1,
+            uptimes    : [],
+            up_since   : 'never',
+            config     : makeLCDConfig(url,this.chainId)
+        } as LCDRotationProfile)
+      )
+
+      LCD_clients.map(url => 
+        this.clients.push({ 
+            priority   : 0,
+            avg_latency: -1,
+            uptimes    : [],
+            up_since   : 'never',
+            config     : makeLCDConfig(url, this.chainId)
+        } as LCDRotationProfile)
+      )
+
+      this.currentLCDC =  new LCDClient(this.clients[0].config)
+      
+
+
+      // 1.create a config and corresponding profile for every LCD url 
+      // 2.prioritize those in the leader pool
+      // 3.if all leaders are down -- attempt to restore with frequency specified, 
+        // go down the leader list and attempt to reconnect 
+      // 4.for every client, leader or not, ping them every X minutes and record average latency
+      // 5.for the client that becomes active -- record uptime and if it fails -- add uptime to log
+
+  }
+
+
+  rotate():void{
+    return 
+  }
+
+
+}
 
 const ax = axios.create({
   httpAgent : new http.Agent({ keepAlive: true }),
@@ -154,7 +248,7 @@ function buildVoteMsgs(
 }
 
 let previousVoteMsgs: MsgAggregateExchangeRateVote[] = []
-let previousVotePeriod = 0
+let previousVotePeriod                               = 0
 
 // yarn start vote command
 export async function processVote(
@@ -286,75 +380,72 @@ async function validateTx(
   return height
 }
 
-interface VoteArgs {
-  ledgerMode: boolean
-  lcdAddress: string[]
-  chainID: string
-  validator: string[]
-  source: string[]
-  password: string
-  keyPath: string
-}
+const makeLCDConfig = (URL:string, chainID:string): LCDClientConfig => ( {URL,chainID})
 
-function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig {
-  return {
-    URL    : args.lcdAddress[lcdIndex],
-    chainID: args.chainID,
-  }
-}
 
-export async function vote(args: VoteArgs): Promise<void> {
+
+
+// export async function vote(args: Required<Omit<CLIArgs,'subparser_name'|'ledgerMode'|'verbose'>> ): Promise<void> {
+export async function vote(
+  { keyPath                     ,
+    password                    ,
+    validators                  ,
+    sources                     ,
+    chainID                     ,
+    lcdAddresses                ,
+    lcdAddressesLeaders         , }:{
+      keyPath            :string  ,
+      password           :string  ,
+      validators         :string[],
+      sources            :string[],
+      chainID            :string  ,
+      lcdAddresses       :string[],
+      lcdAddressesLeaders:string[], }
+): Promise<void> {
+
+
+
+
 
   // Grab and initialize the key
-  const rawKey: RawKey = await initKey(args.keyPath, args.password)
-  const valAddrs       = args.validator || [rawKey.valAddress]
+  const rawKey: RawKey = await initKey(keyPath, password)
   const voterAddr      = rawKey.accAddress
-
-
-  console.log('got parsed arguments:', args);
-    
-
+  const validatorAddrs = validators || [rawKey.valAddress]
+  const rotation       = new LCDRotation(lcdAddressesLeaders,lcdAddresses,chainID, 3000,3000)
 
   // Create a Terra Lite client from the first argument in the list
   // ※ This could be cleaner
-  const lcdRotation = {
-    client : new LCDClient(buildLCDClientConfig(args, 0)),
-    current: 0,
-    max    : args.lcdAddress.length - 1,
-  }
+  
+  process.env.VERBOSE ?  console.info("\x1b[36mBegun voting process.\x1b[0m"): ''
 
   while (true) {
 
-    if (process.env.VERBOSE){
-      console.log("\x1b[36mBegun voting process.\x1b[0m");
-    }
 
     const startTime = Date.now()
     await processVote(
-      lcdRotation.client,
-      lcdRotation.client.wallet(rawKey),
-      args.source,
-      valAddrs,
+      rotation.currentLCDC,
+      rotation.currentLCDC.wallet(rawKey),
+      sources,
+      validatorAddrs,
       voterAddr
-    ).then(r=>{
-      console.log("Voted successfully. LCD Responded: ", r);
-    }).catch((err) => {
-      if (err.isAxiosError && err.response) {
-        console.error(err.message, err.response.data)
-      } else {
-        console.error(err.message)
-      }
-      if (err.isAxiosError) {
-        if (process.env.VERBOSE){
-          // console.info(`Rotating to ${}.`)
-          // console.error(`Current LCD${} failed  with error : `, err)
-          console.error(`Current LCD failed  with error : `, err)
-          console.info(`Rotating to next `)
+    )
+    .then(r=>{console.log("Voted successfully. LCD Responded: ", r)})
+    .catch((err) => {
+        if (err.isAxiosError) {
+          if (process.env.VERBOSE){
+            console.error(`Current LCD(${rotation.currentLCDC.config.URL} | ${rotation.currentLCDC.oracle.feederAddress}) failed  with error : `, err)
+            console.info(`Rotating to next `)
 
-        }
-        console.info('vote: lcd client unavailable, rotating to next lcd client.')
-        rotateLCD(args, lcdRotation)
+          }
+          console.info('vote: lcd client unavailable, rotating to next lcd client.')
+          rotation.rotate()
       }
+        if (err.isAxiosError && err.response) {
+          console.error(err.message, err.response.data)
+        } else {
+          console.error(err.message)
+        }
+
 
       resetPrevote()
     })
@@ -363,73 +454,7 @@ export async function vote(args: VoteArgs): Promise<void> {
   }
 }
 
-
-
-
-interface LCDRotationProfile{
-  config     : LCDClientConfig
-  up_since   : Date
-  uptimes    : Date[][]
-  avg_latency: number
-}
-
-class LCDRotation{
-
-
-  private timeout:number           = 3000  // attempt to switch to another server after [timeout] ms
-  private restore_lead_freq:number = 3000  // Poll current leaders for liveness every  [restore_lead_freq] ms
-
-  public  currentLCD: string[] = []
-
-  readonly clients = {
-
-  }
-
-
-
-
-  constructor(
-
-    LCD_leader_clients : string[],
-    LCD_clients        : string[],
-    leader_re_frequency: number,
-    timeout_threshold  : number){
-
-      if ( [...LCD_leader_clients, ...LCD_clients].length < 1 ){
-        throw 'At least a single LCD client must be specified.'
-      }
-
-
-      // 1.create a config and corresponding profile for every LCD url 
-      // 2.prioritize those in the leader pool
-      // 3.if all leaders are down -- attempt to restore with frequency specified, 
-          // go down the leader list and attempt to reconnect 
-      // 4.for every client, leader or not, ping them every X minutes and record average latency
-      // 4.for the client that becomes active -- record uptime and if it fails -- add uptime to log
-
-  }
-
-
-  rotate():void{
-  }
-
-
-}
-
-function rotateLCD(args: VoteArgs, lcdRotation: { client: LCDClient; current: number; max: number }) {
-
-  if (++lcdRotation.current > lcdRotation.max) {
-    lcdRotation.current = 0
-  }
-
-  lcdRotation.client = new LCDClient(buildLCDClientConfig(args, lcdRotation.current))
-  console.info(
-    'Switched to LCD address ' + lcdRotation.current + '(' + args.lcdAddress[lcdRotation.current] + ')'
-  )
-  return
-}
-
 function resetPrevote() {
   previousVotePeriod = 0
-  previousVoteMsgs = []
+  previousVoteMsgs   = []
 }

@@ -57,10 +57,10 @@ function loadEntities(path: string): Entity[] {
 
 export async function save(
   filePath: string,
-  name: string,
+  name    : string,
   password: string,
   mnemonic: string
-): Promise<void> {
+  )       : Promise<void> {
   const keys = loadEntities(filePath)
 
   if (keys.find((key) => key.name === name)) {
