@@ -134,8 +134,7 @@ d58cd901c30441df6d32323ca0935c1d6ef801d9@95.217.226.95:26099
 92bcd725fb130530263704a4716da9c942becfa7@seed.mcontrol.ml:26656					
 7080247c1c78f86c6df77f3e714fb4983ac3c94f@seed.terra-mainnet.sabai.finance:26656					
 fd777409b042fe41691011eb6ecdeaad5317f8e9@35.240.133.1:26656					
-88d4b1517ccf60be0a7a41793948ab7af3750315@terra-mainnet-seed-1.stakin-nodes.com:26656					
-e86d50d69f9219839f9cd85d3329f186ec741478@terrabackup.stakely.io:26656					
+88d4b1517ccf60be0a7a41793948ab7af3750315@terra-mainnet-seed-1.stakin-nodes.com:26656e86d50d69f9219839f9cd85d3329f186ec741478@terrabackup.stakely.io:26656					
 eb67380db62292506d41f28b1b77785a62a0f298@seed.terra.kkvalidator.com:26656					
 0915d3431ff7af14a6749afc12e6ba45c1b737da@34.152.3.90:26656					
 4f2d05162119a665b267599d3c86a936d65a9af0@seed.terra.rockx.com:26656					
@@ -144,18 +143,191 @@ eb67380db62292506d41f28b1b77785a62a0f298@seed.terra.kkvalidator.com:26656
 2c1b557739450f946ba38aebe113cad69c23cf98@20.199.97.106:26656					
 b976e8d1f94f4e2d554be4ca590929fa5ce320c0@188.166.95.126:26656					
 9825d4993fe6e948f6c800f9a4bbdb89ad120e76@34.79.212.227:26656					
-85963d3827ceab08be38285fbe354b90a2e45fef@seed-mainnet.terra.lunastations.online:36656					
-4df743bfcf507e603411c712d8a9b3adb5e44498@seed.terra.genesislab.net:26656					
+85963d3827ceab08be38285fbe354b90a2e45fef@seed-mainnet.terra.lunastations.online:36656				4df743bfcf507e603411c712d8a9b3adb5e44498@seed.terra.genesislab.net:26656					
 b65bc05a140f2d292055d2afbb00997023aed5ed@52.196.61.226:26656					
-bd8504b7c84472e1b15589c2adbb2c62ecd36e02@terra-mainnet-seed.orbitalcommandvalidator.com:26302					
-fb75d47bdcfe1924bb67d05b78d02ebf68ddc971@ec2-54-183-112-31.us-west-1.compute.amazonaws.com:26656					
-b96b058af0637613c47f0fc7affc07446ebac343@terra-mainnet-seed.blockstake.xyz:26656					
-b977f4a6fe45b2621c2e009cdedc1d57c7f977ff@65.0.190.90:26656					
+bd8504b7c84472e1b15589c2adbb2c62ecd36e02@terra-mainnet-seed.orbitalcommandvalidator.com:26302
+fb75d47bdcfe1924bb67d05b78d02ebf68ddc971@ec2-54-183-112-31.us-west-1.compute.amazonaws.com
+26656b96b058af0637613c47f0fc7affc07446ebac343@terra-mainnet-seed.blockstake.xyz:26656				b977f4a6fe45b2621c2e009cdedc1d57c7f977ff@65.0.190.90:26656					
 ad2c60e2d9b5566385a192fac79ed540955266a4@194.163.167.27:26656					
 a4950a460b60de640432701d0c5b964ba680254f@162.55.244.169:26656					
 0e2ddf13890eaaceb7f177432f6c3f764af16782@95.168.167.83:26656					
 877c6b9f8fae610a4e886604399b33c0c7a985e2@terra.mainnet.seed.forbole.com:10056					
 9d08e286bd1fd1bb29c52ee8bb199b62a8ac564c@85.118.207.63:26656					
+
+
+ DE, Germany
+ DE, Germany
+ DE, Germany
+ IE, Ireland
+ DE, Germany
+ US, United States
+ US, United States
+ US, United States
+ US, United States
+ DE, Germany
+ RO, Romania
+ GB, United Kingdom
+ US, United States
+ US, United States
+ CH, Switzerland
+ US, United States
+ DE, Germany
+ DE, Germany
+ US, United States
+ US, United States
+ US, United States
+ DE, Germany
+ US, United States
+ DE, Germany
+ SG, Singapore
+ US, United States
+ IE, Ireland
+ US, United States
+ US, United States
+ US, United States
+ US, United States
+ US, United States
+ EU, Europe
+ SG, Singapore
+ JP, Japan
+ FR, France
+ DE, Germany
+ GB, United Kingdom
+ FI, Finland
+ FR, France
+ DE, Germany
+ AS, American Samoa
+ US, United States
+ CA, Canada
+ US, United States
+ SG, Singapore
+ US, United States
+ US, United States
+ US, United States
+ NL, Netherlands
+ US, United States
+ IE, Ireland
+ FI, Finland
+ JP, Japan
+ US, United States
+ US, United States
+ SG, Singapore
+ US, United States
+ DE, Germany
+ DE, Germany
+ NL, Netherlands
+ US, United States
+ SE, Sweden
+ SG, Singapore
+ US, United States
+ US, United States
+ US, United States
+ NL, Netherlands
+ US, United States
+ IE, Ireland
+ FI, Finland
+ JP, Japan
+ US, United States
+ US, United States
+ SG, Singapore
+ US, United States
+ DE, Germany
+ DE, Germany
+ NL, Netherlands
+ US, United States
+ SE, Sweden
+ SG, Singapore
+ US, United States
+ US, United States
+ US, United States
+ NL, Netherlands
+ US, United States
+ IE, Ireland
+ FI, Finland
+ JP, Japan
+ US, United States
+ US, United States
+ SG, Singapore
+ US, United States
+ DE, Germany
+ DE, Germany
+ NL, Netherlands
+ US, United States
+ SE, Sweden
+ SG, Singapore
+ US, United States
+ US, United States
+ US, United States
+ NL, Netherlands
+ US, United States
+ IE, Ireland
+ FI, Finland
+ JP, Japan
+ US, United States
+ US, United States
+ SG, Singapore
+ US, United States
+ DE, Germany
+ DE, Germany
+ NL, Netherlands
+ US, United States
+ SE, Sweden
+ SG, Singapore
+ US, United States
+ US, United States
+ US, United States
+ NL, Netherlands
+ US, United States
+ IE, Ireland
+ FI, Finland
+ JP, Japan
+ US, United States
+ US, United States
+ SG, Singapore
+ US, United States
+ DE, Germany
+ DE, Germany
+ NL, Netherlands
+ US, United States
+ SE, Sweden
+ SG, Singapore
+ US, United States
+ US, United States
+ US, United States
+ NL, Netherlands
+ US, United States
+ IE, Ireland
+ FI, Finland
+ JP, Japan
+ US, United States
+ US, United States
+ SG, Singapore
+ US, United States
+ DE, Germany
+ DE, Germany
+ NL, Netherlands
+ US, United States
+ SE, Sweden
+ SG, Singapore
+ US, United States
+ US, United States
+ US, United States
+ NL, Netherlands
+ US, United States
+ IE, Ireland
+ FI, Finland
+ JP, Japan
+ US, United States
+ US, United States
+ SG, Singapore
+ US, United States
+ DE, Germany
+ DE, Germany
+ NL, Netherlands
+ US, United States
+ SE, Sweden
+
+
 
 
 ```bash
