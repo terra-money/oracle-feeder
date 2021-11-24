@@ -17,14 +17,12 @@ import {
   BlockInfo,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
-import { CLIArgs } from 'index'
-import { Completer } from 'readline'
-import { exit } from 'process'
+import { url } from 'inspector'
 
 
 
-
-interface LCDRotationProfile{
+const makeLCDConfig = (URL: string, chainID: string): LCDClientConfig => ({ URL, chainID })
+interface RotationProfile {
   config     : LCDClientConfig
   up_since   : string
   uptimes    : string[][]
@@ -32,13 +30,12 @@ interface LCDRotationProfile{
   priority   : number
 }
 
-class LCDRotation{
+class LCDRotation {
 
-    private timeout          : number               ;
-    private restore_lead_freq: number               ;
-    private chainId          : string               ;
-    public  currentLCDC      : LCDClient            ;
-    private clients          : LCDRotationProfile[] = [] ;
+  private timeout          : number;
+  private restore_lead_freq: number;
+  public  currentLCDC      : LCDClient;
+  private clients          : RotationProfile[] = [];
 
 
   constructor(
@@ -53,77 +50,80 @@ class LCDRotation{
      * - pruning nodes that have been ded for longer than x
      */
 
-    LCD_leader_clients : string[],
-    LCD_clients        : string[],
-    // registring this one chainId argument 
-    // even though every LCD Config is able to take potentially different chain ids with different URL
-    // TODO: A suggestion in this case is to add a "registerClient" method that will add each client individually
-    chainID            : string, 
     leader_re_frequency: number,
-    timeout_threshold  : number){
+    timeout_threshold: number) {
+
+    this.restore_lead_freq = leader_re_frequency;
+    this.timeout           = timeout_threshold;
+    
+
+    // var valn = LCD_leader_clients.length + LCD_clients.length
+
+    // LCD_leader_clients.map(url =>
+    //   this.clients.push({
+    //     priority   : valn--,
+    //     avg_latency: -1,
+    //     uptimes    : [],
+    //     up_since   : 'never',
+    //     config     : makeLCDConfig(url, this.chainID)
+    //   } as RotationProfile)
+    // )
+
+    // LCD_clients.map(url =>
+    //   this.clients.push({
+    //     priority   : 0,
+    //     avg_latency: -1,
+    //     uptimes    : [],
+    //     up_since   : 'never',
+    //     config     : makeLCDConfig(url, this.chainID)
+    //   } as RotationProfile)
+    // )
+
+    // this.currentLCDC = new LCDClient(this.clients[0].config)
+    console.log();
+    
 
 
-      if ( [...LCD_leader_clients, ...LCD_clients].length < 1 ){
-        throw 'At least a single LCD client must be specified.'
-      }
 
-      this.restore_lead_freq = leader_re_frequency;
-      this.timeout           = timeout_threshold;
-
-      var valn = LCD_leader_clients.length + LCD_clients.length
-
-      LCD_leader_clients.map(url => 
-        this.clients.push({ 
-            priority   : valn--,
-            avg_latency: -1,
-            uptimes    : [],
-            up_since   : 'never',
-            config     : makeLCDConfig(url,this.chainId)
-        } as LCDRotationProfile)
-      )
-
-      LCD_clients.map(url => 
-        this.clients.push({ 
-            priority   : 0,
-            avg_latency: -1,
-            uptimes    : [],
-            up_since   : 'never',
-            config     : makeLCDConfig(url, this.chainId)
-        } as LCDRotationProfile)
-      )
-
-      this.currentLCDC =  new LCDClient(this.clients[0].config)
-      
-
-
-      // 1.create a config and corresponding profile for every LCD url 
-      // 2.prioritize those in the leader pool
-      // 3.if all leaders are down -- attempt to restore with frequency specified, 
-        // go down the leader list and attempt to reconnect 
-      // 4.for every client, leader or not, ping them every X minutes and record average latency
-      // 5.for the client that becomes active -- record uptime and if it fails -- add uptime to log
+    // 1.create a config and corresponding profile for every LCD url 
+    // 2.prioritize those in the leader pool
+    // 3.if all leaders are down -- attempt to restore with frequency specified, 
+    // go down the leader list and attempt to reconnect 
+    // 4.for every client, leader or not, ping them every X minutes and record average latency
+    // 5.for the client that becomes active -- record uptime and if it fails -- add uptime to log
 
   }
 
-  
 
-  public register_lcd(url:string, chainId: string):void {
 
+  /**
+   * Add an lcd client to a the of available rotating ones.
+   * @param url  The url of the lcd client
+   * @param chainID Current correspondent chain
+   * @returns 
+   */
+  public register_lcd(url:string, chainID:string, priority:number=0): void {
+    var lcd:RotationProfile ={
+      priority   ,
+      config     : makeLCDConfig(url,chainID),
+      avg_latency: 0,
+      up_since   : 'never',
+      uptimes    : []
+    }
+    this.clients.push(lcd)
+  }
+
+  public rotate(): void {
     return
-
-  }
-
-  public rotate():void{
-    return 
   }
 
 }
 
 const ax = axios.create({
-  httpAgent : new http.Agent({ keepAlive: true }),
+  httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
-  timeout   : 10000,
-  headers   : {
+  timeout: 10000,
+  headers: {
     post: {
       'Content-Type': 'application/json',
     },
@@ -150,10 +150,10 @@ async function loadOracleParams(client: LCDClient): Promise<{
   const oracleParams              = await client.oracle.parameters()
   const oracleVotePeriod          = oracleParams.vote_period
   const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
-  const latestBlock:BlockInfo     = await client.tendermint.blockInfo()
-  
-  const nextBlockHeight   = parseInt(latestBlock.block.header.height, 10) + 1 // the vote will be included in the next blocj
-  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod) // ※ Would be nice to have this link to Terra Docs
+  const latestBlock: BlockInfo    = await client.tendermint.blockInfo()
+
+  const nextBlockHeight   = parseInt(latestBlock.block.header.height, 10) + 1  // the vote will be included in the next blocj
+  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)     // ※ Would be nice to have this link to Terra Docs
   const indexInVotePeriod = nextBlockHeight % oracleVotePeriod
 
   return {
@@ -171,7 +171,6 @@ interface Price {
 }
 
 async function getPrices(sources: string[]): Promise<Price[]> {
-  console.info(`getPrices: source: ${sources.join(',')}`)
 
   const results = await Bluebird.some(
     sources.map((s) => ax.get(s)),
@@ -221,7 +220,6 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
     })
     .filter(Boolean) as Price[]
 
-    console.log("Got new prices")
   oracleWhitelist.forEach((denom) => {
     const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
 
@@ -252,30 +250,35 @@ function buildVoteMsgs(
   })
 }
 
+
+// huh
 let previousVoteMsgs: MsgAggregateExchangeRateVote[] = []
-let previousVotePeriod                               = 0
+let previousVotePeriod = 0
 
 // yarn start vote command
 export async function processVote(
-  client   : LCDClient,
-  wallet   : Wallet,
-  priceURLs: string[],
-  valAddrs : string[],
-  voterAddr: string
-  )        : Promise<void> {
+  client       : LCDClient,
+  signed_wallet: Wallet,
+  priceURLs    : string[],
+  valAddrs     : string[],
+  voterAddr    : string
+  )            : Promise<void> {
   const {
+
     oracleVotePeriod,
     oracleWhitelist,
     currentVotePeriod,
     indexInVotePeriod,
     nextBlockHeight,
+
   } = await loadOracleParams(client)
 
+  console.log("Failed after oracle load params");
+  
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
   if (
-    (previousVotePeriod && currentVotePeriod === previousVotePeriod) ||
-    oracleVotePeriod - indexInVotePeriod < 2
+    (previousVotePeriod && currentVotePeriod === previousVotePeriod) || oracleVotePeriod - indexInVotePeriod < 2
   ) {
     return
   }
@@ -285,25 +288,21 @@ export async function processVote(
   if (previousVotePeriod && currentVotePeriod - previousVotePeriod !== 1) {
     throw new Error('Failed to Reveal Exchange Rates; reset to prevote')
   }
+  console.info(`${new Date().toLocaleTimeString()}\t\tProcessing vote. `)
 
-  // Print timestamp before start
-  console.info(`timestamp: ${new Date().toUTCString()}`)
-
-  // Removes non-whitelisted currencies and abstain for not fetched currencies
-  const prices = preparePrices(await getPrices(priceURLs), oracleWhitelist)
-
-  // Build Exchange Rate Vote Msgs
+  const prices                                   = preparePrices(await getPrices(priceURLs), oracleWhitelist)  // Removes non-whitelisted currencies and abstain for not fetched currencies
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
   // Build Exchange Rate Prevote Msgs
   const isPrevoteOnlyTx = previousVoteMsgs.length === 0
-  const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
-  const tx = await wallet.createAndSignTx({
+  const msgs            = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
+  const tx              = await signed_wallet.createAndSignTx({
     msgs,
-    fee: new Fee((1 + msgs.length) * 50000, []),
+    fee : new Fee((1 + msgs.length) * 50000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
+  
   const res = await client.tx.broadcastSync(tx).catch((err) => {
     console.error(`broadcast error: ${err.message}`, tx.toData())
     throw err
@@ -314,13 +313,12 @@ export async function processVote(
     return
   }
 
-  const txhash = res.txhash
-  console.info(`broadcast success: txhash: ${txhash}`)
+  console.info(`broadcast success: txhash: ${res.txhash}`)
 
   const height = await validateTx(
     client,
     nextBlockHeight,
-    txhash,
+    res.txhash,
     // if only prevote exist, then wait 2 * vote_period blocks,
     // else wait left blocks in the current vote_period
     isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod
@@ -328,15 +326,15 @@ export async function processVote(
 
   // Update last success VotePeriod
   previousVotePeriod = Math.floor(height / oracleVotePeriod)
-  previousVoteMsgs = voteMsgs
+  previousVoteMsgs   = voteMsgs
 }
 
 async function validateTx(
-  client: LCDClient,
+  client         : LCDClient,
   nextBlockHeight: number,
-  txhash: string,
-  timeoutHeight: number
-): Promise<number> {
+  txhash         : string,
+  timeoutHeight  : number
+  )              : Promise<number> {
   let height = 0
 
   // wait 3 blocks
@@ -347,19 +345,15 @@ async function validateTx(
 
   while (!height && lastCheckHeight < maxBlockHeight) {
     await Bluebird.delay(1500)
-
-    const lastBlock = await client.tendermint.blockInfo()
-    const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
+    const lastBlock:BlockInfo = await client.tendermint.blockInfo()
+    const latestBlockHeight   = parseInt(lastBlock.block.header.height, 10)
 
     if (latestBlockHeight <= lastCheckHeight) {
       continue
     }
 
-    // set last check height to latest block height
     lastCheckHeight = latestBlockHeight
-
-    // wait for indexing (not sure; but just for safety)
-    await Bluebird.delay(500)
+    await Bluebird.delay(500) // wait for indexing (not sure; but just for safety)
 
     await client.tx
       .txInfo(txhash)
@@ -372,7 +366,7 @@ async function validateTx(
       })
       .catch((err) => {
         if (!err.isAxiosError) {
-          console.error(err.message)
+          console.error("transaction validation error:", err.message)
         }
       })
   }
@@ -385,27 +379,23 @@ async function validateTx(
   return height
 }
 
-const makeLCDConfig = (URL:string, chainID:string): LCDClientConfig => ( {URL,chainID})
-
-
-
-
 // export async function vote(args: Required<Omit<CLIArgs,'subparser_name'|'ledgerMode'|'verbose'>> ): Promise<void> {
 export async function vote(
-  { keyPath                     ,
-    password                    ,
-    validators                  ,
-    sources                     ,
-    chainID                     ,
-    lcdAddresses                ,
-    lcdAddressesLeaders         , }:{
-      keyPath            :string  ,
-      password           :string  ,
-      validators         :string[],
-      sources            :string[],
-      chainID            :string  ,
-      lcdAddresses       :string[],
-      lcdAddressesLeaders:string[], }
+  { keyPath,
+    password,
+    validators,
+    sources,
+    chainID,
+    lcdAddresses,
+    lcdAddressesLeaders, }: {
+      keyPath: string,
+      password: string,
+      validators: string[],
+      sources: string[],
+      chainID: string,
+      lcdAddresses: string[],
+      lcdAddressesLeaders: string[],
+    }
 ): Promise<void> {
 
 
@@ -416,12 +406,19 @@ export async function vote(
   const rawKey: RawKey = await initKey(keyPath, password)
   const voterAddr      = rawKey.accAddress
   const validatorAddrs = validators || [rawKey.valAddress]
-  const rotation       = new LCDRotation(lcdAddressesLeaders,lcdAddresses,chainID, 3000,3000)
+
+  const rotation       = new LCDRotation(3000, 3000)
+
+  for (var L in lcdAddressesLeaders){
+    rotation.register_lcd(url:"")
+    
+  }
+
 
   // Create a Terra Lite client from the first argument in the list
   // ※ This could be cleaner
-  
-  process.env.VERBOSE ?  console.info("\x1b[36mBegun voting process.\x1b[0m"): ''
+
+  process.env.VERBOSE ? console.info("\x1b[36mBegun voting process.\x1b[0m") : ''
 
   while (true) {
 
@@ -435,26 +432,20 @@ export async function vote(
       validatorAddrs,
       voterAddr
     )
-    .then(r=>{console.log("Voted successfully. LCD Responded: ", r)})
-    .catch((err) => {
+      .catch((err) => {
         if (err.isAxiosError) {
-          if (process.env.VERBOSE){
-            console.error(`Current LCD(${rotation.currentLCDC.config.URL} | ${rotation.currentLCDC.oracle.feederAddress}) failed  with error : `, err)
-            console.info(`Rotating to next `)
-
-          }
-          console.info('vote: lcd client unavailable, rotating to next lcd client.')
+          console.error(`Current LCD (${rotation.currentLCDC.config.URL}) failed. Rotating to next ${'placeholder'}`)
           rotation.rotate()
-      }
+        }
         if (err.isAxiosError && err.response) {
-          console.error(err.message, err.response.data)
+          // console.error( err.message, err.response.data)
         } else {
-          console.error(err.message)
+          // console.error(err.message)
         }
 
 
-      resetPrevote()
-    })
+        resetPrevote()
+      })
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
@@ -462,5 +453,5 @@ export async function vote(
 
 function resetPrevote() {
   previousVotePeriod = 0
-  previousVoteMsgs   = []
+  previousVoteMsgs = []
 }

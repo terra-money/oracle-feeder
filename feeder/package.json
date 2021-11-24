@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "start"     : "ts-node src/index.ts",
-    "roundrobin": "ts-node src/index.ts vote --source   http://localhost:8532/latest --lcd https://blockdaemon-terra-lcd.api.bdnodes.net:1317 --lcd      162.55.244.250:27656  --lcd      162.55.132.48:15606    --lcd      162.55.131.238:15606    --lcd      54.154.91.139:26656    --lcd      seed.terra-mainnet.everstake.one:26656    --lcd      35.86.26.38:26656    --lcd      162.55.244.250:27656    --lcd      terra-mainnet.0base.vc:26656    --lcd      kenaz.coinbevy.com:26656    --lcd      35.227.90.116:26656    --lcd      terra-seed-mainnet.blockngine.io:26676    --lcd      terra.inotel.ro:26656    --chain-id columbus-5    --password \"552881498\"",
+    "roundrobin": "ts-node src/index.ts vote --source   http://localhost:8532/latest -L https://blockdaemon-terra-lcd.api.bdnodes.net:1317 --lcd      162.55.244.250:27656  --lcd      162.55.132.48:15606    --lcd      162.55.131.238:15606    --lcd      54.154.91.139:26656    --lcd      seed.terra-mainnet.everstake.one:26656    --lcd      35.86.26.38:26656    --lcd      162.55.244.250:27656    --lcd      terra-mainnet.0base.vc:26656    --lcd      kenaz.coinbevy.com:26656    --lcd      35.227.90.116:26656    -L      terra-seed-mainnet.blockngine.io:26676    --lcd      terra.inotel.ro:26656    --chain-id columbus-5    --password \"552881498\"",
     "lint"      : "eslint 'src/**/*.{js,ts,tsx}' --fix"
   },
   "dependencies": {
