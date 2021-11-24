@@ -18,27 +18,22 @@ import {
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 import { url } from 'inspector'
+import { time } from 'console'
 
 
 
 const makeLCDConfig = (URL: string, chainID: string): LCDClientConfig => ({ URL, chainID })
 interface RotationProfile {
-  config     : LCDClientConfig
-  up_since   : string
-  uptimes    : string[][]
+  config: LCDClientConfig
+  up_since: string
+  uptimes: string[][]
   avg_latency: number,
-  priority   : number
+  priority: number
 }
 
+
+
 class LCDRotation {
-
-  private timeout          : number;
-  private restore_lead_freq: number;
-  public  currentLCDC      : LCDClient;
-  private clients          : RotationProfile[] = [];
-
-
-  constructor(
 
     /**!-------------------------------------[※]------------------------------------------#
      * Could do a few small things here possibly in the longer run, of course, like in any failover.
@@ -48,41 +43,20 @@ class LCDRotation {
      * - periodically pinging the set and recording the running average latency, reprioritizing accordingly
      * - adding new members inflight 
      * - pruning nodes that have been ded for longer than x
+     * -------------------------------------[※]------------------------------------------#
      */
+  private timeout_threshold: number;
+  private restore_lead_freq: number;
+  public  currentLCDC      : LCDClient;
+  public  clients          : RotationProfile[] = [];
 
+
+  constructor(
     leader_re_frequency: number,
     timeout_threshold: number) {
 
     this.restore_lead_freq = leader_re_frequency;
-    this.timeout           = timeout_threshold;
-    
-
-    // var valn = LCD_leader_clients.length + LCD_clients.length
-
-    // LCD_leader_clients.map(url =>
-    //   this.clients.push({
-    //     priority   : valn--,
-    //     avg_latency: -1,
-    //     uptimes    : [],
-    //     up_since   : 'never',
-    //     config     : makeLCDConfig(url, this.chainID)
-    //   } as RotationProfile)
-    // )
-
-    // LCD_clients.map(url =>
-    //   this.clients.push({
-    //     priority   : 0,
-    //     avg_latency: -1,
-    //     uptimes    : [],
-    //     up_since   : 'never',
-    //     config     : makeLCDConfig(url, this.chainID)
-    //   } as RotationProfile)
-    // )
-
-    // this.currentLCDC = new LCDClient(this.clients[0].config)
-    console.log();
-    
-
+    this.timeout_threshold = timeout_threshold;
 
 
     // 1.create a config and corresponding profile for every LCD url 
@@ -92,29 +66,70 @@ class LCDRotation {
     // 4.for every client, leader or not, ping them every X minutes and record average latency
     // 5.for the client that becomes active -- record uptime and if it fails -- add uptime to log
 
+
+      axios.defaults.timeout = timeout_threshold
+    
   }
 
+  // abstract some logic 
+  private connectLcd()       : void{}
+  private disconnectLcd()    : void{}
+
+  // this should be on timer in the outer loop
+  public  reestablishLeader(): void{}
 
 
+  
   /**
-   * Add an lcd client to a the of available rotating ones.
+   * Add an lcd client to a the of  rotating ones.
    * @param url  The url of the lcd client
    * @param chainID Current correspondent chain
    * @returns 
    */
-  public register_lcd(url:string, chainID:string, priority:number=0): void {
-    var lcd:RotationProfile ={
-      priority   ,
-      config     : makeLCDConfig(url,chainID),
+  public register_lcd(url: string, chainID: string, priority: number = 0): void {
+    var lcd: RotationProfile = {
+      priority,
+      config     : makeLCDConfig(url, chainID),
       avg_latency: 0,
-      up_since   : 'never',
+      up_since   : 'down',
       uptimes    : []
     }
     this.clients.push(lcd)
+    this.clients.sort((a,b)=>a.priority-b.priority)  // make sure they are always in descending order
+    this.pingLeader
+
+    if ( this.currentLCDC === undefined ){
+      this.currentLCDC = new LCDClient({...lcd.config}) // if this is the first lcd --> assign to current
+      return
+    }
+
+    if (this.clients[0].priority < lcd.priority){
+      // if incoming has higher priority, swap out
+      this.clients[0].uptimes.push([ this.clients[0].up_since, Date() ])
+      this.clients[0].up_since = 'down'
+      this.currentLCDC          = new LCDClient({...lcd.config})
+    }
+
+  }
+
+
+
+
+  /**
+   * Check if LCD is alive.
+   * @param url  
+   */
+  private async pingLeader(url:string) {
+    // Is there a better way to check aliveness than trying to reconnect? Ping?
+    console.log("pinging");
+    const resp = await axios.get(`${url}/node_info`)
+    console.log("Leader responded",resp);
   }
 
   public rotate(): void {
-    return
+    // Again, many strategies are possible here, but right now just going trhough leaders,
+    this.pingLeader(this.clients[0].config.URL)
+    this.currentLCDC = new LCDClient({ ...this.clients[0].config }) //※ This could be done more gracefully with "connect" and "disconnect" methods
   }
 
 }
@@ -141,18 +156,18 @@ async function initKey(keyPath: string, password?: string): Promise<RawKey> {
 }
 
 async function loadOracleParams(client: LCDClient): Promise<{
-  oracleVotePeriod : number
-  oracleWhitelist  : string[]
+  oracleVotePeriod: number
+  oracleWhitelist: string[]
   currentVotePeriod: number
   indexInVotePeriod: number
-  nextBlockHeight  : number
+  nextBlockHeight: number
 }> {
-  const oracleParams              = await client.oracle.parameters()
-  const oracleVotePeriod          = oracleParams.vote_period
+  const oracleParams = await client.oracle.parameters()
+  const oracleVotePeriod = oracleParams.vote_period
   const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
-  const latestBlock: BlockInfo    = await client.tendermint.blockInfo()
+  const latestBlock: BlockInfo = await client.tendermint.blockInfo()
 
-  const nextBlockHeight   = parseInt(latestBlock.block.header.height, 10) + 1  // the vote will be included in the next blocj
+  const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1  // the vote will be included in the next blocj
   const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)     // ※ Would be nice to have this link to Terra Docs
   const indexInVotePeriod = nextBlockHeight % oracleVotePeriod
 
@@ -167,7 +182,7 @@ async function loadOracleParams(client: LCDClient): Promise<{
 
 interface Price {
   currency: string
-  price   : string
+  price: string
 }
 
 async function getPrices(sources: string[]): Promise<Price[]> {
@@ -238,10 +253,10 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
 }
 
 function buildVoteMsgs(
-  prices   : Price[],
-  valAddrs : string[],
+  prices: Price[],
+  valAddrs: string[],
   voterAddr: string
-  )        : MsgAggregateExchangeRateVote[] {
+): MsgAggregateExchangeRateVote[] {
   const coins = prices.map(({ currency, price }) => `${price}u${currency.toLowerCase()}`).join(',')
 
   return valAddrs.map((valAddr) => {
@@ -257,12 +272,12 @@ let previousVotePeriod = 0
 
 // yarn start vote command
 export async function processVote(
-  client       : LCDClient,
+  client: LCDClient,
   signed_wallet: Wallet,
-  priceURLs    : string[],
-  valAddrs     : string[],
-  voterAddr    : string
-  )            : Promise<void> {
+  priceURLs: string[],
+  valAddrs: string[],
+  voterAddr: string
+): Promise<void> {
   const {
 
     oracleVotePeriod,
@@ -274,7 +289,7 @@ export async function processVote(
   } = await loadOracleParams(client)
 
   console.log("Failed after oracle load params");
-  
+
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
   if (
@@ -290,19 +305,19 @@ export async function processVote(
   }
   console.info(`${new Date().toLocaleTimeString()}\t\tProcessing vote. `)
 
-  const prices                                   = preparePrices(await getPrices(priceURLs), oracleWhitelist)  // Removes non-whitelisted currencies and abstain for not fetched currencies
+  const prices = preparePrices(await getPrices(priceURLs), oracleWhitelist)  // Removes non-whitelisted currencies and abstain for not fetched currencies
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
   // Build Exchange Rate Prevote Msgs
   const isPrevoteOnlyTx = previousVoteMsgs.length === 0
-  const msgs            = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
-  const tx              = await signed_wallet.createAndSignTx({
+  const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
+  const tx = await signed_wallet.createAndSignTx({
     msgs,
-    fee : new Fee((1 + msgs.length) * 50000, []),
+    fee: new Fee((1 + msgs.length) * 50000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
-  
+
   const res = await client.tx.broadcastSync(tx).catch((err) => {
     console.error(`broadcast error: ${err.message}`, tx.toData())
     throw err
@@ -326,15 +341,15 @@ export async function processVote(
 
   // Update last success VotePeriod
   previousVotePeriod = Math.floor(height / oracleVotePeriod)
-  previousVoteMsgs   = voteMsgs
+  previousVoteMsgs = voteMsgs
 }
 
 async function validateTx(
-  client         : LCDClient,
+  client: LCDClient,
   nextBlockHeight: number,
-  txhash         : string,
-  timeoutHeight  : number
-  )              : Promise<number> {
+  txhash: string,
+  timeoutHeight: number
+): Promise<number> {
   let height = 0
 
   // wait 3 blocks
@@ -345,8 +360,8 @@ async function validateTx(
 
   while (!height && lastCheckHeight < maxBlockHeight) {
     await Bluebird.delay(1500)
-    const lastBlock:BlockInfo = await client.tendermint.blockInfo()
-    const latestBlockHeight   = parseInt(lastBlock.block.header.height, 10)
+    const lastBlock: BlockInfo = await client.tendermint.blockInfo()
+    const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
 
     if (latestBlockHeight <= lastCheckHeight) {
       continue
@@ -388,12 +403,12 @@ export async function vote(
     chainID,
     lcdAddresses,
     lcdAddressesLeaders, }: {
-      keyPath            : string,
-      password           : string,
-      validators         : string[],
-      sources            : string[],
-      chainID            : string,
-      lcdAddresses       : string[],
+      keyPath: string,
+      password: string,
+      validators: string[],
+      sources: string[],
+      chainID: string,
+      lcdAddresses: string[],
       lcdAddressesLeaders: string[],
     }
 ): Promise<void> {
@@ -406,35 +421,23 @@ export async function vote(
   const rawKey: RawKey = await initKey(keyPath, password)
   const voterAddr      = rawKey.accAddress
   const validatorAddrs = validators || [rawKey.valAddress]
-
   const rotation       = new LCDRotation(3000, 3000)
 
 
-  console.log("\x1b[93mCREATED ROATAITONbb\x1b[0m");
-  console.log(`\x1b[93m${lcdAddressesLeaders}\x1b[0m`);
-  console.log(`\x1b[93m${lcdAddresses}\x1b[0m`);
 
-  //? Default: Register leaders in descending priority
-  var valn = lcdAddressesLeaders.length
-
-  lcdAddresses.reduceRight((_,leader_url,i)=>{
-    rotation.register_lcd(leader_url,chainID, ++i)
+  //? Default: Register leaders in descending priority and all others with 0
+  lcdAddressesLeaders.reduceRight((_, leader_url, i) => {
+    rotation.register_lcd(leader_url, chainID, lcdAddressesLeaders.length - i)
     return i
-  },0)
+  }, 0)
 
-
-
+  lcdAddresses.map((url) => { rotation.register_lcd(url, chainID, 0) })
 
   // Create a Terra Lite client from the first argument in the list
   // ※ This could be cleaner
-
   process.env.VERBOSE ? console.info("\x1b[36mBegun voting process.\x1b[0m") : ''
-
   while (true) {
-
-
     const startTime = Date.now()
-
     await processVote(
       rotation.currentLCDC,
       rotation.currentLCDC.wallet(rawKey),
