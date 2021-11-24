@@ -124,10 +124,7 @@ async function main(): Promise<void> {
 
     // ? LCD Addresses, prices source, chainId
     args.lcdAddresses        = args.lcdAddresses        ||(process.env['LCD_ADDRESS'       ] && process.env['LCD_ADDRESS'       ].split(',')) ||[]
-    console.log("Before ARGS," , args.lcdAddressesLeaders);
     args.lcdAddressesLeaders = args.lcdAddressesLeaders ||(process.env['LCD_ADDRESS_LEADER'] && process.env['LCD_ADDRESS_LEADER'].split(',')) ||[]
-    console.log("AFTER ARGS," , args.lcdAddressesLeaders);
-    
 
     args.sources             = args.sources || (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || []
     args.chainID             = args.chainID || process.env['CHAIN_ID'] || ''

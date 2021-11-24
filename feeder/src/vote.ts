@@ -414,11 +414,15 @@ export async function vote(
   console.log(`\x1b[93m${lcdAddressesLeaders}\x1b[0m`);
   console.log(`\x1b[93m${lcdAddresses}\x1b[0m`);
 
-  for (var L in lcdAddressesLeaders){
-    console.log(L);
-    rotation.register_lcd(L,chainID, 0)
-    
-  }
+  //? Default: Register leaders in descending priority
+  var valn = lcdAddressesLeaders.length
+
+  lcdAddresses.reduceRight((_,leader_url,i)=>{
+    rotation.register_lcd(leader_url,chainID, ++i)
+    return i
+  },0)
+
+
 
 
   // Create a Terra Lite client from the first argument in the list
