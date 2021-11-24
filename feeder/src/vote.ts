@@ -14,6 +14,7 @@ import {
   Fee,
   isTxError,
   LCDClientConfig,
+  BlockInfo,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 import { CLIArgs } from 'index'
@@ -104,11 +105,17 @@ class LCDRotation{
 
   }
 
+  
 
-  rotate():void{
-    return 
+  public register_lcd(url:string, chainId: string):void {
+
+    return
+
   }
 
+  public rotate():void{
+    return 
+  }
 
 }
 
@@ -140,15 +147,13 @@ async function loadOracleParams(client: LCDClient): Promise<{
   indexInVotePeriod: number
   nextBlockHeight  : number
 }> {
-  const oracleParams = await client.oracle.parameters()
-  const oracleVotePeriod = oracleParams.vote_period
+  const oracleParams              = await client.oracle.parameters()
+  const oracleVotePeriod          = oracleParams.vote_period
   const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
-
-  const latestBlock = await client.tendermint.blockInfo()
-
-  // the vote will be included in the next block
-  const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1
-  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)
+  const latestBlock:BlockInfo     = await client.tendermint.blockInfo()
+  
+  const nextBlockHeight   = parseInt(latestBlock.block.header.height, 10) + 1 // the vote will be included in the next blocj
+  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod) // ※ Would be nice to have this link to Terra Docs
   const indexInVotePeriod = nextBlockHeight % oracleVotePeriod
 
   return {
@@ -252,12 +257,12 @@ let previousVotePeriod                               = 0
 
 // yarn start vote command
 export async function processVote(
-  client: LCDClient,
-  wallet: Wallet,
+  client   : LCDClient,
+  wallet   : Wallet,
   priceURLs: string[],
-  valAddrs: string[],
+  valAddrs : string[],
   voterAddr: string
-): Promise<void> {
+  )        : Promise<void> {
   const {
     oracleVotePeriod,
     oracleWhitelist,
@@ -422,6 +427,7 @@ export async function vote(
 
 
     const startTime = Date.now()
+
     await processVote(
       rotation.currentLCDC,
       rotation.currentLCDC.wallet(rawKey),

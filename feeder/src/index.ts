@@ -96,7 +96,6 @@ function registerCommands(parser: ArgumentParser): void {
 }
 
 export interface CLIArgs {
-
   subparser_name      : 'vote' | 'update-key'
   verbose ?           : boolean
   keyPath?            : string
