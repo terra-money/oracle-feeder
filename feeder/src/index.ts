@@ -96,22 +96,24 @@ function registerCommands(parser: ArgumentParser): void {
 }
 
 export interface CLIArgs {
-                  subparser_name      : 'vote' | 'update-key'
-          verbose ?                   : boolean
-                  keyPath?            : string
-                  password            : string
-                  sources?            : string[]
-                  validators?         : string[]
-                  chainID?            : string
-                  lcdAddressesLeaders?: string[]
-                  lcdAddresses?       : string[]
-                  ledgerMode?         : boolean
+
+  subparser_name      : 'vote' | 'update-key'
+  verbose ?           : boolean
+  keyPath?            : string
+  password            : string
+  sources?            : string[]
+  validators?         : string[]
+  chainID?            : string
+  lcdAddressesLeaders?: string[]
+  lcdAddresses?       : string[]
+  ledgerMode?         : boolean
+  
 }
 
 async function main(): Promise<void> {
   const parser = new ArgumentParser({
-    version: packageInfo.version,
-    addHelp: true,
+    version    : packageInfo.version,
+    addHelp    : true,
     description: `Terra oracle voter`,
   })
 
