@@ -36,7 +36,7 @@ function registerCommands(parser: ArgumentParser): void {
       'Specify a running Lite Client Daemon (LCD) leader address.' +
       'This will be maintained as the default LCD and frequently polled for liveness in terms of failure with intent to return to it.' +
       'More than one leader is possible and the precedence between them is the same as the order of their --lcdL arguments, they will polled accordingly.',
-    dest: 'lcdAdressessLeaders',
+    dest: 'lcdAddressesLeaders',
     required: false,
   })
 
@@ -124,7 +124,10 @@ async function main(): Promise<void> {
 
     // ? LCD Addresses, prices source, chainId
     args.lcdAddresses        = args.lcdAddresses        ||(process.env['LCD_ADDRESS'       ] && process.env['LCD_ADDRESS'       ].split(',')) ||[]
+    console.log("Before ARGS," , args.lcdAddressesLeaders);
     args.lcdAddressesLeaders = args.lcdAddressesLeaders ||(process.env['LCD_ADDRESS_LEADER'] && process.env['LCD_ADDRESS_LEADER'].split(',')) ||[]
+    console.log("AFTER ARGS," , args.lcdAddressesLeaders);
+    
 
     args.sources             = args.sources || (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || []
     args.chainID             = args.chainID || process.env['CHAIN_ID'] || ''
@@ -172,8 +175,11 @@ async function main(): Promise<void> {
       keyPath, 
       lcdAddresses,
       lcdAddressesLeaders,
-      password,sources,validators
+      password,
+      sources,
+      validators
     })
+
   } else if (args.subparser_name === `update-key`) {
     args.keyPath && await updateKey(args.keyPath)
   }

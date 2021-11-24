@@ -388,12 +388,12 @@ export async function vote(
     chainID,
     lcdAddresses,
     lcdAddressesLeaders, }: {
-      keyPath: string,
-      password: string,
-      validators: string[],
-      sources: string[],
-      chainID: string,
-      lcdAddresses: string[],
+      keyPath            : string,
+      password           : string,
+      validators         : string[],
+      sources            : string[],
+      chainID            : string,
+      lcdAddresses       : string[],
       lcdAddressesLeaders: string[],
     }
 ): Promise<void> {
@@ -409,8 +409,14 @@ export async function vote(
 
   const rotation       = new LCDRotation(3000, 3000)
 
+
+  console.log("\x1b[93mCREATED ROATAITONbb\x1b[0m");
+  console.log(`\x1b[93m${lcdAddressesLeaders}\x1b[0m`);
+  console.log(`\x1b[93m${lcdAddresses}\x1b[0m`);
+
   for (var L in lcdAddressesLeaders){
-    rotation.register_lcd(url:"")
+    console.log(L);
+    rotation.register_lcd(L,chainID, 0)
     
   }
 
