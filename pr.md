@@ -333,3 +333,7 @@ a4950a460b60de640432701d0c5b964ba680254f@162.55.244.169:26656
 ```bash
 awk -F ":" '{print $1}' lcds | awk -F "@" '{print $2}'  | xargs -I % geoiplookup %
 ```
+
+- a little confused wrt the blockheight/voteperiod calculation. didn't bother searching docs, but a link in the coode comments would be nice
+
+- not sure if every lcd is supposed to have its own chain id. the LCDConfig seems to imply so.

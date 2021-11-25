@@ -35,20 +35,20 @@ interface RotationProfile {
 
 class LCDRotation {
 
-    /**!-------------------------------------[※]------------------------------------------#
-     * Could do a few small things here possibly in the longer run, of course, like in any failover.
-     * some useful features might include:
-     * - more granular priority modes for leader-lcds cohort. 
-     *  i.e. descdending/roundrobin, but priority over regular lcds/random-sampling
-     * - periodically pinging the set and recording the running average latency, reprioritizing accordingly
-     * - adding new members inflight 
-     * - pruning nodes that have been ded for longer than x
-     * -------------------------------------[※]------------------------------------------#
-     */
+  /**!-------------------------------------[※]------------------------------------------#
+   * Could do a few small things here possibly in the longer run, of course, like in any failover.
+   * some useful features might include:
+   * - more granular priority modes for leader-lcds cohort. 
+   *  i.e. descdending/roundrobin, but priority over regular lcds/random-sampling
+   * - periodically pinging the set and recording the running average latency, reprioritizing accordingly
+   * - adding new members inflight 
+   * - pruning nodes that have been ded for longer than x
+   * -------------------------------------[※]------------------------------------------#
+   */
   private timeout_threshold: number;
   private restore_lead_freq: number;
-  public  currentLCDC      : LCDClient;
-  public  clients          : RotationProfile[] = [];
+  public currentLCDC: LCDClient;
+  public clients: RotationProfile[] = [];
 
 
   constructor(
@@ -67,19 +67,19 @@ class LCDRotation {
     // 5.for the client that becomes active -- record uptime and if it fails -- add uptime to log
 
 
-      axios.defaults.timeout = timeout_threshold
-    
+    axios.defaults.timeout = timeout_threshold
+
   }
 
   // abstract some logic 
-  private connectLcd()       : void{}
-  private disconnectLcd()    : void{}
+  private connectLcd(): void { }
+  private disconnectLcd(): void { }
 
   // this should be on timer in the outer loop
-  public  reestablishLeader(): void{}
+  public reestablishLeader(): void { }
 
 
-  
+
   /**
    * Add an lcd client to a the of  rotating ones.
    * @param url  The url of the lcd client
@@ -89,25 +89,25 @@ class LCDRotation {
   public register_lcd(url: string, chainID: string, priority: number = 0): void {
     var lcd: RotationProfile = {
       priority,
-      config     : makeLCDConfig(url, chainID),
+      config: makeLCDConfig(url, chainID),
       avg_latency: 0,
-      up_since   : 'down',
-      uptimes    : []
+      up_since: 'down',
+      uptimes: []
     }
     this.clients.push(lcd)
-    this.clients.sort((a,b)=>a.priority-b.priority)  // make sure they are always in descending order
+    this.clients.sort((a, b) => a.priority - b.priority)  // make sure they are always in descending order
     this.pingLeader
 
-    if ( this.currentLCDC === undefined ){
-      this.currentLCDC = new LCDClient({...lcd.config}) // if this is the first lcd --> assign to current
+    if (this.currentLCDC === undefined) {
+      this.currentLCDC = new LCDClient({ ...lcd.config }) // if this is the first lcd --> assign to current
       return
     }
 
-    if (this.clients[0].priority < lcd.priority){
+    if (this.clients[0].priority < lcd.priority) {
       // if incoming has higher priority, swap out
-      this.clients[0].uptimes.push([ this.clients[0].up_since, Date() ])
+      this.clients[0].uptimes.push([this.clients[0].up_since, Date()])
       this.clients[0].up_since = 'down'
-      this.currentLCDC          = new LCDClient({...lcd.config})
+      this.currentLCDC = new LCDClient({ ...lcd.config })
     }
 
   }
@@ -119,11 +119,17 @@ class LCDRotation {
    * Check if LCD is alive.
    * @param url  
    */
-  private async pingLeader(url:string) {
+  private async pingLeader(url: string) {
     // Is there a better way to check aliveness than trying to reconnect? Ping?
     console.log("pinging");
-    const resp = await axios.get(`${url}/node_info`)
-    console.log("Leader responded",resp);
+    try {
+      const resp = await axios.get(`${url}/node_info`)
+      console.log("Leader responded", resp);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log("\x1b[92mAxios Timeout error\x1b[0m");
+      }
+    }
   }
 
   public rotate(): void {
@@ -287,14 +293,16 @@ export async function processVote(
     nextBlockHeight,
 
   } = await loadOracleParams(client)
-
-  console.log("Failed after oracle load params");
+  console.log("Loaded oracle params.");
+  
 
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
   if (
-    (previousVotePeriod && currentVotePeriod === previousVotePeriod) || oracleVotePeriod - indexInVotePeriod < 2
-  ) {
+    (previousVotePeriod && currentVotePeriod === previousVotePeriod) || oracleVotePeriod - indexInVotePeriod < 2) 
+  {
+    console.log(`Previous vote period :${previousVotePeriod}\n Current vote period : ${currentVotePeriod}\nOracleVoteperiod : ${oracleVotePeriod}`);
+    console.log("Skipped voting period.");
     return
   }
 
@@ -303,6 +311,7 @@ export async function processVote(
   if (previousVotePeriod && currentVotePeriod - previousVotePeriod !== 1) {
     throw new Error('Failed to Reveal Exchange Rates; reset to prevote')
   }
+
   console.info(`${new Date().toLocaleTimeString()}\t\tProcessing vote. `)
 
   const prices = preparePrices(await getPrices(priceURLs), oracleWhitelist)  // Removes non-whitelisted currencies and abstain for not fetched currencies
@@ -345,11 +354,11 @@ export async function processVote(
 }
 
 async function validateTx(
-  client: LCDClient,
+  client         : LCDClient,
   nextBlockHeight: number,
-  txhash: string,
-  timeoutHeight: number
-): Promise<number> {
+  txhash         : string,
+  timeoutHeight  : number
+  )              : Promise<number> {
   let height = 0
 
   // wait 3 blocks
@@ -414,14 +423,11 @@ export async function vote(
 ): Promise<void> {
 
 
-
-
-
   // Grab and initialize the key
   const rawKey: RawKey = await initKey(keyPath, password)
-  const voterAddr      = rawKey.accAddress
+  const voterAddr = rawKey.accAddress
   const validatorAddrs = validators || [rawKey.valAddress]
-  const rotation       = new LCDRotation(3000, 3000)
+  const rotation = new LCDRotation(3000, 2500)
 
 
 
@@ -430,7 +436,6 @@ export async function vote(
     rotation.register_lcd(leader_url, chainID, lcdAddressesLeaders.length - i)
     return i
   }, 0)
-
   lcdAddresses.map((url) => { rotation.register_lcd(url, chainID, 0) })
 
   // Create a Terra Lite client from the first argument in the list
@@ -447,7 +452,7 @@ export async function vote(
     )
       .catch((err) => {
         if (err.isAxiosError) {
-          console.error(`Current LCD (${rotation.currentLCDC.config.URL}) failed. Rotating to next ${'placeholder'}`)
+          console.error(`Current LCD (\x1b[91m${rotation.currentLCDC.config.URL}\x1b[0m) failed. Rotating to next ${'placeholder'}`)
           rotation.rotate()
         }
         if (err.isAxiosError && err.response) {
@@ -455,10 +460,9 @@ export async function vote(
         } else {
           // console.error(err.message)
         }
-
-
         resetPrevote()
       })
+
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
@@ -468,3 +472,10 @@ function resetPrevote() {
   previousVotePeriod = 0
   previousVoteMsgs = []
 }
+
+// Lots of thing can be improved on a second glance,
+// but sticking to the minimal version of prioritized leader:
+// TODO: 0. what's the correct way to ping an lcd? would be super useful for probing before reconnecting
+// TODO: 1. Error throwing is a little opaque. straighten this out to know which kind(axios?) warrants a call to leader rotate?
+// 
+
