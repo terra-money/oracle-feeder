@@ -20,17 +20,14 @@ import {
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 
-
-
 const makeLCDConfig = (URL: string, chainID: string): LCDClientConfig => ({ URL, chainID })
 interface RotationProfile {
-  config: LCDClientConfig
-  up_since: string
-  uptimes: string[][]
+  config     : LCDClientConfig
+  up_since   : string
+  uptimes    : string[][]
   avg_latency: number,
-  priority: number
+  priority   : number
 }
-
 
 
 class LCDRotation {
@@ -130,7 +127,6 @@ class LCDRotation {
     console.log("pinging ", url);
 
     // Am i doing this right, senpai?
-    
     return axios({
       method : "GET",
       url    : `https://${url}/node_info`,
@@ -154,6 +150,7 @@ class LCDRotation {
    * So far doesn't
    */
   public async rotate(): Promise<void> {
+
     console.log("\x1b[94mAttempting to rotate.\x1b[0m");
     // A few strategies are possible here, but right now just going trhough leaders,
     // var result            = await this.pingLeader(this.clients[this.leader_index].config.URL)
@@ -483,8 +480,6 @@ export async function vote(
         voterAddr
       )
 
-      console.log("===============================+ Processed vote.");
-
       if (transaction === undefined) {
         console.log("Transaction is undefined");
         continue
@@ -497,7 +492,6 @@ export async function vote(
         throw err
 
       })
-      console.log("===============================+ Broadcastingsync done .");
 
       if (isTxError(res)) {
         console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
