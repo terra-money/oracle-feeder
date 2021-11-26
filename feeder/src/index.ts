@@ -50,8 +50,9 @@ function registerCommands(parser: ArgumentParser): void {
 
   // !-------------------------------------[TODO:  could use a better description,example, a link to terra docs  ]-----------------------------------------#
   voteCommand.addArgument([`--validator`], {
-    action: `append`,
-    help: `validator address (e.g. terravaloper1...), can have multiple`,
+    action  : `append`,
+    help    : `validator address (e.g. terravaloper1...), can have multiple`,
+    dest    : 'validators',
     required: false,
   })
 
@@ -183,5 +184,5 @@ async function main(): Promise<void> {
 }
 
 main().catch((e) => {
-  console.error(e)
+  console.error("errror in main" , e)
 })

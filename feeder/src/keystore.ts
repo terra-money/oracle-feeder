@@ -6,22 +6,22 @@ const KEY_SIZE = 256
 const ITERATIONS = 100
 
 interface Entity {
-  name: string
-  address: string
+  name      : string
+  address   : string
   ciphertext: string
 }
 
 interface PlainEntity {
-  privateKey: string
-  publicKey: string
-  terraAddress: string
+  privateKey     : string
+  publicKey      : string
+  terraAddress   : string
   terraValAddress: string
 }
 
 function encrypt(plainText, pass): string {
   const salt = crypto.randomBytes(16)
-  const iv = crypto.randomBytes(16)
-  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
+  const iv   = crypto.randomBytes(16)
+  const key  = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha1')
 
   const cipher = crypto.createCipheriv('AES-256-CBC', key, iv)
   const encryptedText = Buffer.concat([cipher.update(plainText), cipher.final()]).toString('base64')
@@ -61,6 +61,7 @@ export async function save(
   password: string,
   mnemonic: string
   )       : Promise<void> {
+
   const keys = loadEntities(filePath)
 
   if (keys.find((key) => key.name === name)) {
@@ -71,9 +72,9 @@ export async function save(
 
   const ciphertext = encrypt(
     JSON.stringify({
-      privateKey: mnemonicKey.privateKey.toString(`hex`),
-      publicKey: (mnemonicKey.publicKey as Buffer).toString(`hex`),
-      terraAddress: mnemonicKey.accAddress,
+      privateKey     : mnemonicKey.privateKey.toString(`hex`),
+      publicKey      : (mnemonicKey.publicKey as Buffer).toString(`hex`),
+      terraAddress   : mnemonicKey.accAddress,
       terraValAddress: mnemonicKey.valAddress,
     }),
     password
@@ -89,9 +90,9 @@ export async function save(
 }
 
 export function load(filePath: string, name: string, password: string): PlainEntity {
-  const keys = loadEntities(filePath)
-  const key = keys.find((key) => key.name === name)
 
+  const keys = loadEntities(filePath)
+  const key  = keys.find((key) => key.name === name)
   if (!key) {
     throw new Error('Cannot load key by that name')
   }

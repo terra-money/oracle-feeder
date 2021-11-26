@@ -15,10 +15,10 @@ import {
   isTxError,
   LCDClientConfig,
   BlockInfo,
+  OracleParams,
+  Tx,
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
-import { url } from 'inspector'
-import { time } from 'console'
 
 
 
@@ -46,6 +46,7 @@ class LCDRotation {
    * -------------------------------------[※]------------------------------------------#
    */
   private timeout_threshold: number;
+  private leader_index: number;
   private restore_lead_freq: number;
   public currentLCDC: LCDClient;
   public clients: RotationProfile[] = [];
@@ -57,7 +58,7 @@ class LCDRotation {
 
     this.restore_lead_freq = leader_re_frequency;
     this.timeout_threshold = timeout_threshold;
-
+    this.leader_index = 0
 
     // 1.create a config and corresponding profile for every LCD url 
     // 2.prioritize those in the leader pool
@@ -65,8 +66,6 @@ class LCDRotation {
     // go down the leader list and attempt to reconnect 
     // 4.for every client, leader or not, ping them every X minutes and record average latency
     // 5.for the client that becomes active -- record uptime and if it fails -- add uptime to log
-
-
     axios.defaults.timeout = timeout_threshold
 
   }
@@ -96,7 +95,6 @@ class LCDRotation {
     }
     this.clients.push(lcd)
     this.clients.sort((a, b) => a.priority - b.priority)  // make sure they are always in descending order
-    this.pingLeader
 
     if (this.currentLCDC === undefined) {
       this.currentLCDC = new LCDClient({ ...lcd.config }) // if this is the first lcd --> assign to current
@@ -116,26 +114,61 @@ class LCDRotation {
 
 
   /**
-   * Check if LCD is alive.
+   * Check if LCD is alive. 
+   * ※ Not sure what's the correct way to do this and there isn't one short of attempting to reconnect.
    * @param url  
    */
-  private async pingLeader(url: string) {
+  private async pingLeader(url: string): Promise<boolean> {
     // Is there a better way to check aliveness than trying to reconnect? Ping?
-    console.log("pinging");
-    try {
-      const resp = await axios.get(`${url}/node_info`)
-      console.log("Leader responded", resp);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.log("\x1b[92mAxios Timeout error\x1b[0m");
+
+    // const ping_inst = await axios({ 
+    //   method             : 'get',
+    //   url                : url,
+    //   timeout            : this.timeout_threshold,
+    //   timeoutErrorMessage: "Timeout" })
+
+    console.log("pinging ", url);
+
+    // Am i doing this right, senpai?
+    
+    return axios({
+      method : "GET",
+      url    : `https://${url}/node_info`,
+      timeout: this.timeout_threshold
+    })
+      .then(r => {
+        console.log("Long awaited response", r)
+        return true
+
+      }).catch(e => {
+        //   console.log(`\x1b[92mAxios timed out(${this.timeout_threshold}ms) \x1b[0m`);
+        // console.log("Error?", e) 
+        return axios.isAxiosError(e) // ※ For now just seeing if the ping went through. If so -- try to connect to the node.
+
       }
-    }
+      )
+
   }
 
-  public rotate(): void {
-    // Again, many strategies are possible here, but right now just going trhough leaders,
-    this.pingLeader(this.clients[0].config.URL)
-    this.currentLCDC = new LCDClient({ ...this.clients[0].config }) //※ This could be done more gracefully with "connect" and "disconnect" methods
+  /**
+   * So far doesn't
+   */
+  public async rotate(): Promise<void> {
+    console.log("\x1b[94mAttempting to rotate.\x1b[0m");
+    // A few strategies are possible here, but right now just going trhough leaders,
+    // var result            = await this.pingLeader(this.clients[this.leader_index].config.URL)
+
+    this.leader_index = this.leader_index + 1
+    if (this.clients.length === this.leader_index) {
+      this.leader_index = 0
+    }
+    console.log(`Attempting to rotate. Index : [${this.leader_index}]`)
+    console.log("Leader index : ", this.leader_index);
+    this.currentLCDC = new LCDClient({ ...this.clients[this.leader_index].config })  //※ This could be done more gracefully with "connect" and "disconnect" methods
+    console.log(`created lcd with url ${this.clients[this.leader_index].config.URL}`);
+    
+    
+    
   }
 
 }
@@ -152,29 +185,30 @@ const ax = axios.create({
 })
 
 async function initKey(keyPath: string, password?: string): Promise<RawKey> {
+
   const plainEntity = ks.load(
-    keyPath,
-    'voter',
-    password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
+    keyPath, 'voter', password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
   )
 
   return new RawKey(Buffer.from(plainEntity.privateKey, 'hex'))
 }
 
-async function loadOracleParams(client: LCDClient): Promise<{
-  oracleVotePeriod: number
-  oracleWhitelist: string[]
-  currentVotePeriod: number
-  indexInVotePeriod: number
-  nextBlockHeight: number
-}> {
-  const oracleParams = await client.oracle.parameters()
+/**
+ * Fetches relevant params from tendermint and calculates block hiehgt/vote period
+ * This can be further split up into fetching relevant numbers from tendermint.
+ * 
+ * @param client 
+ * @returns  Promise<BlockParameters>
+ */
+async function calculate_block_params(client: LCDClient): Promise<BlockParameters> {
+  const oracleParams: OracleParams = await client.oracle.parameters()           // fetch oracle params
+
   const oracleVotePeriod = oracleParams.vote_period
   const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
   const latestBlock: BlockInfo = await client.tendermint.blockInfo()
 
-  const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1  // the vote will be included in the next blocj
-  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)     // ※ Would be nice to have this link to Terra Docs
+  const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1  // the vote will be included in the next block
+  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)     // 
   const indexInVotePeriod = nextBlockHeight % oracleVotePeriod
 
   return {
@@ -194,8 +228,7 @@ interface Price {
 async function getPrices(sources: string[]): Promise<Price[]> {
 
   const results = await Bluebird.some(
-    sources.map((s) => ax.get(s)),
-    1
+    sources.map((s) => ax.get(s)), 1
   ).then((results) =>
     results.filter(({ data }) => {
       if (
@@ -272,40 +305,41 @@ function buildVoteMsgs(
 }
 
 
-// huh
+//※ huh. May be a small quality of life improvement to put this into some state container.
+//※ could write to a file also to be able to not cold-start between oracle reboots idk
 let previousVoteMsgs: MsgAggregateExchangeRateVote[] = []
 let previousVotePeriod = 0
 
-// yarn start vote command
 export async function processVote(
-  client: LCDClient,
+  block_params : BlockParameters,
   signed_wallet: Wallet,
-  priceURLs: string[],
-  valAddrs: string[],
-  voterAddr: string
-): Promise<void> {
+  priceURLs    : string[],
+  valAddrs     : string[],
+  voterAddr    : string
+  )            : Promise<Tx> {
+
+
+
   const {
 
-    oracleVotePeriod,
-    oracleWhitelist,
     currentVotePeriod,
     indexInVotePeriod,
-    nextBlockHeight,
+    oracleVotePeriod,
+    oracleWhitelist
+  } = block_params
 
-  } = await loadOracleParams(client)
-  console.log("Loaded oracle params.");
-  
+  console.log('trying to create tx');
 
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
   if (
-    (previousVotePeriod && currentVotePeriod === previousVotePeriod) || oracleVotePeriod - indexInVotePeriod < 2) 
-  {
-    console.log(`Previous vote period :${previousVotePeriod}\n Current vote period : ${currentVotePeriod}\nOracleVoteperiod : ${oracleVotePeriod}`);
+    (previousVotePeriod && currentVotePeriod === previousVotePeriod) || oracleVotePeriod - indexInVotePeriod < 2) {
+    console.log(`Previous vote period :${previousVotePeriod}\nCurrent vote period : ${currentVotePeriod}\nOracleVoteperiod : ${oracleVotePeriod}`);
     console.log("Skipped voting period.");
-    return
-  }
+    
+    throw 'Skipped voting period.'
 
+  }
   // If it failed to reveal the price,
   // reset the state by throwing error
   if (previousVotePeriod && currentVotePeriod - previousVotePeriod !== 1) {
@@ -313,52 +347,29 @@ export async function processVote(
   }
 
   console.info(`${new Date().toLocaleTimeString()}\t\tProcessing vote. `)
-
   const prices = preparePrices(await getPrices(priceURLs), oracleWhitelist)  // Removes non-whitelisted currencies and abstain for not fetched currencies
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
-  // Build Exchange Rate Prevote Msgs
-  const isPrevoteOnlyTx = previousVoteMsgs.length === 0
+  // ※ i don't quite understand why we keep spread in all the succesful messages from before, but reset completely on failed vote. Terra thing?
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
-  const tx = await signed_wallet.createAndSignTx({
+  const transcation: Tx = await signed_wallet.createAndSignTx({
     msgs,
     fee: new Fee((1 + msgs.length) * 50000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
   })
 
+  console.log(transcation.body.messages);
 
-  const res = await client.tx.broadcastSync(tx).catch((err) => {
-    console.error(`broadcast error: ${err.message}`, tx.toData())
-    throw err
-  })
+  return transcation
 
-  if (isTxError(res)) {
-    console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
-    return
-  }
-
-  console.info(`broadcast success: txhash: ${res.txhash}`)
-
-  const height = await validateTx(
-    client,
-    nextBlockHeight,
-    res.txhash,
-    // if only prevote exist, then wait 2 * vote_period blocks,
-    // else wait left blocks in the current vote_period
-    isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod
-  )
-
-  // Update last success VotePeriod
-  previousVotePeriod = Math.floor(height / oracleVotePeriod)
-  previousVoteMsgs = voteMsgs
 }
 
 async function validateTx(
-  client         : LCDClient,
+  client: LCDClient,
   nextBlockHeight: number,
-  txhash         : string,
-  timeoutHeight  : number
-  )              : Promise<number> {
+  txhash: string,
+  timeoutHeight: number
+): Promise<number> {
   let height = 0
 
   // wait 3 blocks
@@ -403,6 +414,14 @@ async function validateTx(
   return height
 }
 
+interface BlockParameters {
+  oracleVotePeriod : number
+  oracleWhitelist  : string[]
+  currentVotePeriod: number
+  indexInVotePeriod: number
+  nextBlockHeight  : number
+}
+
 // export async function vote(args: Required<Omit<CLIArgs,'subparser_name'|'ledgerMode'|'verbose'>> ): Promise<void> {
 export async function vote(
   { keyPath,
@@ -412,12 +431,12 @@ export async function vote(
     chainID,
     lcdAddresses,
     lcdAddressesLeaders, }: {
-      keyPath: string,
-      password: string,
-      validators: string[],
-      sources: string[],
-      chainID: string,
-      lcdAddresses: string[],
+      keyPath            : string,
+      password           : string,
+      validators         : string[],
+      sources            : string[],
+      chainID            : string,
+      lcdAddresses       : string[],
       lcdAddressesLeaders: string[],
     }
 ): Promise<void> {
@@ -425,11 +444,11 @@ export async function vote(
 
   // Grab and initialize the key
   const rawKey: RawKey = await initKey(keyPath, password)
-  const voterAddr = rawKey.accAddress
+  const voterAddr      = rawKey.accAddress
   const validatorAddrs = validators || [rawKey.valAddress]
-  const rotation = new LCDRotation(3000, 2500)
+  const rotation       = new LCDRotation(3000, 2500)
 
-
+  console.log("ADDRESS:", validatorAddrs);
 
   //? Default: Register leaders in descending priority and all others with 0
   lcdAddressesLeaders.reduceRight((_, leader_url, i) => {
@@ -441,28 +460,75 @@ export async function vote(
   // Create a Terra Lite client from the first argument in the list
   // ※ This could be cleaner
   process.env.VERBOSE ? console.info("\x1b[36mBegun voting process.\x1b[0m") : ''
+
   while (true) {
     const startTime = Date.now()
-    await processVote(
-      rotation.currentLCDC,
-      rotation.currentLCDC.wallet(rawKey),
-      sources,
-      validatorAddrs,
-      voterAddr
-    )
-      .catch((err) => {
-        if (err.isAxiosError) {
-          console.error(`Current LCD (\x1b[91m${rotation.currentLCDC.config.URL}\x1b[0m) failed. Rotating to next ${'placeholder'}`)
-          rotation.rotate()
-        }
-        if (err.isAxiosError && err.response) {
-          // console.error( err.message, err.response.data)
-        } else {
-          // console.error(err.message)
-        }
-        resetPrevote()
-      })
 
+    // ※ Check periodically if leader awoke.
+    
+    try {
+      console.log("trying", rotation.currentLCDC.config.URL);
+      
+      // ? Process vote is  pretty convoluted thing.
+      const blockParams: BlockParameters = await calculate_block_params(rotation.currentLCDC)
+
+      // Build Exchange Rate Prevote Msgs
+      const isPrevoteOnlyTx = previousVoteMsgs.length === 0
+
+      const transaction: Tx | void = await processVote(
+        blockParams,
+        rotation.currentLCDC.wallet(rawKey),
+        sources,
+        validatorAddrs,
+        voterAddr
+      )
+
+      console.log("===============================+ Processed vote.");
+
+      if (transaction === undefined) {
+        console.log("Transaction is undefined");
+        continue
+      }
+
+      const res = await rotation.currentLCDC.tx.broadcastSync(transaction).catch((err) => {
+
+        console.error(`broadcast error: ${err.message}`, transaction.toData())
+        console.log("Trhowing deadling error");
+        throw err
+
+      })
+      console.log("===============================+ Broadcastingsync done .");
+
+      if (isTxError(res)) {
+        console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
+        return
+      }
+      console.info(`broadcast success: txhash: ${res.txhash}`)
+
+      const height = await validateTx(
+        rotation.currentLCDC, blockParams.nextBlockHeight, res.txhash,
+        // if only prevote exist, then wait 2 * vote_period blocks,
+        // else wait left blocks in the current vote_period
+        isPrevoteOnlyTx ? blockParams.oracleVotePeriod * 2 : blockParams.oracleVotePeriod - blockParams.indexInVotePeriod
+      )
+
+      // Update last success VotePeriod
+      previousVotePeriod = Math.floor(height / blockParams.oracleVotePeriod)
+      // previousVoteMsgs   = voteMsgs //<=-----------------------
+
+    }
+    catch (err) {
+
+      if (axios.isAxiosError(err)) {
+        console.error(`Current LCD (\x1b[91m${rotation.currentLCDC.config.URL}\x1b[0m) failed. Rotating to next ${''}`)
+        await rotation.rotate()
+
+      }
+      else {
+        console.error("\x1b[95m[ regular error ]\x1b[0m", err, err.message)
+      }
+      resetPrevote()
+    }
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
@@ -470,12 +536,11 @@ export async function vote(
 
 function resetPrevote() {
   previousVotePeriod = 0
-  previousVoteMsgs = []
+  previousVoteMsgs   = []
 }
 
 // Lots of thing can be improved on a second glance,
 // but sticking to the minimal version of prioritized leader:
 // TODO: 0. what's the correct way to ping an lcd? would be super useful for probing before reconnecting
-// TODO: 1. Error throwing is a little opaque. straighten this out to know which kind(axios?) warrants a call to leader rotate?
-// 
+// TODO: 1. Errors are a little opaque  straighten this out to know which kind just warrants a call to leader rotate and which are critical? 
 
