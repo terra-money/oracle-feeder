@@ -23,7 +23,7 @@ export class Fixer extends Quoter {
     }
 
     const response: Response = await fetch(
-      `http://data.fixer.io/api/latest?${toQueryString(params)}`,
+      `https://data.fixer.io/api/latest?${toQueryString(params)}`,
       { timeout: this.options.timeout }
     ).then((res) => res.json())
 
