@@ -1,3 +1,5 @@
+// Updated 09-Feb-22
+
 const fiatSymbols = [
   'USD/SDR',
   'USD/KRW',
@@ -14,10 +16,12 @@ const fiatSymbols = [
   'USD/SGD',
   'USD/THB',
   'USD/SEK',
-  'USD/NOK',
   'USD/DKK',
   'USD/IDR',
   'USD/PHP',
+  'USD/MYR',
+  'USD/NOK',
+  'USD/TWD'
 ]
 
 module.exports = {
