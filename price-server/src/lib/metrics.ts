@@ -1,4 +1,4 @@
-import { Counter, UpDownCounter } from '@opentelemetry/api-metrics'
+import { Counter } from '@opentelemetry/api-metrics'
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus'
 import { Meter, MeterProvider } from '@opentelemetry/metrics'
 import * as config from 'config'
