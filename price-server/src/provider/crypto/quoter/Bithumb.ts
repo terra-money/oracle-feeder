@@ -65,7 +65,7 @@ export class Bithumb extends WebSocketQuoter {
 
     switch (data?.type) {
       case 'transaction':
-        this.onTransaction((data as unknown) as TransactionResponse)
+        this.onTransaction(data as unknown as TransactionResponse)
         break
 
       default:

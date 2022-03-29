@@ -21,7 +21,7 @@ const fiatSymbols = [
   'USD/PHP',
   'USD/MYR',
   'USD/NOK',
-  'USD/TWD'
+  'USD/TWD',
 ]
 
 module.exports = {
@@ -56,7 +56,7 @@ module.exports = {
     },
     bandprotocol: {
       // DKK is not supported for bandprotocol
-      symbols: fiatSymbols.filter(v => !v.includes('DKK') && !v.includes('PHP')),
+      symbols: fiatSymbols.filter((v) => !v.includes('DKK') && !v.includes('PHP')),
       interval: 60 * 1000,
       timeout: 5000,
       // https://data.bandprotocol.com/
