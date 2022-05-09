@@ -14,7 +14,7 @@ interface Response {
 export class Fixer extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
-      access_key: this.options.apiKey,
+      // access_key: this.options.apiKey,
       // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription, default: EUR
       symbols:
         this.symbols
@@ -23,8 +23,11 @@ export class Fixer extends Quoter {
     }
 
     const response: Response = await fetch(
-      `https://data.fixer.io/api/latest?${toQueryString(params)}`,
-      { timeout: this.options.timeout }
+      `https://api.apilayer.com/fixer/latest?${toQueryString(params)}`,
+    { 
+      timeout: this.options.timeout,
+      headers: { 'apikey': this.options.apiKey ?? '' } 
+    }
     ).then((res) => res.json())
 
     if (!response || !response.success || !response.rates) {

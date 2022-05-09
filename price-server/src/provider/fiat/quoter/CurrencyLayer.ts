@@ -14,7 +14,7 @@ interface Response {
 export class CurrencyLayer extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
-      access_key: this.options.apiKey,
+      // access_key: this.options.apiKey,
       source: 'USD',
       currencies: this.symbols
         .map((symbol) => (symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', '')))
@@ -22,9 +22,10 @@ export class CurrencyLayer extends Quoter {
     }
 
     const response: Response = await fetch(
-      `https://apilayer.net/api/live?${toQueryString(params)}`,
+      `https://api.apilayer.com/currency_data/live?${toQueryString(params)}`,
       {
         timeout: this.options.timeout,
+        headers: { 'apikey': this.options.apiKey ?? '' }
       }
     ).then((res) => res.json())
 
