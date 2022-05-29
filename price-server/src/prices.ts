@@ -8,31 +8,31 @@ export function getLunaPrices(): PriceBySymbol {
   }
   const prices = lunaProvider.getPrices()
 
-  // make 'LUNA/USD' rate
-  if (prices['LUNA/USDT'] && helpers['USDT/USD']) {
-    // LUNA/USD = LUNA/USDT * USDT/USD
-    prices['LUNA/USD'] = prices['LUNA/USDT'].multipliedBy(helpers['USDT/USD'])
+  // make 'LUNC/USD' rate
+  if (prices['LUNC/USDT'] && helpers['USDT/USD']) {
+    // LUNC/USD = LUNC/USDT * USDT/USD
+    prices['LUNC/USD'] = prices['LUNC/USDT'].multipliedBy(helpers['USDT/USD'])
   }
 
-  // make 'LUNA/FIAT' rates
-  if (prices['LUNA/USD']) {
+  // make 'LUNC/FIAT' rates
+  if (prices['LUNC/USD']) {
     Object.keys(fiatProvider.getPrices()).map((symbol) => {
-      const targetSymbol = `LUNA/${getQuoteCurrency(symbol)}`
+      const targetSymbol = `LUNC/${getQuoteCurrency(symbol)}`
       const usdFiat = fiatProvider.getPriceBy(symbol)
 
-      // LUNA/FIAT = LUNA/USD * USD/FIAT
-      prices[targetSymbol] = prices['LUNA/USD'].multipliedBy(usdFiat)
+      // LUNC/FIAT = LUNC/USD * USD/FIAT
+      prices[targetSymbol] = prices['LUNC/USD'].multipliedBy(usdFiat)
     })
   }
 
-  // make 'LUNA/CRYPTO' rates
-  if (prices['LUNA/USDT']) {
+  // make 'LUNC/CRYPTO' rates
+  if (prices['LUNC/USDT']) {
     Object.keys(cryptoProvider.getPrices())
       .filter((symbol) => getQuoteCurrency(symbol) === 'USDT')
       .map((symbol) => {
-        const targetSymbol = `LUNA/${getBaseCurrency(symbol)}`
+        const targetSymbol = `LUNC/${getBaseCurrency(symbol)}`
 
-        prices[targetSymbol] = prices['LUNA/USDT'].dividedBy(cryptoProvider.getPriceBy(symbol))
+        prices[targetSymbol] = prices['LUNC/USDT'].dividedBy(cryptoProvider.getPriceBy(symbol))
       })
   }
 
