@@ -61,6 +61,11 @@ export async function save(
   password: string,
   mnemonic: string
 ): Promise<void> {
+  if(!fs.existsSync(filePath))
+  {
+    fs.writeFileSync(filePath, '')
+  }
+
   const keys = loadEntities(filePath)
 
   if (keys.find((key) => key.name === name)) {
