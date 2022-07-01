@@ -21,7 +21,7 @@ interface PlainEntity {
 function encrypt(plainText, pass): string {
   const salt = crypto.randomBytes(16)
   const iv = crypto.randomBytes(16)
-  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha512')
+  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha256')
 
   const cipher = crypto.createCipheriv('AES-256-GCM', key, iv)
   const encryptedText = Buffer.concat([cipher.update(plainText), cipher.final()]).toString('base64')
@@ -34,7 +34,7 @@ function encrypt(plainText, pass): string {
 function decrypt(transitmessage, pass) {
   const salt = Buffer.from(transitmessage.substr(0, 32), 'hex')
   const iv = Buffer.from(transitmessage.substr(32, 32), 'hex')
-  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha512')
+  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha256')
 
   const encryptedText = transitmessage.substring(64)
   const cipher = crypto.createDecipheriv('AES-256-GCM', key, iv)
