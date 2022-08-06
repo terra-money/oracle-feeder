@@ -2,9 +2,6 @@ import * as fs from 'fs'
 import * as crypto from 'crypto'
 import { MnemonicKey } from '@terra-money/terra.js'
 
-const KEY_SIZE = 256
-const ITERATIONS = 100
-
 interface Entity {
   name: string
   address: string
@@ -18,32 +15,31 @@ interface PlainEntity {
   terraValAddress: string
 }
 
-function encrypt(plainText, pass): string {
-  const salt = crypto.randomBytes(16)
-  const iv = crypto.randomBytes(16)
-  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha256')
+const resizedIV = Buffer.allocUnsafe(16);
+const iv = crypto.createHash('sha256').update('myHashedIV').digest();
 
-  const cipher = crypto.createCipheriv('AES-256-GCM', key, iv)
-  const encryptedText = Buffer.concat([cipher.update(plainText), cipher.final()]).toString('base64')
+iv.copy(resizedIV);
 
-  // salt, iv will be hex 32 in length
-  // append them to the ciphertext for use  in decryption
-  return salt.toString('hex') + iv.toString('hex') + encryptedText
+function encrypt(plainText, pass): string {  
+  const key = crypto.createHash('sha256').update(pass).digest();
+  const cipher = crypto.createCipheriv('aes256', key, resizedIV);
+  const msg: string[] = [];
+
+  msg.push(cipher.update(plainText, 'binary', 'hex'));
+  msg.push(cipher.final('hex'));
+
+  return msg.join('');
 }
 
 function decrypt(transitmessage, pass) {
-  const salt = Buffer.from(transitmessage.substr(0, 32), 'hex')
-  const iv = Buffer.from(transitmessage.substr(32, 32), 'hex')
-  const key = crypto.pbkdf2Sync(pass, salt, ITERATIONS, KEY_SIZE / 8, 'sha256')
+  const key = crypto.createHash('sha256').update(pass).digest();
+  const decipher = crypto.createDecipheriv('aes256', key, resizedIV);
+  const msg: string[] = [];
 
-  const encryptedText = transitmessage.substring(64)
-  const cipher = crypto.createDecipheriv('AES-256-GCM', key, iv)
-  const decryptedText = Buffer.concat([
-    cipher.update(encryptedText, 'base64'),
-    cipher.final(),
-  ]).toString()
+  msg.push(decipher.update(transitmessage, 'hex', 'binary'));
+  msg.push(decipher.final('binary'));
 
-  return decryptedText
+  return msg.join('');
 }
 
 function loadEntities(path: string): Entity[] {

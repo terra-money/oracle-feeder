@@ -88,16 +88,16 @@ async function main(): Promise<void> {
 
   if (args.subparser_name === `vote`) {
     args.lcdAddress =
-      args.lcdAddress || (process.env['LCD_ADDRESS'] && process.env['LCD_ADDRESS'].split(',')) || []
-    args.source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || []
-    args.chainID = args.chainID || process.env['CHAIN_ID'] || ''
+      args.lcdAddress || (process.env['ORACLE_FEEDER_LCD_ADDRESSES'] && process.env['ORACLE_FEEDER_LCD_ADDRESSES'].split(',')) || []
+    args.source = args.source || (process.env['ORACLE_FEEDER_PRICE_ENDPOINT'] && process.env['ORACLE_FEEDER_PRICE_ENDPOINT'].split(',')) || []
+    args.chainID = args.chainID || process.env['ORACLE_FEEDER_CHAIN_ID'] || ''
     if (args.lcdAddress.length === 0 || args.source.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --source')
       return
     }
 
-    args.keyPath = args.keyPath || process.env['KEY_PATH'] || 'voter.json'
-    args.password = args.password || process.env['PASSPHRASE'] || ''
+    args.keyPath = args.keyPath || process.env['ORACLE_FEEDER_KEY_PATH'] || 'voter.json'
+    args.password = args.password || process.env['ORACLE_FEEDER_PASSPHRASE'] || ''
     if (args.keyPath === '' || args.passphrase === '') {
       console.error('Missing either --key-path or --password')
       return
@@ -105,7 +105,7 @@ async function main(): Promise<void> {
 
     // validator is skippable and default value will be extracted from the key
     args.validator =
-      args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(','))
+      args.validator || (process.env['ORACLE_VALIDATOR_ADDRESSES'] && process.env['ORACLE_VALIDATOR_ADDRESSES'].split(','))
 
     await vote(args)
   } else if (args.subparser_name === `update-key`) {
