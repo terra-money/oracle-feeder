@@ -58,9 +58,9 @@ You can start feeder with arguments or env.
 
 | Argument    | Env           | Description                                      | Example                      |
 | ----------- | ------------- | ------------------------------------------------ | ---------------------------- |
-| `source`    | `ORACLE_FEEDER_PRICE_ENDPOINT`      | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | `ORACLE_FEEDER_LCD_ADDRESSES` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
-| `chain-id`  | `ORACLE_FEEDER_CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
+| `source`    | `ORACLE_FEEDER_PRICE_SERVER_URI`      | Price server URL.                                | http://localhost:8532/latest |
+| `lcd`       | `ORACLE_FEEDER_LCD_URIS` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
+| `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
 | `validator` | `ORACLE_FEEDER_VALIDATOR_ADDRESSES`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
 | `password`  | `ORACLE_FEEDER_PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
 | `key-path`  | `ORACLE_FEEDER_KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |

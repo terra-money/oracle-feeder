@@ -88,9 +88,9 @@ async function main(): Promise<void> {
 
   if (args.subparser_name === `vote`) {
     args.lcdAddress =
-      args.lcdAddress || (process.env['ORACLE_FEEDER_LCD_ADDRESSES'] && process.env['ORACLE_FEEDER_LCD_ADDRESSES'].split(',')) || []
-    args.source = args.source || (process.env['ORACLE_FEEDER_PRICE_ENDPOINT'] && process.env['ORACLE_FEEDER_PRICE_ENDPOINT'].split(',')) || []
-    args.chainID = args.chainID || process.env['ORACLE_FEEDER_CHAIN_ID'] || ''
+      args.lcdAddress || (process.env['ORACLE_FEEDER_LCD_URIS'] && process.env['ORACLE_FEEDER_LCD_URIS'].split(',')) || []
+    args.source = args.source || (process.env['ORACLE_FEEDER_PRICE_SERVER_URI'] && process.env['ORACLE_FEEDER_PRICE_SERVER_URI'].split(',')) || []
+    args.chainID = args.chainID || process.env['CHAIN_ID'] || ''
     if (args.lcdAddress.length === 0 || args.source.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --source')
       return

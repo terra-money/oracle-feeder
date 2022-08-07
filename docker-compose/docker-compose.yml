@@ -22,11 +22,11 @@ services:
      #image: terrarebels/terraclassic.oracle-feeder:latest-rebel-1
      environment:
        - "CHAINID=rebel-1"
-       - "LCD_ADDRESS=https://lcd.terra.dev"
-       - "SOURCE=http://oracle-price-server:8532/latest"
-       - "VALIDATOR=terravaloper1xx"
-       - "PASSPHRASE=12345678"
-       - "MNENOMIC=torch swamp cancel lift never october child harsh rib aspect luxury word peanut length bamboo hawk material vehicle glue above west random sketch author"
+       - "ORACLE_FEEDER_LCD_URIS=https://lcd.terra.dev"
+       - "ORACLE_FEEDER_PRICE_SERVER_URI=http://oracle-price-server:8532/latest"
+       - "ORACLE_FEEDER_VALIDATOR_ADDRESSES=terravaloper1xx"
+       - "ORACLE_FEEDER_PASSPHRASE=12345678"
+       - "ORACLE_FEEDER_MNEMONIC=torch swamp cancel lift never october child harsh rib aspect luxury word peanut length bamboo hawk material vehicle glue above west random sketch author"
      restart: always
      networks:
        - terra-classic
