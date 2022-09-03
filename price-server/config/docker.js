@@ -8,6 +8,39 @@ module.exports = {
     channel: process.env.SLACK_CHANNEL || '',
     url: process.env.SLACK_URL || '',
   },
+  luncProvider: {
+
+    adjustTvwapSymbols: process.env.LUNC_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || [],
+
+    bithumb: process.env.LUNC_PROVIDER_BITHUMB_SYMBOLS && {
+
+      symbols: process.env.LUNC_PROVIDER_BITHUMB_SYMBOLS.split(',') || [],
+
+    },
+
+    coinone: process.env.LUNC_PROVIDER_COINONE_SYMBOLS && {
+
+      symbols: process.env.LUNC_PROVIDER_COINONE_SYMBOLS.split(',') || [],
+
+    },
+
+    huobi: process.env.LUNC_PROVIDER_HUOBI_SYMBOLS && {
+
+      symbols: process.env.LUNC_PROVIDER_HUOBI_SYMBOLS.split(',') || [],
+
+      krwPriceFrom: process.env.LUNC_PROVIDER_HUOBI_KRW_PRICE_FROM || undefined,
+
+    },
+
+    binance: process.env.LUNC_PROVIDER_BINANCE_SYMBOLS && {
+
+      symbols: process.env.LUNC_PROVIDER_BINANCE_SYMBOLS.split(',') || [],
+
+      krwPriceFrom: process.env.LUNC_PROVIDER_BINANCE_KRW_PRICE_FROM || undefined,
+
+    },
+
+  },
   lunaProvider: {
     adjustTvwapSymbols: process.env.LUNA_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || [],
     bithumb: process.env.LUNA_PROVIDER_BITHUMB_SYMBOLS && {
