@@ -1,6 +1,6 @@
 # Terra Oracle Feeder
 
-This contains the Oracle feeder software that is used internally by Terraform Labs' validator nodes for periodically submitting oracle votes for the exchange rate of LUNA. This implementation can be used as-is, but also can serve as a reference for creating your own custom oracle feeder. For more information regarding the oracle process, please refer to the [oracle module specs](https://docs.terra.money/dev/spec-oracle).
+This contains the Oracle feeder software that is used internally by Terraform Labs' validator nodes for periodically submitting oracle votes for the exchange rate of LUNC (LUNA Classic). This implementation can be used as-is, but also can serve as a reference for creating your own custom oracle feeder. For more information regarding the oracle process, please refer to the [oracle module specs](https://docs.terra.money/dev/spec-oracle).
 
 ## Overview
 
@@ -9,15 +9,15 @@ This solution has 2 components:
 1. [`price-server`](price-server/)
 
    - Obtain information from various data sources (exchanges, forex data, etc)
-   - Use data to compute the exchange rates of LUNA for a given set of fiat denominations
-   - Most recent LUNA exchange rates are available through HTTP endpoint
+   - Use data to compute the exchange rates of LUNC for a given set of fiat denominations
+   - Most recent LUNC exchange rates are available through HTTP endpoint
 
 2. [`feeder`](feeder/)
 
-   - Reads LUNA exchange rates from a data source (`price-server`)
+   - Reads LUNC exchange rates from a data source (`price-server`)
    - Periodically submits vote and prevote messages following the oracle voting procedure
 
-You can easily modify the logic for how LUNA exchange rates are computed by either directly modifying `price-server` or replacing the input stream for `feeder`.
+You can easily modify the logic for how LUNC exchange rates are computed by either directly modifying `price-server` or replacing the input stream for `feeder`.
 
 ## Prerequisites
 

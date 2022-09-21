@@ -62,10 +62,10 @@ module.exports = {
     url: '',
   },
   lunaProvider: {
-    adjustTvwapSymbols: ['LUNA/USDT'],
-    huobi: { symbols: ['LUNA/USDT'] },
-    binance: { symbols: ['LUNA/USDT'] },
-    kucoin: { symbols: ['LUNA/USDT'] },
+    adjustTvwapSymbols: ['LUNC/USDT'],
+    huobi: { symbols: ['LUNC/USDT'] },
+    binance: { symbols: ['LUNC/USDT'] },
+    kucoin: { symbols: ['LUNC/USDT'] },
   },
   cryptoProvider: {
     adjustTvwapSymbols: ['USDT/USD'],
