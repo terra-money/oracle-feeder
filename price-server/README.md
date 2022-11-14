@@ -73,7 +73,7 @@ module.exports = {
     kraken: { symbols: ['USDT/USD'] },
   },
   fiatProvider: { // at least one fiatprovider should be set
-    fallbackPriority: ['currencylayer', 'exchangerate', 'bandprotocol'],
+    fallbackPriority: ['currencylayer', 'exchangerate'],
     currencylayer: {
       symbols: fiatSymbols,
       interval: 60 * 1000,
@@ -81,12 +81,6 @@ module.exports = {
       // https://currencylayer.com/product
       // recommend: business subscription(60second Updates): $79.99/month
       apiKey: '', // necessary
-    },
-    bandprotocol: {
-      symbols: fiatSymbols.filter(v => !v.includes('DKK') && !v.includes('PHP')),
-      interval: 60 * 1000,
-      timeout: 5000,
-      // https://data.bandprotocol.com/
     },
     exchangerate: {
       symbols: fiatSymbols,

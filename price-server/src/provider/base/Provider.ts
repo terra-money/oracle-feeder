@@ -11,7 +11,9 @@ import Quoter from './Quoter'
 const TVWAP_PERIOD = 3 * 60 * 1000 // 3 minutes
 
 export interface ProviderOptions {
-  adjustTvwapSymbols?: string[] // symbol list that adjust price using tvwap
+  adjustTvwap: {
+    symbols: string[]
+  }
 }
 
 export class Provider {
@@ -81,8 +83,8 @@ export class Provider {
     for (const symbol of this.symbols) {
       delete this.priceBySymbol[symbol]
 
-      let useTvwap = this.options.adjustTvwapSymbols
-        ? this.options.adjustTvwapSymbols.indexOf(symbol) !== -1
+      let useTvwap = this.options.adjustTvwap
+        ? this.options.adjustTvwap.symbols.indexOf(symbol) !== -1
         : false
 
       if (useTvwap) {

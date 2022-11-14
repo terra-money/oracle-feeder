@@ -9,7 +9,9 @@ module.exports = {
     url: process.env.SLACK_URL || '',
   },
   lunaProvider: {
-    adjustTvwapSymbols: process.env.LUNA_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || [],
+    adjustTvwap: {
+      symbols: process.env.LUNA_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || []
+    },
     bithumb: process.env.LUNA_PROVIDER_BITHUMB_SYMBOLS && {
       symbols: process.env.LUNA_PROVIDER_BITHUMB_SYMBOLS.split(',') || [],
     },
@@ -26,7 +28,9 @@ module.exports = {
     },
   },
   cryptoProvider: {
-    adjustTvwapSymbols: process.env.CRYPTO_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || [],
+    adjustTvwap: {
+      symbols: process.env.LUNA_PROVIDER_ADJUST_TVWAP_SYMBOLS.split(',') || []
+    },
     upbit: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS && {
       symbols: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS.split(',') || [],
     },
@@ -70,12 +74,6 @@ module.exports = {
       // https://www.alphavantage.co/premium/
       // recommend: 120 API request per minute: $49.99/month
       apiKey: process.env.FIAT_PROVIDER_ALPHA_VANTAGE_API_KEY || '', // necessary
-    },
-    bandprotocol: process.env.FIAT_PROVIDER_BAND_PROTOCOL_INTERVAL && {
-      symbols: FIAT_SYMBOLS,
-      interval: parseInt(process.env.FIAT_PROVIDER_BAND_PROTOCOL_INTERVAL) || 60 * 1000,
-      timeout: parseInt(process.env.FIAT_PROVIDER_BAND_PROTOCOL_TIMEOUT) || 5000,
-      // https://data.bandprotocol.com/
     },
   },
 }

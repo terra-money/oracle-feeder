@@ -2,26 +2,15 @@
 
 const fiatSymbols = [
   'USD/SDR',
-  'USD/KRW',
-  'USD/MNT',
-  'USD/EUR',
   'USD/CNY',
+  'USD/EUR',
   'USD/JPY',
   'USD/GBP',
+  'USD/KRW',
   'USD/INR',
   'USD/CAD',
-  'USD/CHF',
   'USD/HKD',
   'USD/AUD',
-  'USD/SGD',
-  'USD/THB',
-  'USD/SEK',
-  'USD/DKK',
-  'USD/IDR',
-  'USD/PHP',
-  'USD/MYR',
-  'USD/NOK',
-  'USD/TWD',
 ]
 
 module.exports = {
@@ -34,18 +23,36 @@ module.exports = {
     url: '',
   },
   lunaProvider: {
-    adjustTvwapSymbols: ['LUNC/USDT'],
-    huobi: { symbols: ['LUNC/USDT'] },
-    binance: { symbols: ['LUNC/USDT'] },
-    kucoin: { symbols: ['LUNC/USDT'] },
+    adjustTvwap: {
+      symbols: [
+        'LUNA/USDT'
+      ]
+    },
+    huobi: {
+      symbols: ['LUNC/USDT']
+    },
+    binance: {
+      symbols: ['LUNC/USDT']
+    },
+    kucoin: {
+      symbols: ['LUNC/USDT']
+    },
   },
   cryptoProvider: {
-    adjustTvwapSymbols: ['USDT/USD'],
-    bitfinex: { symbols: ['USDT/USD'] },
-    kraken: { symbols: ['USDT/USD'] },
+    adjustTvwap: {
+      symbols: [
+        'LUNA/USDT'
+      ]
+    },
+    bitfinex: {
+      symbols: ['USDT/USD']
+    },
+    kraken: {
+      symbols: ['USDT/USD']
+    },
   },
   fiatProvider: {
-    fallbackPriority: ['currencylayer', 'alphavantage', 'fixer', 'exchangerate', 'bandprotocol'],
+    fallbackPriority: ['currencylayer', 'alphavantage', 'fixer', 'exchangerate'],
     currencylayer: {
       symbols: fiatSymbols,
       interval: 60 * 1000,
@@ -53,13 +60,6 @@ module.exports = {
       // https://currencylayer.com/product
       // recommend: business subscription(60second Updates): $79.99/month
       apiKey: '', // necessary
-    },
-    bandprotocol: {
-      // DKK is not supported for bandprotocol
-      symbols: fiatSymbols.filter((v) => !v.includes('DKK') && !v.includes('PHP')),
-      interval: 60 * 1000,
-      timeout: 5000,
-      // https://data.bandprotocol.com/
     },
     exchangerate: {
       symbols: fiatSymbols,

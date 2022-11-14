@@ -1,6 +1,6 @@
 {
   "name": "@terra-money/price-server",
-  "version": "2.0.3",
+  "version": "3.0.1",
   "main": "src/main.ts",
   "license": "Apache-2.0",
   "scripts": {
@@ -45,7 +45,7 @@
     "ts-jest": "^27.1.4"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "husky": {
     "hooks": {

@@ -61,11 +61,6 @@ function registerCommands(parser: ArgumentParser): void {
     required: false,
   })
 
-  voteCommand.addArgument([`-d`, `--denoms`], {
-    action: `help`,
-    help: '🚨***DEPRECATED***🚨 remove this parameter from command line',
-  })
-
   // Updating Key command
   const keyCommand = subparsers.addParser(`update-key`, { addHelp: true })
 
