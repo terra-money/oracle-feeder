@@ -34,13 +34,14 @@ export class Provider {
     }
     this.symbols = uniq(concat(...this.quoters.map((quoter) => quoter.getSymbols())))
 
-    await this.tick(Date.now())
+    await this.tick()
 
     const quoters = this.quoters.map((quoter) => quoter.constructor.name).join(', ')
     logger.info(`initialized ${this.constructor.name}: ${quoters}`)
   }
 
-  public async tick(now: number): Promise<boolean> {
+  public async tick(): Promise<boolean> {
+    const now = Date.now()
     const responses = await Promise.all(this.quoters.map((quoter) => quoter.tick(now)))
     let isUpdated = false
 

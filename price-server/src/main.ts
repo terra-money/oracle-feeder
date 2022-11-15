@@ -1,5 +1,3 @@
-import { promises } from 'fs'
-import * as path from 'path'
 import * as bluebird from 'bluebird'
 import * as config from 'config'
 import * as logger from 'lib/logger'

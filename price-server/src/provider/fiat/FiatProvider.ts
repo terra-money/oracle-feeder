@@ -25,7 +25,7 @@ class FiatProvider extends Provider {
 
     await super.initialize()
 
-    await this.tick(Date.now())
+    await this.tick()
   }
 
   protected adjustPrices(): void {
