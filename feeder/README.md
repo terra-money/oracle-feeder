@@ -41,11 +41,9 @@ You can start feeder with arguments or env.
    ``` shell
    $ npm start vote -- \
       --source http://localhost:8532/latest \
-      --lcd https://lcd-1.terra.dev \
-      --lcd https://lcd-2.terra.dev \
-      --chain-id columbus-5 \
-      --validator terravaloper1xx \
-      --validator terravaloper1yy \
+      --lcd http://localhost:1317/ \
+      --chain-id andromeda-oracle-1 \
+      --validator adrvaloper1kxhysqmykgd46dsz8me2epsrhqcdpt9l56mhtt \
       --password "<password>"
    ```
 
@@ -59,8 +57,9 @@ You can start feeder with arguments or env.
 | Argument    | Env           | Description                                      | Example                      |
 | ----------- | ------------- | ------------------------------------------------ | ---------------------------- |
 | `source`    | `SOURCE`      | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | `LCD_ADDRESS` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
+| `lcd`       | `LCD_URL` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
 | `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
 | `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
 | `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
+| `        `  | `MNEMONIC`    | Mnemonic to assign in step                       | `window duty close pair...`  |
 | `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |

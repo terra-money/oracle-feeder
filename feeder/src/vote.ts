@@ -5,16 +5,12 @@ import * as http from 'http'
 import * as https from 'https'
 import axios from 'axios'
 import * as ks from './keystore'
-import {
-  LCDClient,
-  RawKey,
-  Wallet,
-  MsgAggregateExchangeRateVote,
-  Fee,
-  isTxError,
-  LCDClientConfig,
-} from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
+import { Secp256k1HdWallet, LcdClient, StdFee} from "@cosmjs/launchpad";
+import { IgniteClient } from 'oracle/client'
+import { Module } from './oracle'
+import { OracleAsset, OracleParams } from 'oracle/rest'
+import { MsgAggregateExchangeRateVote } from 'oracle/module'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -27,28 +23,18 @@ const ax = axios.create({
   },
 })
 
-async function initKey(keyPath: string, password?: string): Promise<RawKey> {
-  const plainEntity = ks.load(
-    keyPath,
-    'voter',
-    password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
-  )
-
-  return new RawKey(Buffer.from(plainEntity.privateKey, 'hex'))
-}
-
-async function loadOracleParams(client: LCDClient): Promise<{
+async function loadOracleParams(igniteClient: IgniteClient, lcd: LcdClient): Promise<{
   oracleVotePeriod: number
-  oracleWhitelist: string[]
+  oracleWhitelist: OracleAsset[]
   currentVotePeriod: number
   indexInVotePeriod: number
   nextBlockHeight: number
 }> {
-  const oracleParams = await client.oracle.parameters()
-  const oracleVotePeriod = oracleParams.vote_period
-  const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
-
-  const latestBlock = await client.tendermint.blockInfo()
+  const oracle = Module(igniteClient).module.OracleOracle;
+  const oracleParams = (await oracle.query.queryParams()).data.params as OracleParams;
+  const oracleVotePeriod = Number(oracleParams.vote_period);
+  const oracleWhitelist: OracleAsset[] = oracleParams.whitelist as OracleAsset[];
+  const latestBlock = await lcd.blocksLatest();
 
   // the vote will be included in the next block
   const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1
@@ -65,7 +51,8 @@ async function loadOracleParams(client: LCDClient): Promise<{
 }
 
 interface Price {
-  currency: string
+  denom: string
+  name: string
   price: string
 }
 
@@ -104,30 +91,30 @@ async function getPrices(sources: string[]): Promise<Price[]> {
 }
 
 /**
- * preparePrices traverses prices array for following logics:
+ * prepareOracleAssets traverses prices array for following logics:
  * 1. Removes price that cannot be found in oracle whitelist
  * 2. Fill abstain prices for prices that cannot be found in price source but in oracle whitelist
  */
-function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
-  const newPrices = prices
-    .map((price) => {
-      const { currency } = price
-
-      if (oracleWhitelist.indexOf(`u${currency.toLowerCase()}`) === -1) {
+function prepareOracleAssets(prices: Price[], oracleWhitelisted: OracleAsset[]): OracleAsset[] {
+  const newPrices = prices.map((price) => {
+      const { denom } = price
+      const exists = oracleWhitelisted.findIndex(asset => asset.denom?.indexOf(`u${denom.toLowerCase()}`) === -1);
+      
+      if (exists === -1) {
         return
       }
 
       return price
     })
-    .filter(Boolean) as Price[]
+    .filter(Boolean) as OracleAsset[]
 
-  oracleWhitelist.forEach((denom) => {
-    const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
+  oracleWhitelisted.forEach(asset => {
+    const found = prices.filter(price => asset.denom === `u${price.denom.toLowerCase()}`).length > 0
 
     if (!found) {
       newPrices.push({
-        currency: denom.slice(1).toUpperCase(),
-        price: '0.000000000000000000',
+        denom: asset.denom?.slice(1).toUpperCase(),
+        amount: '0.000000',
       })
     }
   })
@@ -136,15 +123,16 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
 }
 
 function buildVoteMsgs(
-  prices: Price[],
+  prices: OracleAsset[],
   valAddrs: string[],
-  voterAddr: string
+  feeder: string
 ): MsgAggregateExchangeRateVote[] {
-  const coins = prices.map(({ currency, price }) => `${price}u${currency.toLowerCase()}`).join(',')
+  const exchangeRates = prices.map(({ denom, amount }) => `${amount}u${denom?.toLowerCase()}`).join(',')
 
-  return valAddrs.map((valAddr) => {
+  return valAddrs.map((validator) => {
     const salt = crypto.randomBytes(2).toString('hex')
-    return new MsgAggregateExchangeRateVote(coins, salt, voterAddr, valAddr)
+
+    return { exchangeRates,  salt,  feeder,  validator}
   })
 }
 
@@ -153,8 +141,8 @@ let previousVotePeriod = 0
 
 // yarn start vote command
 export async function processVote(
-  client: LCDClient,
-  wallet: Wallet,
+  client: IgniteClient,
+  lcd: LcdClient,
   priceURLs: string[],
   valAddrs: string[],
   voterAddr: string
@@ -165,7 +153,7 @@ export async function processVote(
     currentVotePeriod,
     indexInVotePeriod,
     nextBlockHeight,
-  } = await loadOracleParams(client)
+  } = await loadOracleParams(client, lcd)
 
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
@@ -186,37 +174,31 @@ export async function processVote(
   console.info(`timestamp: ${new Date().toUTCString()}`)
 
   // Removes non-whitelisted currencies and abstain for not fetched currencies
-  const prices = preparePrices(await getPrices(priceURLs), oracleWhitelist)
+  const prices = prepareOracleAssets(await getPrices(priceURLs), oracleWhitelist)
 
   // Build Exchange Rate Vote Msgs
   const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
   // Build Exchange Rate Prevote Msgs
   const isPrevoteOnlyTx = previousVoteMsgs.length === 0
-  const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
-  const tx = await wallet.createAndSignTx({
-    msgs,
-    fee: new Fee((1 + msgs.length) * 50000, []),
-    memo: `${packageInfo.name}@${packageInfo.version}`,
-  })
+  const msgs = [
+    ...previousVoteMsgs, 
+    ...voteMsgs,
+  ]
 
-  const res = await client.tx.broadcastSync(tx).catch((err) => {
-    console.error(`broadcast error: ${err.message}`, tx.toData())
-    throw err
-  })
+  const txres = await client.signAndBroadcast(msgs,{gas: (1 + msgs.length) * 50000},`${packageInfo.name}@${packageInfo.version}`)
+    .catch((e)=> {
+      return console.error(`broadcast error: code: ${e.code}, raw_log: ${e.raw_log}`)
+    })
 
-  if (isTxError(res)) {
-    console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
-    return
-  }
 
-  const txhash = res.txhash
+  const txhash = txres?.transactionHash;
   console.info(`broadcast success: txhash: ${txhash}`)
 
   const height = await validateTx(
-    client,
+    lcd,
     nextBlockHeight,
-    txhash,
+    txhash as string,
     // if only prevote exist, then wait 2 * vote_period blocks,
     // else wait left blocks in the current vote_period
     isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod
@@ -228,7 +210,7 @@ export async function processVote(
 }
 
 async function validateTx(
-  client: LCDClient,
+  lcd: LcdClient,
   nextBlockHeight: number,
   txhash: string,
   timeoutHeight: number
@@ -244,7 +226,7 @@ async function validateTx(
   while (!height && lastCheckHeight < maxBlockHeight) {
     await Bluebird.delay(1500)
 
-    const lastBlock = await client.tendermint.blockInfo()
+    const lastBlock = await lcd.blocksLatest()
     const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
 
     if (latestBlockHeight <= lastCheckHeight) {
@@ -283,7 +265,7 @@ async function validateTx(
 
 interface VoteArgs {
   ledgerMode: boolean
-  lcdAddress: string[]
+  LCD_URL: string
   chainID: string
   validator: string[]
   source: string[]
@@ -291,63 +273,37 @@ interface VoteArgs {
   keyPath: string
 }
 
-function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig {
-  return {
-    URL: args.lcdAddress[lcdIndex],
-    chainID: args.chainID,
-  }
-}
-
 export async function vote(args: VoteArgs): Promise<void> {
-  const rawKey: RawKey = await initKey(args.keyPath, args.password)
-  const valAddrs = args.validator || [rawKey.valAddress]
-  const voterAddr = rawKey.accAddress
-
-  const lcdRotate = {
-    client: new LCDClient(buildLCDClientConfig(args, 0)),
-    current: 0,
-    max: args.lcdAddress.length - 1,
-  }
+  const plainEntry: ks.PlainEntity = ks.load(
+    args.keyPath,
+    'voter',
+    args.password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
+  );
+  const wallet = await Secp256k1HdWallet.fromMnemonic(plainEntry.mnemonic);
+  const igniteClient = new IgniteClient({...process.env, MNEMONIC: plainEntry.mnemonic} as any, wallet)
+  const lcd = LcdClient.withExtensions({apiUrl: args.LCD_URL});
 
   while (true) {
     const startTime = Date.now()
 
-    await processVote(
-      lcdRotate.client,
-      lcdRotate.client.wallet(rawKey),
-      args.source,
-      valAddrs,
-      voterAddr
-    ).catch((err) => {
-      if (err.isAxiosError && err.response) {
-        console.error(err.message, err.response.data)
-      } else {
-        console.error(err.message)
-      }
+    await processVote(igniteClient, lcd, args.source, [plainEntry.validator], plainEntry.address)
+      .catch((err) => {
+        if (err.isAxiosError && err.response) {
+          console.error(err.message, err.response.data)
+        } else {
+          console.error(err.message)
+        }
 
-      if (err.isAxiosError) {
-        console.info('vote: lcd client unavailable, rotating to next lcd client.')
-        rotateLCD(args, lcdRotate)
-      }
+        if (err.isAxiosError) {
+          // TODO: switch the client if axios error at some point
+          console.info('vote: lcd client unavailable, rotating to next lcd client.')
+        }
 
-      resetPrevote()
-    })
+        resetPrevote()
+      })
 
     await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
   }
-}
-
-function rotateLCD(args: VoteArgs, lcdRotate: { client: LCDClient; current: number; max: number }) {
-  if (++lcdRotate.current > lcdRotate.max) {
-    lcdRotate.current = 0
-  }
-
-  lcdRotate.client = new LCDClient(buildLCDClientConfig(args, lcdRotate.current))
-  console.info(
-    'Switched to LCD address ' + lcdRotate.current + '(' + args.lcdAddress[lcdRotate.current] + ')'
-  )
-
-  return
 }
 
 function resetPrevote() {

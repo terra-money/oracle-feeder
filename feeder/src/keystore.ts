@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { MnemonicKey } from '@terra-money/terra.js'
+import { Secp256k1HdWallet } from "@cosmjs/launchpad";
 
 const KEY_SIZE = 256
 const ITERATIONS = 100
@@ -11,11 +11,10 @@ interface Entity {
   ciphertext: string
 }
 
-interface PlainEntity {
-  privateKey: string
-  publicKey: string
-  terraAddress: string
-  terraValAddress: string
+export interface PlainEntity {
+  validator: string;
+  mnemonic: string;
+  address: string;
 }
 
 function encrypt(plainText, pass): string {
@@ -67,22 +66,20 @@ export async function save(
     throw new Error('Key already exists by that name')
   }
 
-  const mnemonicKey = new MnemonicKey({ mnemonic })
+  const wallet = await Secp256k1HdWallet.fromMnemonic(mnemonic, { prefix: "adr" });
+  const [{ address }] = await wallet.getAccounts();
+
 
   const ciphertext = encrypt(
     JSON.stringify({
-      privateKey: mnemonicKey.privateKey.toString(`hex`),
-      terraAddress: mnemonicKey.accAddress,
-      terraValAddress: mnemonicKey.valAddress,
+      validator: process.env.VALIDATOR,
+      mnemonic,
+      address,
     }),
     password
   )
 
-  keys.push({
-    name,
-    address: mnemonicKey.accAddress,
-    ciphertext,
-  })
+  keys.push({ name, address, ciphertext })
 
   fs.writeFileSync(filePath, JSON.stringify(keys))
 }

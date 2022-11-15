@@ -4,7 +4,6 @@ import * as logger from 'lib/logger'
 import { init as initErrorHandler, errorHandler } from 'lib/error'
 import { initialize as initializeProviders, tick } from 'provider'
 import { createServer } from './server'
-import * as defaultConfig from '../config/default-sample'
 import { setupMetricsServer } from 'lib/metrics'
 
 bluebird.config({ longStackTraces: true })
