@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-d
 import * as promptly from 'promptly'
 import { PlainEntity, VoteServiceConfig } from './models'
 import * as ks from './keystore'
-import Bluebird from 'bluebird'
+import * as Bluebird from 'bluebird'
 dotenv.config()
 
 function registerCommands(parser: ArgumentParser): void {
@@ -81,7 +81,6 @@ async function main(): Promise<void> {
       password: process.env.PASSWORD ?? "thispassword",
       keyPath: process.env.KEY_PATH ?? args.keyPath,
       keyName: process.env.KEY_NAME ?? args.keyName,
-
     };
 
     const plainEntry: PlainEntity = ks.load(
@@ -96,7 +95,7 @@ async function main(): Promise<void> {
 
       await voteService.process()
         .catch(err => {
-          console.error(JSON.stringify(err));
+          console.error(err);
 
           if (err.isAxiosError) {
             // TODO: switch price client if axios error at some point
@@ -104,8 +103,10 @@ async function main(): Promise<void> {
           }
           voteService.resetPrevote()
         })
+        
       await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
     }
+
   }
   else if (args.command === `add-key`) {
     let password = process.env.PASSWORD || ''
@@ -137,7 +138,7 @@ async function main(): Promise<void> {
       return
     }
 
-    await ks.save(args.keyPath, 'voter', password, mnemonic)
+    await ks.save(args.keyPath, args.keyName, password, mnemonic)
     console.info(`saved!`)
   }
   else throw Error("Missing argument, it has to be vote or add-key")

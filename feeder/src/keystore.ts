@@ -36,7 +36,10 @@ function decrypt(transitmessage, pass) {
 
 function loadEntities(path: string): Entity[] {
   try {
-    return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`)
+    if(fs.lstatSync(path).isFile()) {
+      return JSON.parse(fs.readFileSync(path, `utf8`))
+    }
+    return []
   } catch (e) {
     console.error('loadKeys', e.message)
     return []

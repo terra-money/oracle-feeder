@@ -12,6 +12,7 @@ import { msgAggregateExchangeRateVoteParams } from './oracle/module'
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { DeliverTxResponse } from "@cosmjs/stargate";
 import { ErrorCodes, ModuleData, PlainEntity, Price, VoteServiceConfig } from './models'
+import { resolve } from 'path'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -92,6 +93,8 @@ export class VoteService {
     // Update last success VotePeriod
     this.previousVotePeriod = Math.floor(height / this.moduleData.oracleVotePeriod)
     this.previousVoteMsgs = msgs;
+
+    return Promise.resolve();
   }
 
   preValidateModuleData(): [boolean, string | null] {

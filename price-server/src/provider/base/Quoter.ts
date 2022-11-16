@@ -55,16 +55,6 @@ export class Quoter {
   }
 
   public getSymbols(): string[] {
-    // deprecated (2021.07.08)
-    // if (this.options.krwPriceFrom) {
-    //   return concat(
-    //     this.symbols,
-    //     this.symbols
-    //       .filter((symbol) => getQuoteCurrency(symbol) === this.options.krwPriceFrom)
-    //       .map((symbol) => `${getBaseCurrency(symbol)}/KRW`)
-    //   )
-    // }
-
     return this.symbols
   }
 
@@ -124,36 +114,6 @@ export class Quoter {
 
     return trades
   }
-
-  // deprecated (2021.07.08)
-  // protected calculateKRWPrice(symbol: string): void {
-  //   const { krwPriceFrom } = this.options
-  //   if (!krwPriceFrom || getQuoteCurrency(symbol) !== krwPriceFrom) {
-  //     return
-  //   }
-
-  //   const krwRate = getUsdtToKrwRate()
-  //   if (!krwRate) {
-  //     return
-  //   }
-
-  //   const convertedSymbol = `${getBaseCurrency(symbol)}/KRW`
-  //   const trades = this.getTrades(symbol)
-
-  //   if (trades.length > 1) {
-  //     const calculatedTrades = this.getTrades(symbol).map((trade) => ({
-  //       timestamp: trade.timestamp,
-  //       price: trade.price.multipliedBy(krwRate),
-  //       volume: trade.volume,
-  //     }))
-
-  //     this.setTrades(convertedSymbol, calculatedTrades)
-  //     this.setPrice(convertedSymbol, calculatedTrades[calculatedTrades.length - 1].price)
-  //   } else {
-  //     const price = this.getPrice(symbol)
-  //     price && this.setPrice(convertedSymbol, price.multipliedBy(krwRate))
-  //   }
-  // }
 
   protected alive(): void {
     if (!this.isAlive) {
