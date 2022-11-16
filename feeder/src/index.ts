@@ -1,14 +1,17 @@
 import { ArgumentParser } from 'argparse'
-import { vote } from './vote'
-import { updateKey } from './updateKey'
+import { VoteService } from './VoteService'
 import * as packageInfo from '../package.json'
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import * as promptly from 'promptly'
+import { PlainEntity, VoteServiceConfig } from './models'
+import * as ks from './keystore'
+import Bluebird from 'bluebird'
 dotenv.config()
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
-    title: `commands`,
-    dest: `subparser_name`,
+    title: `command`,
+    dest: `command`,
     description: `Available commands`,
   })
 
@@ -16,39 +19,6 @@ function registerCommands(parser: ArgumentParser): void {
   const voteCommand = subparsers.addParser(`vote`, {
     addHelp: true,
     description: `Fetch price and broadcast oracle messages`,
-  })
-
-  voteCommand.addArgument([`--ledger`], {
-    action: `storeTrue`,
-    help: `using ledger`,
-    dest: 'ledgerMode',
-    defaultValue: false,
-  })
-
-  voteCommand.addArgument(['-l', '--lcd'], {
-    action: 'append',
-    help: 'lcd url',
-    dest: 'lcdURL',
-    required: false,
-  })
-
-  voteCommand.addArgument([`-c`, `--chain-id`], {
-    action: `store`,
-    help: `chain ID`,
-    dest: `chainID`,
-    required: false,
-  })
-
-  voteCommand.addArgument([`--validator`], {
-    action: `append`,
-    help: `validator address (e.g. terravaloper1...), can have multiple`,
-    required: false,
-  })
-
-  voteCommand.addArgument([`-s`, `--source`], {
-    action: `append`,
-    help: `Append price data source(It can handle multiple sources)`,
-    required: false,
   })
 
   voteCommand.addArgument([`-p`, `--password`], {
@@ -60,16 +30,31 @@ function registerCommands(parser: ArgumentParser): void {
     action: `store`,
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
-    required: false,
+    defaultValue: `voter.json`
+  })
+
+  voteCommand.addArgument([`-n`, `--key-name`], {
+    help: `key name from store`,
+    dest: `keyName`,
+    defaultValue: `defaultName`
   })
 
   // Updating Key command
-  const keyCommand = subparsers.addParser(`update-key`, { addHelp: true })
+  const keyCommand = subparsers.addParser(`add-key`, {
+    addHelp: true,
+    description: `Adds a new key in the keystore path`,
+  })
 
   keyCommand.addArgument([`-k`, `--key-path`], {
     help: `key store path to save encrypted key`,
     dest: `keyPath`,
-    defaultValue: `voter.json`,
+    defaultValue: `voter.json`
+  })
+
+  keyCommand.addArgument([`-n`, `--key-name`], {
+    help: `key name from store`,
+    dest: `keyName`,
+    defaultValue: `defaultName`
   })
 }
 
@@ -83,31 +68,79 @@ async function main(): Promise<void> {
   registerCommands(parser)
   const args = parser.parseArgs()
 
-  if (args.subparser_name === `vote`) {
-    args.lcdURL =
-      args.lcdURL || (process.env.LCD_URL && process.env.LCD_URL.split(',')) || []
-    args.source = args.source || (process.env.SOURCE && process.env.SOURCE.split(',')) || []
-    args.chainID = args.chainID || process.env.CHAIN_ID || ''
-    if (args.lcdURL.length === 0 || args.source.length === 0 || args.chainID === '') {
-      console.error('Missing --lcd, --chain-id or --source')
-      return
+  if (args.command === `vote`) {
+    if (!process.env.VALIDATORS) throw Error("Specify VALIDATORS list in .env file")
+
+    const voteServiceConfig: VoteServiceConfig = {
+      lcdUrl: process.env.LCD_URL ?? "http://localhost:1317",
+      rpcUrl: process.env.RPC_URL ?? "http://localhost:26657",
+      dataSourceUrls: process.env.DATA_SOURCE_URL?.split(",") ?? ["http://localhost:8532/latest"],
+      chainID: process.env.CHAIN_ID ?? "andromeda-oracle-1",
+      validators: process.env.VALIDATORS.split(","),
+      addrPrefix: process.env.ADDR_PREFIX ?? 'adr',
+      password: process.env.PASSWORD ?? "thispassword",
+      keyPath: process.env.KEY_PATH ?? args.keyPath,
+      keyName: process.env.KEY_NAME ?? args.keyName,
+
+    };
+
+    const plainEntry: PlainEntity = ks.load(
+      voteServiceConfig.keyPath,
+      voteServiceConfig.keyName,
+      voteServiceConfig.password
+    );
+    const voteService = await VoteService.getNewService(voteServiceConfig, plainEntry);
+
+    while (true) {
+      const startTime = Date.now()
+
+      await voteService.process()
+        .catch(err => {
+          console.error(JSON.stringify(err));
+
+          if (err.isAxiosError) {
+            // TODO: switch price client if axios error at some point
+            console.info('vote: lcd client unavailable, rotating to next lcd client.')
+          }
+          voteService.resetPrevote()
+        })
+      await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
     }
-
-    args.keyPath = args.keyPath || process.env.KEY_PATH || 'voter.json'
-    args.password = args.password || process.env.PASSPHRASE || ''
-    if (args.keyPath === '' || args.passphrase === '') {
-      console.error('Missing either --key-path or --password')
-      return
-    }
-
-    // validator is skippable and default value will be extracted from the key
-    args.validator =
-      args.validator || (process.env.VALIDATOR && process.env.VALIDATOR.split(','))
-
-    await vote(args)
-  } else if (args.subparser_name === `update-key`) {
-    await updateKey(args.keyPath)
   }
+  else if (args.command === `add-key`) {
+    let password = process.env.PASSWORD || ''
+    let mnemonic = process.env.MNEMONIC || ''
+
+    if (password === '') {
+      password = await promptly.password(`Enter a password to encrypt your key to disk:`, {
+        replace: `*`,
+      })
+      const confirm = await promptly.password(`Repeat the password:`, { replace: `*` })
+
+      if (password !== confirm) {
+        console.error(`ERROR: passwords don't match, retry`)
+        return
+      }
+    }
+
+    if (password.length < 8) {
+      console.error(`ERROR: password must be at least 8 characters`)
+      return
+    }
+
+    if (mnemonic === '') {
+      mnemonic = await promptly.prompt(`Enter your bip39 mnemonic: `)
+    }
+
+    if (mnemonic.trim().split(` `).length !== 24) {
+      console.error(`Error: Mnemonic is not valid.`)
+      return
+    }
+
+    await ks.save(args.keyPath, 'voter', password, mnemonic)
+    console.info(`saved!`)
+  }
+  else throw Error("Missing argument, it has to be vote or add-key")
 }
 
 main().catch((e) => {

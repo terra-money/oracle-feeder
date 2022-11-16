@@ -4,9 +4,9 @@ import {
   EncodeObject,
   Registry,
 } from "@cosmjs/proto-signing";
-import { StdFee } from "@cosmjs/launchpad";
-import { SigningStargateClient } from "@cosmjs/stargate";
-import { Env } from "../../env";
+import { LcdClientBaseOptions } from '@cosmjs/launchpad/build/lcdapi/lcdclient'
+import { StdFee, LcdClient } from "@cosmjs/launchpad";
+import { SigningStargateClient, DeliverTxResponse} from "@cosmjs/stargate";
 import { UnionToIntersection, Return, Constructor } from "./helpers";
 import { Module } from "./modules";
 import { EventEmitter } from "events";
@@ -16,11 +16,33 @@ const defaultFee = {
   gas: "200000",
 };
 
+interface ClientConfig extends LcdClientBaseOptions{
+  rpcUrl: string
+}
+
 export class IgniteClient extends EventEmitter {
   static plugins: Module[] = [];
-  env: Env;
-  signer: OfflineSigner;
+  readonly lcd: LcdClient;
   registry: Array<[string, GeneratedType]> = [];
+
+  constructor(
+    readonly config: ClientConfig,
+    readonly signer: OfflineSigner
+  ) {
+    super();
+    this.setMaxListeners(0);
+    this.lcd = LcdClient.withExtensions(config);
+
+    const classConstructor = this.constructor as typeof IgniteClient;
+    classConstructor.plugins.forEach(plugin => {
+      const pluginInstance = plugin(this);
+      Object.assign(this, pluginInstance.module)
+      if (this.registry) {
+        this.registry = this.registry.concat(pluginInstance.registry)
+      }
+    });
+  }
+
   static plugin<T extends Module | Module[]>(plugin: T) {
     const currentPlugins = this.plugins;
 
@@ -37,37 +59,10 @@ export class IgniteClient extends EventEmitter {
     return AugmentedClient as typeof AugmentedClient & Constructor<Extension>;
   }
 
-  async signAndBroadcast(msgs: EncodeObject[], fee: StdFee, memo: string) {
-    if (this.signer) {
-      const options = { registry: new Registry(this.registry), prefix: "adr" };
-      const { address } = (await this.signer.getAccounts())[0];
-      const signingClient = await SigningStargateClient.connectWithSigner(
-        this.env.RPC_URL,
-        this.signer,
-        options
-      );
-      return await signingClient.signAndBroadcast(address, msgs, fee ? fee : defaultFee, memo)
-    } else {
-      throw new Error(" Signer is not present.");
-    }
-  }
-
-  constructor(env: Env, signer: OfflineSigner) {
-    super();
-    this.env = env;
-    this.setMaxListeners(0);
-    this.signer = signer;
-    const classConstructor = this.constructor as typeof IgniteClient;
-    classConstructor.plugins.forEach(plugin => {
-      const pluginInstance = plugin(this);
-      Object.assign(this, pluginInstance.module)
-      if (this.registry) {
-        this.registry = this.registry.concat(pluginInstance.registry)
-      }
-    });
-  }
-  async useSigner(signer: OfflineSigner) {
-    this.signer = signer;
-    this.emit("signer-changed", this.signer);
+  async signAndBroadcast(msgs: EncodeObject[], fee?: StdFee, memo?: string): Promise<DeliverTxResponse> {
+    const options = { registry: new Registry(this.registry), prefix: "adr" };
+    const { address } = (await this.signer.getAccounts())[0];
+    const signingClient = await SigningStargateClient.connectWithSigner(this.config.apiUrl, this.signer, options);
+    return await signingClient.signAndBroadcast(address, msgs, fee ? fee : defaultFee, memo)
   }
 }

@@ -14,121 +14,120 @@ import { MsgAggregateExchangeRateVote } from "./types/oracle/tx";
 export { MsgAggregateExchangeRatePrevote, MsgDelegateFeedConsent, MsgAggregateExchangeRateVote };
 
 type sendMsgAggregateExchangeRatePrevoteParams = {
-  value: MsgAggregateExchangeRatePrevote,
-  fee?: StdFee,
-  memo?: string
+	value: MsgAggregateExchangeRatePrevote,
+	fee?: StdFee,
+	memo?: string
 };
 
 type sendMsgDelegateFeedConsentParams = {
-  value: MsgDelegateFeedConsent,
-  fee?: StdFee,
-  memo?: string
+	value: MsgDelegateFeedConsent,
+	fee?: StdFee,
+	memo?: string
 };
 
 type sendMsgAggregateExchangeRateVoteParams = {
-  value: MsgAggregateExchangeRateVote,
-  fee?: StdFee,
-  memo?: string
+	value: MsgAggregateExchangeRateVote,
+	fee?: StdFee,
+	memo?: string
 };
 
 
 type msgAggregateExchangeRatePrevoteParams = {
-  value: MsgAggregateExchangeRatePrevote,
+	value: MsgAggregateExchangeRatePrevote,
 };
 
 type msgDelegateFeedConsentParams = {
-  value: MsgDelegateFeedConsent,
+	value: MsgDelegateFeedConsent,
 };
 
-type msgAggregateExchangeRateVoteParams = {
-  value: MsgAggregateExchangeRateVote,
+export type msgAggregateExchangeRateVoteParams = {
+	value: MsgAggregateExchangeRateVote,
 };
 
 
 export const registry = new Registry(msgTypes);
 
 const defaultFee = {
-  amount: [],
-  gas: "200000",
+	amount: [],
+	gas: "200000",
 };
 
 interface TxClientOptions {
-  addr: string
+	addr: string
 	prefix: string
 	signer?: OfflineSigner
 }
 
-export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "http://localhost:26657", prefix: "adr" }) => {
+export const txClient = ({ signer, prefix, addr }: TxClientOptions) => {
 
-  return {
-		
+	return {
 		async sendMsgAggregateExchangeRatePrevote({ value, fee, memo }: sendMsgAggregateExchangeRatePrevoteParams): Promise<DeliverTxResponse> {
 			if (!signer) {
-					throw new Error('TxClient:sendMsgAggregateExchangeRatePrevote: Unable to sign Tx. Signer is not present.')
+				throw new Error('TxClient:sendMsgAggregateExchangeRatePrevote: Unable to sign Tx. Signer is not present.')
 			}
-			try {			
-				const { address } = (await signer.getAccounts())[0]; 
-				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+			try {
+				const { address } = (await signer.getAccounts())[0];
+				const signingClient = await SigningStargateClient.connectWithSigner(addr, signer, { registry, prefix });
 				let msg = this.msgAggregateExchangeRatePrevote({ value: MsgAggregateExchangeRatePrevote.fromPartial(value) })
 				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
 			} catch (e: any) {
-				throw new Error('TxClient:sendMsgAggregateExchangeRatePrevote: Could not broadcast Tx: '+ e.message)
+				throw new Error('TxClient:sendMsgAggregateExchangeRatePrevote: Could not broadcast Tx: ' + e.message)
 			}
 		},
-		
+
 		async sendMsgDelegateFeedConsent({ value, fee, memo }: sendMsgDelegateFeedConsentParams): Promise<DeliverTxResponse> {
 			if (!signer) {
-					throw new Error('TxClient:sendMsgDelegateFeedConsent: Unable to sign Tx. Signer is not present.')
+				throw new Error('TxClient:sendMsgDelegateFeedConsent: Unable to sign Tx. Signer is not present.')
 			}
-			try {			
-				const { address } = (await signer.getAccounts())[0]; 
-				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+			try {
+				const { address } = (await signer.getAccounts())[0];
+				const signingClient = await SigningStargateClient.connectWithSigner(addr, signer, { registry, prefix });
 				let msg = this.msgDelegateFeedConsent({ value: MsgDelegateFeedConsent.fromPartial(value) })
 				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
 			} catch (e: any) {
-				throw new Error('TxClient:sendMsgDelegateFeedConsent: Could not broadcast Tx: '+ e.message)
+				throw new Error('TxClient:sendMsgDelegateFeedConsent: Could not broadcast Tx: ' + e.message)
 			}
 		},
-		
+
 		async sendMsgAggregateExchangeRateVote({ value, fee, memo }: sendMsgAggregateExchangeRateVoteParams): Promise<DeliverTxResponse> {
 			if (!signer) {
-					throw new Error('TxClient:sendMsgAggregateExchangeRateVote: Unable to sign Tx. Signer is not present.')
+				throw new Error('TxClient:sendMsgAggregateExchangeRateVote: Unable to sign Tx. Signer is not present.')
 			}
-			try {			
-				const { address } = (await signer.getAccounts())[0]; 
-				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+			try {
+				const { address } = (await signer.getAccounts())[0];
+				const signingClient = await SigningStargateClient.connectWithSigner(addr, signer, { registry, prefix });
 				let msg = this.msgAggregateExchangeRateVote({ value: MsgAggregateExchangeRateVote.fromPartial(value) })
 				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
 			} catch (e: any) {
-				throw new Error('TxClient:sendMsgAggregateExchangeRateVote: Could not broadcast Tx: '+ e.message)
+				throw new Error('TxClient:sendMsgAggregateExchangeRateVote: Could not broadcast Tx: ' + e.message)
 			}
 		},
-		
-		
+
+
 		msgAggregateExchangeRatePrevote({ value }: msgAggregateExchangeRatePrevoteParams): EncodeObject {
 			try {
-				return { typeUrl: "/oracle.oracle.MsgAggregateExchangeRatePrevote", value: MsgAggregateExchangeRatePrevote.fromPartial( value ) }  
+				return { typeUrl: "/oracle.oracle.MsgAggregateExchangeRatePrevote", value: MsgAggregateExchangeRatePrevote.fromPartial(value) }
 			} catch (e: any) {
 				throw new Error('TxClient:MsgAggregateExchangeRatePrevote: Could not create message: ' + e.message)
 			}
 		},
-		
+
 		msgDelegateFeedConsent({ value }: msgDelegateFeedConsentParams): EncodeObject {
 			try {
-				return { typeUrl: "/oracle.oracle.MsgDelegateFeedConsent", value: MsgDelegateFeedConsent.fromPartial( value ) }  
+				return { typeUrl: "/oracle.oracle.MsgDelegateFeedConsent", value: MsgDelegateFeedConsent.fromPartial(value) }
 			} catch (e: any) {
 				throw new Error('TxClient:MsgDelegateFeedConsent: Could not create message: ' + e.message)
 			}
 		},
-		
+
 		msgAggregateExchangeRateVote({ value }: msgAggregateExchangeRateVoteParams): EncodeObject {
 			try {
-				return { typeUrl: "/oracle.oracle.MsgAggregateExchangeRateVote", value: MsgAggregateExchangeRateVote.fromPartial( value ) }  
+				return { typeUrl: "/oracle.oracle.MsgAggregateExchangeRateVote", value: MsgAggregateExchangeRateVote.fromPartial(value) }
 			} catch (e: any) {
 				throw new Error('TxClient:MsgAggregateExchangeRateVote: Could not create message: ' + e.message)
 			}
 		},
-		
+
 	}
 };
 
@@ -136,35 +135,34 @@ interface QueryClientOptions {
 	lcdUrl: string
 }
 
-export const queryClient = ({ lcdUrl: lcdUrl }: QueryClientOptions = { lcdUrl: "http://localhost:1317" }) => {
-  return new Api({ baseURL: lcdUrl });
+export const queryClient = ({ lcdUrl }: QueryClientOptions) => {
+	return new Api({ baseURL: lcdUrl });
 };
 
 class SDKModule {
 	public query: ReturnType<typeof queryClient>;
 	public tx: ReturnType<typeof txClient>;
-	
+
 	public registry: Array<[string, GeneratedType]> = [];
 
-	constructor(client: IgniteClient) {		
-	
-		this.query = queryClient({ lcdUrl: client.env.LCD_URL });		
+	constructor(client: IgniteClient) {
+		this.query = queryClient({ lcdUrl: client.config.apiUrl });
 		this.updateTX(client);
-		client.on('signer-changed',(signer) => {			
-		 this.updateTX(client);
+		client.on('signer-changed', (signer) => {
+			this.updateTX(client);
 		})
 	}
 	updateTX(client: IgniteClient) {
-    const methods = txClient({
-        signer: client.signer,
-        addr: client.env.RPC_URL,
-        prefix: "adr",
-    })
-	
-    this.tx = methods;
-    for (let m in methods) {
-        this.tx[m] = methods[m].bind(this.tx);
-    }
+		const methods = txClient({
+			signer: client.signer,
+			addr: client.config.rpcUrl,
+			prefix: "adr",
+		})
+
+		this.tx = methods;
+		for (let m in methods) {
+			this.tx[m] = methods[m].bind(this.tx);
+		}
 	}
 };
 
@@ -174,6 +172,6 @@ const Module = (test: IgniteClient) => {
 			OracleOracle: new SDKModule(test)
 		},
 		registry: msgTypes
-  }
+	}
 }
 export default Module;

@@ -285,21 +285,6 @@ export class HttpClient<SecurityDataType = unknown> {
     };
   }
 
-  private createFormData(input: Record<string, unknown>): FormData {
-    return Object.keys(input || {}).reduce((formData, key) => {
-      const property = input[key];
-      formData.append(
-        key,
-        property instanceof Blob
-          ? property
-          : typeof property === "object" && property !== null
-          ? JSON.stringify(property)
-          : `${property}`,
-      );
-      return formData;
-    }, new FormData());
-  }
-
   public request = async <T = any, _E = any>({
     secure,
     path,
@@ -321,8 +306,6 @@ export class HttpClient<SecurityDataType = unknown> {
       requestParams.headers.common = { Accept: "*/*" };
       requestParams.headers.post = {};
       requestParams.headers.put = {};
-
-      body = this.createFormData(body as Record<string, unknown>);
     }
 
     return this.instance.request({

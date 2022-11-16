@@ -332,6 +332,7 @@ export const AggregateExchangeRateVote = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+
           message.exchangeRateTuples.push(ExchangeRateTuple.decode(reader, reader.uint32()));
           break;
         case 2:
@@ -468,7 +469,7 @@ function longToNumber(long: Long): number {
   return long.toNumber();
 }
 
-if (_m0.util.Long !== Long) {
+if (_m0?.util?.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
 }

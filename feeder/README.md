@@ -24,8 +24,8 @@ You need the mnemonic phrase for the **feeder account** for your validator.
 ```sh
 npm start update-key
 
-Enter a passphrase to encrypt your key to disk: ********
-Repeat the passphrase: ********
+Enter a password to encrypt your key to disk: ********
+Repeat the password: ********
 Enter your bip39 mnemonic : <some nice mnemonic>
 saved!
 ✨  Done in 9.19s.
@@ -60,6 +60,6 @@ You can start feeder with arguments or env.
 | `lcd`       | `LCD_URL` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
 | `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
 | `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
-| `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
+| `password`  | `PASSWORD`    | Password for mnemonic (assigned in step #2)      | `12345678`                   |
 | `        `  | `MNEMONIC`    | Mnemonic to assign in step                       | `window duty close pair...`  |
 | `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |

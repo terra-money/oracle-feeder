@@ -1,5 +1,5 @@
 export interface Env {
-    PASSPHRASE: string;
+    PASSWORD: string;
     MNEMONIC: string;
     SOURCE: string;
     CHAIN_ID: string;

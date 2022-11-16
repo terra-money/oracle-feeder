@@ -1,21 +1,10 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
 import { Secp256k1HdWallet } from "@cosmjs/launchpad";
+import { Entity, PlainEntity } from 'models';
 
 const KEY_SIZE = 256
 const ITERATIONS = 100
-
-interface Entity {
-  name: string
-  address: string
-  ciphertext: string
-}
-
-export interface PlainEntity {
-  validator: string;
-  mnemonic: string;
-  address: string;
-}
 
 function encrypt(plainText, pass): string {
   const salt = crypto.randomBytes(16)

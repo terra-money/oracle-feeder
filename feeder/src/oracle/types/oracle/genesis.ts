@@ -343,7 +343,7 @@ function longToNumber(long: Long): number {
   return long.toNumber();
 }
 
-if (_m0.util.Long !== Long) {
+if (_m0?.util?.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
 }
