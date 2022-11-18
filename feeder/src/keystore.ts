@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { MnemonicKey } from '@terra-money/terra.js'
+import { MnemonicKey } from '@terra-money/station.js'
 
 const KEY_SIZE = 256
 const ITERATIONS = 100
@@ -67,7 +67,7 @@ export async function save(
     throw new Error('Key already exists by that name')
   }
 
-  const mnemonicKey = new MnemonicKey({ mnemonic })
+  const mnemonicKey = new MnemonicKey({ mnemonic, coinType: 118 })
 
   const ciphertext = encrypt(
     JSON.stringify({
@@ -80,7 +80,7 @@ export async function save(
 
   keys.push({
     name,
-    address: mnemonicKey.accAddress,
+    address: mnemonicKey.accAddress('adr'),
     ciphertext,
   })
 

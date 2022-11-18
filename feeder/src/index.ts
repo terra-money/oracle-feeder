@@ -1,7 +1,9 @@
 import { ArgumentParser } from 'argparse'
 import { vote } from './vote'
-import { updateKey } from './updateKey'
+import { addKey } from './addKey'
 import * as packageInfo from '../package.json'
+import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+dotenv.config()
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
@@ -16,17 +18,10 @@ function registerCommands(parser: ArgumentParser): void {
     description: `Fetch price and broadcast oracle messages`,
   })
 
-  voteCommand.addArgument([`--ledger`], {
-    action: `storeTrue`,
-    help: `using ledger`,
-    dest: 'ledgerMode',
-    defaultValue: false,
-  })
-
-  voteCommand.addArgument(['-l', '--lcd'], {
+  voteCommand.addArgument(['-l', '--lcd-url'], {
     action: 'append',
     help: 'lcd address',
-    dest: 'lcdAddress',
+    dest: 'lcdUrl',
     required: false,
   })
 
@@ -37,15 +32,16 @@ function registerCommands(parser: ArgumentParser): void {
     required: false,
   })
 
-  voteCommand.addArgument([`--validator`], {
+  voteCommand.addArgument([`--validators`], {
     action: `append`,
-    help: `validator address (e.g. terravaloper1...), can have multiple`,
+    help: `validators address (e.g. terravaloper1...), can have multiple`,
     required: false,
   })
 
-  voteCommand.addArgument([`-s`, `--source`], {
+  voteCommand.addArgument([`-d`, `--data-source-url`], {
     action: `append`,
     help: `Append price data source(It can handle multiple sources)`,
+    dest: `dataSourceUrl`,
     required: false,
   })
 
@@ -61,13 +57,8 @@ function registerCommands(parser: ArgumentParser): void {
     required: false,
   })
 
-  voteCommand.addArgument([`-d`, `--denoms`], {
-    action: `help`,
-    help: '🚨***DEPRECATED***🚨 remove this parameter from command line',
-  })
-
   // Updating Key command
-  const keyCommand = subparsers.addParser(`update-key`, { addHelp: true })
+  const keyCommand = subparsers.addParser(`add-key`, { addHelp: true })
 
   keyCommand.addArgument([`-k`, `--key-path`], {
     help: `key store path to save encrypted key`,
@@ -87,29 +78,31 @@ async function main(): Promise<void> {
   const args = parser.parseArgs()
 
   if (args.subparser_name === `vote`) {
-    args.lcdAddress =
-      args.lcdAddress || (process.env['LCD_ADDRESS'] && process.env['LCD_ADDRESS'].split(',')) || []
-    args.source = args.source || (process.env['SOURCE'] && process.env['SOURCE'].split(',')) || []
-    args.chainID = args.chainID || process.env['CHAIN_ID'] || ''
-    if (args.lcdAddress.length === 0 || args.source.length === 0 || args.chainID === '') {
-      console.error('Missing --lcd, --chain-id or --source')
+    args.lcdUrl = args.lcdUrl || (process.env.LCD_URL && process.env.LCD_URL.split(',')) || []
+    
+    args.dataSourceUrl = args.dataSourceUrl || (process.env.DATA_SOURCE_URL && process.env.DATA_SOURCE_URL.split(',')) || []
+    args.chainID = args.chainID || process.env.CHAIN_ID || 'andromeda-oracle-1'
+    if (args.lcdUrl?.length === 0 || args.dataSourceUrl?.length === 0 || args.chainID === '') {
+      console.error('Missing --lcd, --chain-id or --data-source-url')
       return
     }
 
-    args.keyPath = args.keyPath || process.env['KEY_PATH'] || 'voter.json'
-    args.password = args.password || process.env['PASSPHRASE'] || ''
-    if (args.keyPath === '' || args.passphrase === '') {
+    args.keyPath = args.keyPath || process.env.KEY_PATH || 'voter.json'
+    args.password = args.password || process.env.PASSWORD || ''
+    if (args.keyPath === '' || args.password === '') {
       console.error('Missing either --key-path or --password')
       return
     }
 
-    // validator is skippable and default value will be extracted from the key
-    args.validator =
-      args.validator || (process.env['VALIDATOR'] && process.env['VALIDATOR'].split(','))
+    // validators is skippable and default value will be extracted from the key
+    args.validators =
+      args.validators || (process.env.VALIDATORS && process.env.VALIDATORS.split(','))
 
+    args.prefix = process.env.ADDR_PREFIX;
+    
     await vote(args)
-  } else if (args.subparser_name === `update-key`) {
-    await updateKey(args.keyPath)
+  } else if (args.subparser_name === `add-key`) {
+    await addKey(args.keyPath)
   }
 }
 

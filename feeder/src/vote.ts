@@ -5,16 +5,10 @@ import * as http from 'http'
 import * as https from 'https'
 import axios from 'axios'
 import * as ks from './keystore'
-import {
-  LCDClient,
-  RawKey,
-  Wallet,
-  MsgAggregateExchangeRateVote,
-  Fee,
-  isTxError,
-  LCDClientConfig,
-} from '@terra-money/terra.js'
+import { LCDClient, RawKey, Wallet, Fee, isTxError, LCDClientConfig } from '@terra-money/station.js'
 import * as packageInfo from '../package.json'
+import { MsgAggregateExchangeRateVote } from './oracle/msgs'
+import { OracleAPI } from './oracle/OracleAPI'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -37,18 +31,20 @@ async function initKey(keyPath: string, password?: string): Promise<RawKey> {
   return new RawKey(Buffer.from(plainEntity.privateKey, 'hex'))
 }
 
-async function loadOracleParams(client: LCDClient): Promise<{
+interface OracleParameters {
   oracleVotePeriod: number
   oracleWhitelist: string[]
   currentVotePeriod: number
   indexInVotePeriod: number
   nextBlockHeight: number
-}> {
-  const oracleParams = await client.oracle.parameters()
-  const oracleVotePeriod = oracleParams.vote_period
-  const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
+}
 
-  const latestBlock = await client.tendermint.blockInfo()
+async function loadOracleParams(client: LCDClient, oracle: OracleAPI, chainID: string): Promise<OracleParameters> {
+  const oracleParams = await oracle.parameters()
+  const oracleVotePeriod = oracleParams.vote_period
+  const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.denom)
+
+  const latestBlock = await client.tendermint.blockInfo(chainID)
 
   // the vote will be included in the next block
   const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1
@@ -65,13 +61,11 @@ async function loadOracleParams(client: LCDClient): Promise<{
 }
 
 interface Price {
-  currency: string
+  denom: string
   price: string
 }
 
 async function getPrices(sources: string[]): Promise<Price[]> {
-  console.info(`getPrices: source: ${sources.join(',')}`)
-
   const results = await Bluebird.some(
     sources.map((s) => ax.get(s)),
     1
@@ -111,9 +105,7 @@ async function getPrices(sources: string[]): Promise<Price[]> {
 function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
   const newPrices = prices
     .map((price) => {
-      const { currency } = price
-
-      if (oracleWhitelist.indexOf(`u${currency.toLowerCase()}`) === -1) {
+      if (oracleWhitelist.indexOf(`u${price.denom.toLowerCase()}`) === -1) {
         return
       }
 
@@ -122,12 +114,12 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
     .filter(Boolean) as Price[]
 
   oracleWhitelist.forEach((denom) => {
-    const found = prices.filter(({ currency }) => denom === `u${currency.toLowerCase()}`).length > 0
+    const found = prices.filter((price) => (denom === `u${price.denom.toLowerCase()}`)).length > 0
 
     if (!found) {
       newPrices.push({
-        currency: denom.slice(1).toUpperCase(),
-        price: '0.000000000000000000',
+        denom: denom.slice(1).toUpperCase(),
+        price: '0.000000',
       })
     }
   })
@@ -140,7 +132,7 @@ function buildVoteMsgs(
   valAddrs: string[],
   voterAddr: string
 ): MsgAggregateExchangeRateVote[] {
-  const coins = prices.map(({ currency, price }) => `${price}u${currency.toLowerCase()}`).join(',')
+  const coins = prices.map(({ denom, price }) => `${price}u${denom.toLowerCase()}`).join(',')
 
   return valAddrs.map((valAddr) => {
     const salt = crypto.randomBytes(2).toString('hex')
@@ -155,17 +147,19 @@ let previousVotePeriod = 0
 export async function processVote(
   client: LCDClient,
   wallet: Wallet,
-  priceURLs: string[],
+  args: VoteArgs,
   valAddrs: string[],
   voterAddr: string
 ): Promise<void> {
+  const oracle = new OracleAPI(client, args.chainID);
+  console.info(`[${new Date().toUTCString()}][VOTE] Requesting on chain data`);
   const {
     oracleVotePeriod,
     oracleWhitelist,
     currentVotePeriod,
     indexInVotePeriod,
     nextBlockHeight,
-  } = await loadOracleParams(client)
+  } = await loadOracleParams(client, oracle, args.chainID)
 
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
@@ -183,14 +177,16 @@ export async function processVote(
   }
 
   // Print timestamp before start
-  console.info(`timestamp: ${new Date().toUTCString()}`)
+  console.info(`[${new Date().toUTCString()}][VOTE] Requesting prices from price server ${args.dataSourceUrl.join(',')}`);
+  const _prices = await getPrices(args.dataSourceUrl);
 
   // Removes non-whitelisted currencies and abstain for not fetched currencies
-  const prices = preparePrices(await getPrices(priceURLs), oracleWhitelist)
+  const prices = preparePrices(_prices, oracleWhitelist)
 
   // Build Exchange Rate Vote Msgs
-  const voteMsgs: MsgAggregateExchangeRateVote[] = buildVoteMsgs(prices, valAddrs, voterAddr)
+  const voteMsgs: any[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
+  console.info(`[${new Date().toUTCString()}][VOTE] Create transaction and sign`);
   // Build Exchange Rate Prevote Msgs
   const isPrevoteOnlyTx = previousVoteMsgs.length === 0
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
@@ -198,25 +194,28 @@ export async function processVote(
     msgs,
     fee: new Fee((1 + msgs.length) * 50000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
+    chainID: args.chainID
   })
 
-  const res = await client.tx.broadcastSync(tx).catch((err) => {
+  const res = await client.tx.broadcastSync(tx, args.chainID).catch((err) => {
     console.error(`broadcast error: ${err.message}`, tx.toData())
     throw err
   })
 
   if (isTxError(res)) {
+    console.log(res);
     console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
     return
   }
 
   const txhash = res.txhash
-  console.info(`broadcast success: txhash: ${txhash}`)
+  console.info(`[${new Date().toUTCString()}][VOTE] Broadcast success ${txhash}`);
 
   const height = await validateTx(
     client,
     nextBlockHeight,
     txhash,
+    args,
     // if only prevote exist, then wait 2 * vote_period blocks,
     // else wait left blocks in the current vote_period
     isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod
@@ -231,9 +230,10 @@ async function validateTx(
   client: LCDClient,
   nextBlockHeight: number,
   txhash: string,
+  args: VoteArgs,
   timeoutHeight: number
 ): Promise<number> {
-  let height = 0
+  let inclusionHeight = 0
 
   // wait 3 blocks
   const maxBlockHeight = nextBlockHeight + timeoutHeight
@@ -241,10 +241,10 @@ async function validateTx(
   // current block height
   let lastCheckHeight = nextBlockHeight - 1
 
-  while (!height && lastCheckHeight < maxBlockHeight) {
+  while (!inclusionHeight && lastCheckHeight < maxBlockHeight) {
     await Bluebird.delay(1500)
 
-    const lastBlock = await client.tendermint.blockInfo()
+    const lastBlock = await client.tendermint.blockInfo(args.chainID)
     const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
 
     if (latestBlockHeight <= lastCheckHeight) {
@@ -257,56 +257,67 @@ async function validateTx(
     // wait for indexing (not sure; but just for safety)
     await Bluebird.delay(500)
 
-    await client.tx
-      .txInfo(txhash)
-      .then((txinfo) => {
-        if (!txinfo.code) {
-          height = txinfo.height
+    // FIX-ME: replace this rest request with a station.js request. At the moment 
+    // station.js does not accept custom models which means that it will fail 
+    // parsing the /oracle.oracle.MsgAggregateExchangeRatePrevote and as a 
+    // consequence will not return the height which is the parameter we need
+    // to operate on.
+    await ax.get(`${args.lcdUrl}/cosmos/tx/v1beta1/txs/${txhash}`)
+      .then(res => {
+        const {height, code, raw_log} = res.data.tx_response;
+
+        if (!res.data.code) {
+          inclusionHeight = height
         } else {
-          throw new Error(`validateTx: failed tx: code: ${txinfo.code}, raw_log: ${txinfo.raw_log}`)
+          throw new Error(`validateTx: failed tx: code: ${code}, raw_log: ${raw_log}`)
         }
       })
       .catch((err) => {
         if (!err.isAxiosError) {
-          console.error(err.message)
+          console.error("txInfo error", err)
         }
       })
   }
 
-  if (!height) {
+  if (!inclusionHeight) {
     throw new Error('validateTx: timeout')
   }
 
-  console.info(`validateTx: height: ${height}`)
-  return height
+  console.info(`validateTx: height: ${inclusionHeight}`)
+  return inclusionHeight
 }
 
 interface VoteArgs {
-  ledgerMode: boolean
-  lcdAddress: string[]
+  lcdUrl: string[]
+  prefix: string;
   chainID: string
   validator: string[]
-  source: string[]
+  dataSourceUrl: string[]
   password: string
   keyPath: string
 }
 
-function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): LCDClientConfig {
+function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, LCDClientConfig> {
   return {
-    URL: args.lcdAddress[lcdIndex],
-    chainID: args.chainID,
+    [args.chainID]: {
+      lcd: args.lcdUrl[lcdIndex],
+      chainID: args.chainID,
+      gasAdjustment: "1.2",
+      gasPrices: "200000",
+      prefix: args.prefix
+    }
   }
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.password)
-  const valAddrs = args.validator || [rawKey.valAddress]
-  const voterAddr = rawKey.accAddress
+  const valAddrs: string[] = args.validator || [rawKey.valAddress(args.prefix)]
+  const voterAddr = rawKey.accAddress(args.prefix);
 
   const lcdRotate = {
     client: new LCDClient(buildLCDClientConfig(args, 0)),
     current: 0,
-    max: args.lcdAddress.length - 1,
+    max: args.lcdUrl.length - 1,
   }
 
   while (true) {
@@ -315,14 +326,14 @@ export async function vote(args: VoteArgs): Promise<void> {
     await processVote(
       lcdRotate.client,
       lcdRotate.client.wallet(rawKey),
-      args.source,
+      args,
       valAddrs,
       voterAddr
     ).catch((err) => {
       if (err.isAxiosError && err.response) {
         console.error(err.message, err.response.data)
       } else {
-        console.error(err.message)
+        console.error(err)
       }
 
       if (err.isAxiosError) {
@@ -344,7 +355,7 @@ function rotateLCD(args: VoteArgs, lcdRotate: { client: LCDClient; current: numb
 
   lcdRotate.client = new LCDClient(buildLCDClientConfig(args, lcdRotate.current))
   console.info(
-    'Switched to LCD address ' + lcdRotate.current + '(' + args.lcdAddress[lcdRotate.current] + ')'
+    'Switched to LCD address ' + lcdRotate.current + '(' + args.lcdUrl[lcdRotate.current] + ')'
   )
 
   return

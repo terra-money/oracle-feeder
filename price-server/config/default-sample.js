@@ -1,27 +1,16 @@
-// Updated 09-Feb-22
+// Updated 18-Nov-22
 
 const fiatSymbols = [
   'USD/SDR',
-  'USD/KRW',
-  'USD/MNT',
-  'USD/EUR',
   'USD/CNY',
+  'USD/EUR',
   'USD/JPY',
   'USD/GBP',
+  'USD/KRW',
   'USD/INR',
   'USD/CAD',
-  'USD/CHF',
   'USD/HKD',
   'USD/AUD',
-  'USD/SGD',
-  'USD/THB',
-  'USD/SEK',
-  'USD/DKK',
-  'USD/IDR',
-  'USD/PHP',
-  'USD/MYR',
-  'USD/NOK',
-  'USD/TWD',
 ]
 
 module.exports = {
@@ -33,56 +22,54 @@ module.exports = {
     channel: '#bot-test',
     url: '',
   },
-  lunaProvider: {
-    adjustTvwapSymbols: ['LUNC/USDT'],
-    huobi: { symbols: ['LUNC/USDT'] },
-    binance: { symbols: ['LUNC/USDT'] },
-    kucoin: { symbols: ['LUNC/USDT'] },
-  },
   cryptoProvider: {
-    adjustTvwapSymbols: ['USDT/USD'],
-    bitfinex: { symbols: ['USDT/USD'] },
-    kraken: { symbols: ['USDT/USD'] },
+    adjustTvwap: {
+      symbols: [
+        'LUNA/USDT',
+        'BTC/USDT',
+        'ETH/USDT',
+      ]
+    },
+    huobi: {
+      symbols: [
+        'LUNA/USDT',
+        'BTC/USDT',
+        'ETH/USDT'
+      ]
+    },
+    binance: {
+      symbols: [
+        'LUNA/USDT',
+        'BTC/USDT',
+        'ETH/USDT'
+      ]
+    },
+    // kucoin: {
+    //   symbols: [
+    //     'LUNA-USDT',
+    //     'BTC-USDT',
+    //     'ETH-USDT'
+    //   ]
+    // },
+    // bitfinex: {
+    //   symbols: [
+    //     'USDT/USD'
+    //   ]
+    // },
+    // kraken: {
+    //   symbols: [
+    //     'USDT/USD'
+    //   ]
+    // },
   },
   fiatProvider: {
-    fallbackPriority: ['currencylayer', 'alphavantage', 'fixer', 'exchangerate', 'bandprotocol'],
-    currencylayer: {
-      symbols: fiatSymbols,
-      interval: 60 * 1000,
-      timeout: 5000,
-      // https://currencylayer.com/product
-      // recommend: business subscription(60second Updates): $79.99/month
-      apiKey: '', // necessary
-    },
-    bandprotocol: {
-      // DKK is not supported for bandprotocol
-      symbols: fiatSymbols.filter((v) => !v.includes('DKK') && !v.includes('PHP')),
-      interval: 60 * 1000,
-      timeout: 5000,
-      // https://data.bandprotocol.com/
-    },
+    fallbackPriority: ['exchangerate'],
     exchangerate: {
       symbols: fiatSymbols,
       interval: 60 * 1000,
       timeout: 5000,
       // https://exchangerate.host/
-    },
-    fixer: {
-      symbols: fiatSymbols,
-      interval: 60 * 1000,
-      timeout: 5000,
-      // https://fixer.io/product
-      // recommend: professional plus(60second Updates): $80/month
-      apiKey: '', // necessary
-    },
-    alphavantage: {
-      symbols: fiatSymbols,
-      interval: 60 * 1000,
-      timeout: 5000,
-      // https://www.alphavantage.co/premium/
-      // recommend: 120 API request per minute: $49.99/month
-      apiKey: '', // necessary
-    },
+    }
   },
   fiatSymbols,
 }

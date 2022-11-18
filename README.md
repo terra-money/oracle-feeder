@@ -54,7 +54,7 @@ cd feeder
 npm install
 
 # configure to use feeder account
-npm start update-key
+npm start add-key
 
 # start voting
 npm start vote -- \

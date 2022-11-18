@@ -19,6 +19,5 @@ export function init(opts: Options = {}): void {
 }
 
 export function errorHandler(error: Error): void {
-  logger.error(error)
   sentry.captureException(error)
 }

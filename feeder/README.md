@@ -22,7 +22,7 @@ npm install
 You need the mnemonic phrase for the **feeder account** for your validator.
 
 ```sh
-npm start update-key
+npm start add-key
 
 Enter a passphrase to encrypt your key to disk: ********
 Repeat the passphrase: ********
@@ -41,11 +41,11 @@ You can start feeder with arguments or env.
    ``` shell
    $ npm start vote -- \
       --source http://localhost:8532/latest \
-      --lcd https://lcd-1.terra.dev \
-      --lcd https://lcd-2.terra.dev \
-      --chain-id columbus-5 \
-      --validator terravaloper1xx \
-      --validator terravaloper1yy \
+      --lcd-url https://lcd-1.terra.dev \
+      --lcd-url https://lcd-2.terra.dev \
+      --chain-id andromeda-oralce-1 \
+      --validators terravaloper1xx \
+      --validators terravaloper1yy \
       --password "<password>"
    ```
 
@@ -56,11 +56,11 @@ You can start feeder with arguments or env.
    ```
 
 
-| Argument    | Env           | Description                                      | Example                      |
-| ----------- | ------------- | ------------------------------------------------ | ---------------------------- |
-| `source`    | `SOURCE`      | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | `LCD_ADDRESS` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
-| `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
-| `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
-| `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
-| `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |
+| Argument              | Env                | Description                                      | Example                      |
+| --------------------- | ------------------ | ------------------------------------------------ | ---------------------------- |
+| `password`            | `PASSWORD`         | Password for mnemonic (assigned in step #2)      | `12345678`                   |
+| `data-source-url`     | `DATA_SOURCE_URL`  | Price server URL.                                | http://localhost:8532/latest |
+| `lcd-url`             | `LCD_ADDRESS`      | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
+| `chain-id`            | `CHAIN_ID`         | Chain ID.                                        | `andromeda-oralce-1`         |
+| `validators`          | `VALIDATOR`        | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
+| `key-path`            | `KEY_PATH`         | signing key store path (default voter.json)      | `voter.json`                 |
