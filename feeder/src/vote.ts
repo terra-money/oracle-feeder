@@ -8,6 +8,7 @@ import * as ks from './keystore'
 import { LCDClient, RawKey, Wallet, Fee, isTxError, LCDClientConfig } from '@terra-money/station.js'
 import * as packageInfo from '../package.json'
 import { MsgAggregateExchangeRateVote } from './oracle/msgs'
+import * as logger from './logger'
 import { OracleAPI } from './oracle/OracleAPI'
 
 const ax = axios.create({
@@ -76,13 +77,13 @@ async function getPrices(sources: string[]): Promise<Price[]> {
         !Array.isArray(data.prices) ||
         !data.prices.length
       ) {
-        console.error('getPrices: invalid response')
+        logger.error('getPrices: invalid response')
         return false
       }
 
       // Ignore prices older than 60 seconds ago
       if (Date.now() - new Date(data.created_at).getTime() > 60 * 1000) {
-        console.error('getPrices: too old')
+        logger.error('getPrices: too old')
         return false
       }
 
@@ -152,7 +153,7 @@ export async function processVote(
   voterAddr: string
 ): Promise<void> {
   const oracle = new OracleAPI(client, args.chainID);
-  console.info(`[${new Date().toUTCString()}][VOTE] Requesting on chain data`);
+  logger.info(`[VOTE] Requesting on chain data`);
   const {
     oracleVotePeriod,
     oracleWhitelist,
@@ -177,7 +178,7 @@ export async function processVote(
   }
 
   // Print timestamp before start
-  console.info(`[${new Date().toUTCString()}][VOTE] Requesting prices from price server ${args.dataSourceUrl.join(',')}`);
+  logger.info(`[VOTE] Requesting prices from price server ${args.dataSourceUrl.join(',')}`);
   const _prices = await getPrices(args.dataSourceUrl);
 
   // Removes non-whitelisted currencies and abstain for not fetched currencies
@@ -186,7 +187,7 @@ export async function processVote(
   // Build Exchange Rate Vote Msgs
   const voteMsgs: any[] = buildVoteMsgs(prices, valAddrs, voterAddr)
 
-  console.info(`[${new Date().toUTCString()}][VOTE] Create transaction and sign`);
+  logger.info(`[VOTE] Create transaction and sign`);
   // Build Exchange Rate Prevote Msgs
   const isPrevoteOnlyTx = previousVoteMsgs.length === 0
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
@@ -198,18 +199,17 @@ export async function processVote(
   })
 
   const res = await client.tx.broadcastSync(tx, args.chainID).catch((err) => {
-    console.error(`broadcast error: ${err.message}`, tx.toData())
+    logger.error(`broadcast error: ${err.message} ${tx.toData()}`)
     throw err
   })
 
   if (isTxError(res)) {
-    console.log(res);
-    console.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
+    logger.error(`broadcast error: code: ${res.code}, raw_log: ${res.raw_log}`)
     return
   }
 
   const txhash = res.txhash
-  console.info(`[${new Date().toUTCString()}][VOTE] Broadcast success ${txhash}`);
+  logger.info(`[VOTE] Broadcast success ${txhash}`);
 
   const height = await validateTx(
     client,
@@ -269,21 +269,21 @@ async function validateTx(
         if (!res.data.code) {
           inclusionHeight = height
         } else {
-          throw new Error(`validateTx: failed tx: code: ${code}, raw_log: ${raw_log}`)
+          throw new Error(`[VOTE]: transaction failed tx: code: ${code}, raw_log: ${raw_log}`)
         }
       })
       .catch((err) => {
         if (!err.isAxiosError) {
-          console.error("txInfo error", err)
+          logger.error("txInfo error", err)
         }
       })
   }
 
   if (!inclusionHeight) {
-    throw new Error('validateTx: timeout')
+    throw new Error('[VOTE]: transaction timeout')
   }
 
-  console.info(`validateTx: height: ${inclusionHeight}`)
+  logger.info(`[VOTE] Included at height: ${inclusionHeight}`)
   return inclusionHeight
 }
 
@@ -331,13 +331,13 @@ export async function vote(args: VoteArgs): Promise<void> {
       voterAddr
     ).catch((err) => {
       if (err.isAxiosError && err.response) {
-        console.error(err.message, err.response.data)
+        logger.error(err.message, err.response.data)
       } else {
-        console.error(err)
+        logger.error(err)
       }
 
       if (err.isAxiosError) {
-        console.info('vote: lcd client unavailable, rotating to next lcd client.')
+        logger.info('vote: lcd client unavailable, rotating to next lcd client.')
         rotateLCD(args, lcdRotate)
       }
 
@@ -354,7 +354,7 @@ function rotateLCD(args: VoteArgs, lcdRotate: { client: LCDClient; current: numb
   }
 
   lcdRotate.client = new LCDClient(buildLCDClientConfig(args, lcdRotate.current))
-  console.info(
+  logger.info(
     'Switched to LCD address ' + lcdRotate.current + '(' + args.lcdUrl[lcdRotate.current] + ')'
   )
 

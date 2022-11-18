@@ -27,7 +27,7 @@ export namespace OracleWhitelist {
 }
 
 export interface OracleParams {
-  /** Number of blocks that define the period over which new votes must be submitted for the exchange rate of uluna. */
+  /** Number of blocks that define the period over which new votes must be submitted for the oracle data. */
   vote_period: number;
 
   /** Ratio of voting power that must be reached for a denomination to be considered "active." */
@@ -42,7 +42,7 @@ export interface OracleParams {
   /** List of active denominations that must be voted on. */
   whitelist: OracleWhitelist[];
 
-  /** Percetange of stake slashed once per slash window. */
+  /** Percentage of stake slashed once per slash window. */
   slash_fraction: Dec;
 
   /** Number of blocks that define the period over which slashing penalties for missing votes are incurred. */
@@ -87,7 +87,7 @@ export class OracleAPI extends BaseAPI {
   }
 
   /**
-   * Gets the Oracle module's currently registered exchange rate for uluna in all available denominations.
+   * Gets the Oracle module's currently registered exchange rates for all available denominations.
    */
   public async exchangeRates(params: APIParams = {}): Promise<Coins> {
     return this.c
@@ -100,7 +100,7 @@ export class OracleAPI extends BaseAPI {
 
   /**
    * Gets the Oracle module's currently registered exchange rate for the specific denomination.
-   * @param denom denomination in which to get the exchange rate of uluna
+   * @param denom denomination of one of the available assets
    */
   public async exchangeRate(
     denom: Denom,

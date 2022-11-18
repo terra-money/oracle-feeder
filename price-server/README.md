@@ -1,6 +1,6 @@
 # `price-server`
 
-This component is reponsible for computing the exchange rate of LUNA to submit and makes it available through an HTTP endpoints.
+This component is responsible for computing the exchange rate of different assets from multiple data sources and make it available through HTTP endpoints.
 
 ## Instructions
 
@@ -15,8 +15,9 @@ npm install
 ```sh
 # Copy sample config file
 cp ./config/default-sample.js ./config/default.js
+
 # make edits
-vim ./config/default.js
+nano ./config/default.js
 ```
 
 3. Run server
