@@ -9,10 +9,9 @@ import { IgniteClient } from './oracle/client'
 import { Module as OracleModule } from './oracle'
 import { OracleAsset, OracleParams } from './oracle/rest'
 import { msgAggregateExchangeRateVoteParams } from './oracle/module'
-import { EncodeObject } from "@cosmjs/proto-signing";
+import { DirectSecp256k1HdWallet, EncodeObject } from "@cosmjs/proto-signing";
 import { DeliverTxResponse } from "@cosmjs/stargate";
 import { ErrorCodes, ModuleData, PlainEntity, Price, VoteServiceConfig } from './models'
-import { resolve } from 'path'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -36,10 +35,10 @@ export class VoteService {
   private constructor(
     private readonly config: VoteServiceConfig,
     private readonly entry: PlainEntity,
-    wallet: Secp256k1HdWallet
+    wallet: DirectSecp256k1HdWallet
   ) {
-    const client = new CustomClient({ 
-      apiUrl: config.lcdUrl, 
+    const client = new CustomClient({
+      apiUrl: config.lcdUrl,
       rpcUrl: config.rpcUrl,
       broadcastMode: BroadcastMode.Block
     }, wallet);
@@ -47,11 +46,12 @@ export class VoteService {
   }
 
   static async getNewService(config: VoteServiceConfig, entry: PlainEntity): Promise<VoteService> {
-    const wallet = await Secp256k1HdWallet.fromMnemonic(entry.mnemonic);
+    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(entry.mnemonic, { prefix: config.addrPrefix });
     return new VoteService(config, entry, wallet)
   }
 
   async process(): Promise<any> {
+    console.info(`[${new Date().toUTCString()}][VoteService] before loading blockchain module data`);
     // Load necessary data from the blockchain to calculate the vote rate
     await this.loadModuleData();
 
@@ -62,9 +62,7 @@ export class VoteService {
       return Promise.reject(err);
     }
 
-    // Print timestamp before start
-    console.info(`[${new Date().toUTCString()}][VoteService] before request prices`)
-
+    console.info(`[${new Date().toUTCString()}][VoteService] before loading prices from price-feeder`)
     // Request prices from price-server 
     const prices = await this.getPrices();
 
@@ -77,8 +75,8 @@ export class VoteService {
     // Sign & Broadcast the msgs
     const txRes = (await this.client.signAndBroadcast(
       msgs,
-      { gas: (1 + msgs.length) * 50000 },
       `${packageInfo.name}@${packageInfo.version}`,
+      { gas: (1 + msgs.length) * 50000 }
     )) as DeliverTxResponse;
 
     console.info(`[${new Date().toUTCString()}][VoteService] Transaction broadcasted successfully with hash ${txRes.transactionHash}`)
@@ -119,10 +117,10 @@ export class VoteService {
 
   async loadModuleData(): Promise<void> {
     // Query the blockchain for the required data
-    const oracleParams = (await this.client.oracle.query.queryParams()).data.params as OracleParams;
+    const oracleParams = (await this.client.OracleOracle.query.queryParams()).data.params as OracleParams;
     const oracleVotePeriod = Number(oracleParams.vote_period);
     const oracleWhitelist: OracleAsset[] = oracleParams.whitelist as OracleAsset[];
-    const latestBlock = await this.client.lcd.blocksLatest();
+    const latestBlock = await this.client.lcd.get("/cosmos/base/tendermint/v1beta1/blocks/latest");
 
     // the vote will be included in the next block
     const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1
@@ -133,19 +131,18 @@ export class VoteService {
   }
 
   async getPrices(): Promise<Price[]> {
-    console.info(`getPrices: source: ${this.config.dataSourceUrls.join(',')}`)
     const axPromises = this.config.dataSourceUrls.map((s) => ax.get(s));
 
     const results = await Bluebird.some(axPromises, 1)
-      .then((results) => results.filter(({ data }) => {
-        if (typeof data.created_at !== 'string' || !Array.isArray(data.prices) || !data.prices.length) {
-          console.error('getPrices: invalid response')
+      .then((res) => res.filter(({ data }) => {
+        if (typeof data.creationDate !== 'string' || !Array.isArray(data.prices) || !data.prices.length) {
+          console.error(`[${new Date().toUTCString()}][VoteService] invalid response`)
           return false
         }
 
         // Ignore prices older than 60 seconds ago
-        if (Date.now() - new Date(data.created_at).getTime() > 60 * 1000) {
-          console.error('getPrices: too old')
+        if (Date.now() - new Date(data.creationDate).getTime() > 60 * 1000) {
+          console.error(`[${new Date().toUTCString()}][VoteService] response too old`)
           return false
         }
 
@@ -165,7 +162,7 @@ export class VoteService {
    * 1. Removes price that cannot be found in oracle whitelist
    * 2. Fill abstain prices for prices that cannot be found in price source but in oracle whitelist
    */
-  prepareOracleAssets(prices: Price[]): OracleAsset[] {
+  prepareOracleAssets(prices: Price[]): Price[] {
     const newPrices = prices
       .map((price) => {
         const { denom } = price
@@ -177,15 +174,16 @@ export class VoteService {
 
         return price
       })
-      .filter(Boolean) as OracleAsset[];
+      .filter(Boolean) as Price[];
 
     this.moduleData.oracleWhitelist.forEach(asset => {
       const found = prices.filter(price => asset.denom === `u${price.denom.toLowerCase()}`).length > 0
 
       if (!found) {
         newPrices.push({
-          denom: asset.denom?.slice(1).toUpperCase(),
-          amount: '0.000000',
+          denom: asset.denom?.slice(1).toUpperCase() as string,
+          price: '0.000000',
+          name: asset.name as string
         })
       }
     })
@@ -193,9 +191,9 @@ export class VoteService {
     return newPrices
   }
 
-  buildEncodedAssetList(prices: OracleAsset[]): EncodeObject[] {
-    const exchangeRates = prices.map(({ denom, amount }) => `${amount}u${denom?.toLowerCase()}`).join(',')
-
+  buildEncodedAssetList(prices: Price[]): EncodeObject[] {
+    const exchangeRates = prices.map(({ denom, price }) => `${price}u${denom?.toLowerCase()}`).join(',')
+    
     return this.config.validators
       .map(validator => {
         const salt = crypto.randomBytes(2).toString('hex')

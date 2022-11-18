@@ -1,8 +1,8 @@
 import {
   GeneratedType,
-  OfflineSigner,
   EncodeObject,
   Registry,
+  DirectSecp256k1HdWallet,
 } from "@cosmjs/proto-signing";
 import { LcdClientBaseOptions } from '@cosmjs/launchpad/build/lcdapi/lcdclient'
 import { StdFee, LcdClient } from "@cosmjs/launchpad";
@@ -27,7 +27,7 @@ export class IgniteClient extends EventEmitter {
 
   constructor(
     readonly config: ClientConfig,
-    readonly signer: OfflineSigner
+    readonly signer: DirectSecp256k1HdWallet
   ) {
     super();
     this.setMaxListeners(0);
@@ -59,10 +59,25 @@ export class IgniteClient extends EventEmitter {
     return AugmentedClient as typeof AugmentedClient & Constructor<Extension>;
   }
 
-  async signAndBroadcast(msgs: EncodeObject[], fee?: StdFee, memo?: string): Promise<DeliverTxResponse> {
+  async signAndBroadcast(msgs: EncodeObject[], memo: string, fee?: StdFee): Promise<DeliverTxResponse> {
     const options = { registry: new Registry(this.registry), prefix: "adr" };
     const { address } = (await this.signer.getAccounts())[0];
-    const signingClient = await SigningStargateClient.connectWithSigner(this.config.apiUrl, this.signer, options);
-    return await signingClient.signAndBroadcast(address, msgs, fee ? fee : defaultFee, memo)
+    
+    let signer = await SigningStargateClient.connectWithSigner(this.config.rpcUrl, this.signer, options);
+    const { accountNumber, sequence } = await signer.getSequence(address);
+    const chainId = await signer.getChainId();
+    signer.disconnect();
+
+    const offlineSigner = await SigningStargateClient.offline(this.signer, options);
+    const signerData = {
+        accountNumber: accountNumber,
+        sequence: sequence,
+        chainId: chainId,
+    };
+    const tx = await offlineSigner.sign(address, msgs, fee ? fee : defaultFee, memo, signerData);
+    
+    signer = await SigningStargateClient.connectWithSigner(this.config.rpcUrl, this.signer, options);
+    return signer.broadcastTx(tx.bodyBytes);
+
   }
 }

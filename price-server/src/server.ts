@@ -36,7 +36,7 @@ export async function createServer(): Promise<http.Server> {
     ]
 
     send(res, 200, {
-      created_at: new Date().toISOString(),
+      creationDate: new Date().toISOString(),
       prices,
     })
   })
@@ -45,7 +45,7 @@ export async function createServer(): Promise<http.Server> {
     const fiatPrices = getFiatPrices()
 
     send(res, 200, {
-      created_at: new Date().toISOString(),
+      creationDate: new Date().toISOString(),
       prices: Object.keys(fiatPrices).map((symbol) => ({
         denom: getQuoteCurrency(symbol),
         price: fiatPrices[symbol].toFixed(6),
@@ -57,7 +57,7 @@ export async function createServer(): Promise<http.Server> {
     const cryptoPrices = getCryptoPrices()
 
     send(res, 200, {
-      created_at: new Date().toISOString(),
+      creationDate: new Date().toISOString(),
       prices: Object.keys(cryptoPrices).map((symbol) => ({
         denom: getBaseCurrency(symbol),
         price: cryptoPrices[symbol].toFixed(6),
