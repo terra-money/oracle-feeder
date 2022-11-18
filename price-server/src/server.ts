@@ -30,7 +30,7 @@ export async function createServer(): Promise<http.Server> {
         price: cryptoPrices[symbol].toFixed(6),
       })),
       ...Object.keys(fiatPrices).map((symbol) => ({
-        denom: getQuoteCurrency(symbol),
+        denom: getBaseCurrency(symbol),
         price: fiatPrices[symbol].toFixed(6),
       })),
     ]

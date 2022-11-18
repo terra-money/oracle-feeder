@@ -19,7 +19,13 @@ export function report(now: number): void {
       (result, value, key) => Object.assign(result, { [key]: value.toFixed(6) }),
       {}
     )
-    logger.info(cryptoPrices)
+    const fiatPrices = reduce(
+      getFiatPrices(),
+      (result, value, key) => Object.assign(result, { [key]: value.toFixed(6) }),
+      {}
+    )
+    const prices = Object.assign(cryptoPrices, fiatPrices)
+    logger.info(`[REPORTER]`, prices)
 
     if (!config.report) {
       reportedAt = now
@@ -29,14 +35,14 @@ export function report(now: number): void {
     if (!reporter || !isSameDay(now, reportedAt)) {
       reporter = createReporter(`report/prices_${format(now, 'MM-dd_HHmm')}.csv`, [
         'time',
-        ...Object.keys(cryptoPrices).map((quote) => quote),
+        ...Object.keys(prices).map((quote) => quote),
       ])
     }
 
     reporter.writeRecords([
       {
         time: format(Math.floor(addMinutes(now, -1).getTime() / 60000) * 60000, 'MM-dd HH:mm'),
-        ...cryptoPrices,
+        ...prices,
       },
     ])
   } catch (error) {

@@ -1,16 +1,16 @@
 // Updated 18-Nov-22
 
 const fiatSymbols = [
-  'USD/SDR',
-  'USD/CNY',
-  'USD/EUR',
-  'USD/JPY',
-  'USD/GBP',
-  'USD/KRW',
-  'USD/INR',
-  'USD/CAD',
-  'USD/HKD',
-  'USD/AUD',
+  'SDR/USD',
+  'CNY/USD',
+  'EUR/USD',
+  'JPY/USD',
+  'GBP/USD',
+  'KRW/USD',
+  'INR/USD',
+  'CAD/USD',
+  'HKD/USD',
+  'AUD/USD',
 ]
 
 module.exports = {
