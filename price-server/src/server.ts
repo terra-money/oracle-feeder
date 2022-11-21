@@ -24,9 +24,6 @@ export async function createServer(): Promise<http.Server> {
     const cryptoPrices = getCryptoPrices()
     const fiatPrices = getFiatPrices()
 
-    console.log('cryptoPrices', cryptoPrices)
-    console.log('fiatPrices', fiatPrices)
-
     const prices = [
       ...Object.keys(cryptoPrices).map((symbol) => ({
         denom: getBaseCurrency(symbol),

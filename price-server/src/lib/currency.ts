@@ -1,7 +1,9 @@
 export function getBaseCurrency(symbol: string): string {
-  return symbol.split('/')[0]
+  let splitter = symbol.includes('/') ? "/" : "-";
+  return symbol.split(splitter)[0]
 }
 
 export function getQuoteCurrency(symbol: string): string {
-  return symbol.split('/')[1]
+  let splitter = symbol.includes('/') ? "/" : "-";
+  return symbol.split(splitter)[1]
 }

@@ -30,14 +30,14 @@ module.exports = {
     binance: {
       symbols: ['LUNA/USDT', 'LUNA/BUSD', 'BTC/USDT', 'BTC/BUSD', 'ETH/USDT', 'ETH/BUSD', 'BUSD/USDT'],
     },
-    kucoin: {
-      symbols: ['LUNA-USDT', 'BTC-USDT', 'ETH-USDT'],
-    },
+    // kucoin: {
+    //   symbols: ['LUNA-USDT', 'BTC-USDT', 'ETH-USDT'],
+    // },
     bitfinex: {
       symbols: ['USDT/USD', 'BTC/USDT', 'ETH/USDT'],
     },
     kraken: {
-      symbols: ['USDT/USD'],
+      symbols: ['USDT/USD', 'USDC/USD'],
     },
   },
   fiatProvider: {
