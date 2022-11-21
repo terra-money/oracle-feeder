@@ -28,20 +28,14 @@ export class ExchangeRate extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
       base: 'USD',
-      symbols: this.symbols
-        .map((symbol) => (symbol === 'SDR/USD' ? 'XDR' : symbol.replace('/USD', '')))
-        .join(','),
+      symbols: this.symbols.map((symbol) => (symbol === 'SDR/USD' ? 'XDR' : symbol.replace('/USD', ''))).join(','),
     }
 
-    const response: Response = await nodeFetch(
-      `https://api.exchangerate.host/latest?${toQueryString(params)}`,
-      { timeout: this.options.timeout }
-    ).then((res) => res.json())
+    const response: Response = await nodeFetch(`https://api.exchangerate.host/latest?${toQueryString(params)}`, {
+      timeout: this.options.timeout,
+    }).then((res) => res.json())
     if (!response || !response.success || !response.rates) {
-      logger.error(
-        `${this.constructor.name}: wrong api response`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
       throw new Error('Invalid response from ExchangeRate')
     }
 

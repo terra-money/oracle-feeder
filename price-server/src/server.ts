@@ -4,7 +4,7 @@ import * as send from '@polka/send-type'
 import * as bluebird from 'bluebird'
 import * as config from 'config'
 import * as logger from 'lib/logger'
-import { getBaseCurrency, getQuoteCurrency } from 'lib/currency'
+import { getBaseCurrency } from 'lib/currency'
 import { getCryptoPrices, getFiatPrices } from 'prices'
 import { countAllRequests } from 'lib/metrics'
 

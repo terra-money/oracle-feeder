@@ -1,4 +1,4 @@
-import { MsgAggregateExchangeRateVote } from './MsgAggregateExchangeRateVote';
+import { MsgAggregateExchangeRateVote } from './MsgAggregateExchangeRateVote'
 
 describe('MsgAggregateExchangeRateVote', () => {
   it('getAggregateVoteHash', () => {
@@ -11,12 +11,10 @@ describe('MsgAggregateExchangeRateVote', () => {
       'salt',
       'terra1krj7amhhagjnyg2tkkuh6l0550y733jnjulzjh',
       'terravaloper1krj7amhhagjnyg2tkkuh6l0550y733jnjnnlzy'
-    );
-    msg.getPrevote();
-    expect(msg.getAggregateVoteHash()).toEqual(
-      '7929908433e7399845fa60f9ef70ef7f2bb8f01b'
-    );
-  });
+    )
+    msg.getPrevote()
+    expect(msg.getAggregateVoteHash()).toEqual('7929908433e7399845fa60f9ef70ef7f2bb8f01b')
+  })
   it('conversion', () => {
     const msg = new MsgAggregateExchangeRateVote(
       {
@@ -27,8 +25,8 @@ describe('MsgAggregateExchangeRateVote', () => {
       'salt',
       'terra1krj7amhhagjnyg2tkkuh6l0550y733jnjulzjh',
       'terravaloper1krj7amhhagjnyg2tkkuh6l0550y733jnjnnlzy'
-    );
-    const anyObj = msg.packAny(true);
-    expect(MsgAggregateExchangeRateVote.unpackAny(anyObj, true)).toBeDefined();
-  });
-});
+    )
+    const anyObj = msg.packAny()
+    expect(MsgAggregateExchangeRateVote.unpackAny(anyObj)).toBeDefined()
+  })
+})

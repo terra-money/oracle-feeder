@@ -38,10 +38,7 @@ function decrypt(transitmessage, pass) {
 
   const encryptedText = transitmessage.substring(64)
   const cipher = crypto.createDecipheriv('AES-256-CBC', key, iv)
-  const decryptedText = Buffer.concat([
-    cipher.update(encryptedText, 'base64'),
-    cipher.final(),
-  ]).toString()
+  const decryptedText = Buffer.concat([cipher.update(encryptedText, 'base64'), cipher.final()]).toString()
 
   return decryptedText
 }

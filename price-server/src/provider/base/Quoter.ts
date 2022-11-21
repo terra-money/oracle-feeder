@@ -2,7 +2,6 @@ import { BigNumber } from 'bignumber.js'
 import * as logger from 'lib/logger'
 import { sendSlack } from 'lib/slack'
 import { TradesBySymbol, Trades, PriceBySymbol } from './types'
-import { format } from 'date-fns'
 import { setQuoterAlive } from 'lib/metrics'
 
 export interface QuoterOptions {

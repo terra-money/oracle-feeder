@@ -1,4 +1,4 @@
-// Updated 18-Nov-22
+// Updated 09-Feb-22
 
 const fiatSymbols = [
   'SDR/USD',
@@ -24,25 +24,17 @@ module.exports = {
   },
   cryptoProvider: {
     adjustTvwap: {
-      symbols: [
-        'LUNA/USDT',
-        'BTC/USDT',
-        'ETH/USDT',
-      ]
+      symbols: ['LUNA/USDT', 'BTC/USDT', 'ETH/USDT'],
     },
-    huobi: {
-      symbols: [
-        'LUNA/USDT',
-        'BTC/USDT',
-        'ETH/USDT'
-      ]
-    },
+    // huobi: {
+    //   symbols: [
+    //     'LUNA/USD',
+    //     'BTC/USD',
+    //     'ETH/USD'
+    //   ]
+    // },
     binance: {
-      symbols: [
-        'LUNA/USDT',
-        'BTC/USDT',
-        'ETH/USDT'
-      ]
+      symbols: ['LUNA/USDT', 'BTC/USDT', 'BTC/BUSD', 'ETH/USDT'],
     },
     // kucoin: {
     //   symbols: [
@@ -69,7 +61,7 @@ module.exports = {
       interval: 60 * 1000,
       timeout: 5000,
       // https://exchangerate.host/
-    }
+    },
   },
   fiatSymbols,
 }

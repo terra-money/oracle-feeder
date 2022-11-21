@@ -1,9 +1,9 @@
-import { SHA256 } from 'jscrypto/SHA256';
-import { ValAddress, AccAddress, Coins } from '@terra-money/station.js';
-import { JSONSerializable } from '@terra-money/station.js/dist/util/json';
-import { MsgAggregateExchangeRatePrevote } from './MsgAggregateExchangeRatePrevote';
-import { Any } from '@terra-money/legacy.proto/google/protobuf/any';
-import { MsgAggregateExchangeRateVote as MsgAggregateExchangeRateVote_pb } from '@terra-money/legacy.proto/terra/oracle/v1beta1/tx';
+import { SHA256 } from 'jscrypto/SHA256'
+import { ValAddress, AccAddress, Coins } from '@terra-money/station.js'
+import { JSONSerializable } from '@terra-money/station.js/dist/util/json'
+import { MsgAggregateExchangeRatePrevote } from './MsgAggregateExchangeRatePrevote'
+import { Any } from '@terra-money/legacy.proto/google/protobuf/any'
+import { MsgAggregateExchangeRateVote as MsgAggregateExchangeRateVote_pb } from '@terra-money/legacy.proto/terra/oracle/v1beta1/tx'
 
 /**
  * Calculates the aggregate vote hash
@@ -11,11 +11,9 @@ import { MsgAggregateExchangeRateVote as MsgAggregateExchangeRateVote_pb } from 
  * @param salt salt
  * @param validator validator operator address
  */
-export function aggregateVoteHash(exchangeRates: Coins,salt: string,validator: ValAddress): string {
-  const payload = `${salt}:${exchangeRates
-    .toDecCoins()
-    .toString()}:${validator}`;
-  return SHA256.hash(payload).toString().substring(0, 40);
+export function aggregateVoteHash(exchangeRates: Coins, salt: string, validator: ValAddress): string {
+  const payload = `${salt}:${exchangeRates.toDecCoins().toString()}:${validator}`
+  return SHA256.hash(payload).toString().substring(0, 40)
 }
 
 /**
@@ -27,7 +25,7 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
   MsgAggregateExchangeRateVote.Data,
   MsgAggregateExchangeRateVote.Proto
 > {
-  public exchange_rates: Coins;
+  public exchange_rates: Coins
 
   /**
    * @param exchange_rate exchange rates
@@ -41,20 +39,20 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
     public feeder: AccAddress,
     public validator: ValAddress
   ) {
-    super();
-    this.exchange_rates = new Coins(exchange_rates).toDecCoins();
+    super()
+    this.exchange_rates = new Coins(exchange_rates).toDecCoins()
   }
 
   public static fromAmino(data: MsgAggregateExchangeRateVote.Amino): MsgAggregateExchangeRateVote {
     const {
       value: { exchange_rates, salt, feeder, validator },
-    } = data;
-    const xrs = Coins.fromString(exchange_rates);
-    return new MsgAggregateExchangeRateVote(xrs, salt, feeder, validator);
+    } = data
+    const xrs = Coins.fromString(exchange_rates)
+    return new MsgAggregateExchangeRateVote(xrs, salt, feeder, validator)
   }
 
   public toAmino(): MsgAggregateExchangeRateVote.Amino {
-    const { exchange_rates, salt, feeder, validator } = this;
+    const { exchange_rates, salt, feeder, validator } = this
     return {
       type: 'oracle/MsgAggregateExchangeRateVote',
       value: {
@@ -63,17 +61,17 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
         feeder,
         validator,
       },
-    };
+    }
   }
 
   public static fromData(proto: MsgAggregateExchangeRateVote.Data): MsgAggregateExchangeRateVote {
-    const { exchange_rates, salt, feeder, validator } = proto;
-    const xrs = Coins.fromString(exchange_rates);
-    return new MsgAggregateExchangeRateVote(xrs, salt, feeder, validator);
+    const { exchange_rates, salt, feeder, validator } = proto
+    const xrs = Coins.fromString(exchange_rates)
+    return new MsgAggregateExchangeRateVote(xrs, salt, feeder, validator)
   }
 
   public toData(): MsgAggregateExchangeRateVote.Data {
-    const { exchange_rates, salt, feeder, validator } = this;
+    const { exchange_rates, salt, feeder, validator } = this
 
     return {
       '@type': '/oracle.oracle.MsgAggregateExchangeRateVote',
@@ -81,29 +79,24 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
       salt,
       feeder,
       validator,
-    };
+    }
   }
 
   public static fromProto(proto: MsgAggregateExchangeRateVote.Proto): MsgAggregateExchangeRateVote {
-    const xrs = Coins.fromString(proto.exchangeRates);
+    const xrs = Coins.fromString(proto.exchangeRates)
 
-    return new MsgAggregateExchangeRateVote(
-      xrs,
-      proto.salt,
-      proto.feeder,
-      proto.validator
-    );
+    return new MsgAggregateExchangeRateVote(xrs, proto.salt, proto.feeder, proto.validator)
   }
 
   public toProto(): MsgAggregateExchangeRateVote.Proto {
-    const { exchange_rates, salt, feeder, validator } = this;
+    const { exchange_rates, salt, feeder, validator } = this
 
     return MsgAggregateExchangeRateVote_pb.fromPartial({
       exchangeRates: exchange_rates.toString(),
       feeder,
       salt,
       validator,
-    });
+    })
   }
 
   /**
@@ -111,7 +104,7 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
    *  the corresponding prevote message.
    */
   public getAggregateVoteHash(): string {
-    return aggregateVoteHash(this.exchange_rates, this.salt, this.validator);
+    return aggregateVoteHash(this.exchange_rates, this.salt, this.validator)
   }
 
   /**
@@ -122,47 +115,39 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
    * @returns the corresponding prevote message to send
    */
   public getPrevote(): MsgAggregateExchangeRatePrevote {
-    return new MsgAggregateExchangeRatePrevote(
-      this.getAggregateVoteHash(),
-      this.feeder,
-      this.validator
-    );
+    return new MsgAggregateExchangeRatePrevote(this.getAggregateVoteHash(), this.feeder, this.validator)
   }
 
   public packAny(): Any {
     return Any.fromPartial({
       typeUrl: '/oracle.oracle.MsgAggregateExchangeRateVote',
-      value: MsgAggregateExchangeRateVote_pb.encode(
-        this.toProto()
-      ).finish(),
-    });
+      value: MsgAggregateExchangeRateVote_pb.encode(this.toProto()).finish(),
+    })
   }
 
   public static unpackAny(msgAny: Any): MsgAggregateExchangeRateVote {
-    return MsgAggregateExchangeRateVote.fromProto(
-      MsgAggregateExchangeRateVote_pb.decode(msgAny.value),
-    );
+    return MsgAggregateExchangeRateVote.fromProto(MsgAggregateExchangeRateVote_pb.decode(msgAny.value))
   }
 }
 
 export namespace MsgAggregateExchangeRateVote {
   export interface Amino {
-    type: 'oracle/MsgAggregateExchangeRateVote';
+    type: 'oracle/MsgAggregateExchangeRateVote'
     value: {
-      exchange_rates: string;
-      salt: string;
-      feeder: AccAddress;
-      validator: ValAddress;
-    };
+      exchange_rates: string
+      salt: string
+      feeder: AccAddress
+      validator: ValAddress
+    }
   }
 
   export interface Data {
-    '@type': '/oracle.oracle.MsgAggregateExchangeRateVote';
-    exchange_rates: string;
-    salt: string;
-    feeder: AccAddress;
-    validator: ValAddress;
+    '@type': '/oracle.oracle.MsgAggregateExchangeRateVote'
+    exchange_rates: string
+    salt: string
+    feeder: AccAddress
+    validator: ValAddress
   }
 
-  export type Proto = MsgAggregateExchangeRateVote_pb;
+  export type Proto = MsgAggregateExchangeRateVote_pb
 }

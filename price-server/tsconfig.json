@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["es2020"],
+    "lib": [
+      "es2020"
+    ],
     "module": "commonjs",
     "target": "es2019",
     "allowJs": false,
@@ -13,6 +15,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "baseUrl": "src",
-    "sourceRoot": "src"
+    "sourceRoot": "src",
+    "resolveJsonModule": true
   }
 }

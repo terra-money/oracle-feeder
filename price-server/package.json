@@ -4,9 +4,7 @@
   "main": "src/main.ts",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
-    "test": "jest",
-    "lint": "eslint '*/**/*.{js,ts,tsx}' --fix"
+    "start": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.0.2",
@@ -30,43 +28,10 @@
     "ws": "^7.4.2"
   },
   "devDependencies": {
-    "@types/jest": "^27.4.1",
     "@types/node-fetch": "^2.5.8",
-    "@types/ws": "^7.4.0",
-    "@typescript-eslint/eslint-plugin": "^5.17.0",
-    "@typescript-eslint/parser": "^5.17.0",
-    "eslint": "^8.12.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "husky": "^4.3.8",
-    "jest": "^27.5.1",
-    "lint-staged": "^10.5.3",
-    "prettier": "^2.2.1",
-    "ts-jest": "^27.1.4"
+    "@types/ws": "^7.4.0"
   },
   "engines": {
-    "node": ">=16"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "./src/**/*.{js,ts,tsx}": [
-      "prettier --write",
-      "eslint --fix",
-      "git add"
-    ],
-    "./src/**/*.{json,css}": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "prettier": {
-    "parser": "typescript",
-    "printWidth": 100,
-    "singleQuote": true,
-    "semi": false
+    "node": ">=18"
   }
 }

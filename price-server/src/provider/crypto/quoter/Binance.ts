@@ -56,9 +56,7 @@ export class Binance extends WebSocketQuoter {
 
     // try connect to websocket server
     // reference: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-streams
-    const symbols = this.symbols
-      .map((symbol) => `${symbol.replace('/', '').toLowerCase()}@kline_1m`)
-      .join('/')
+    const symbols = this.symbols.map((symbol) => `${symbol.replace('/', '').toLowerCase()}@kline_1m`).join('/')
     this.connect(`wss://stream.binance.com:9443/stream?streams=${symbols}`)
   }
 
@@ -89,15 +87,12 @@ export class Binance extends WebSocketQuoter {
 
     // Get candles from Binance
     // reference: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-data
-    const response = await fetch(
-      `https://api.binance.com/api/v3/klines?${toQueryString(params)}`
-    ).then((res) => res.json())
+    const response = await fetch(`https://api.binance.com/api/v3/klines?${toQueryString(params)}`).then((res) =>
+      res.json()
+    )
 
     if (!response || !Array.isArray(response) || response.length < 1) {
-      logger.error(
-        `${this.constructor.name}: invalid api response:`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+      logger.error(`${this.constructor.name}: invalid api response:`, response ? JSON.stringify(response) : 'empty')
       throw new Error(`${this.constructor.name}: invalid response`)
     }
 

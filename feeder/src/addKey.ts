@@ -1,15 +1,12 @@
 import * as keystore from './keystore'
 import * as promptly from 'promptly'
 
-export async function addKey(
-  filePath: string,
-  coinType: string,
-  keyName: string
-): Promise<void> {
+export async function addKey(filePath: string, coinType: string, keyName: string): Promise<void> {
   let password = process.env.PASSWORD || ''
   let mnemonic = process.env.MNEMONIC || ''
-  coinType = process.env.COIN_TYPE ? process.env.COIN_TYPE : coinType;
-  keyName = process.env.KEY_NAME ? process.env.KEY_NAME : keyName;
+
+  coinType = process.env.COIN_TYPE ? process.env.COIN_TYPE : coinType
+  keyName = process.env.KEY_NAME ? process.env.KEY_NAME : keyName
 
   if (password === '') {
     password = await promptly.password(`Enter a passphrase to encrypt your key to disk:`, {
@@ -37,12 +34,6 @@ export async function addKey(
     return
   }
 
-  await keystore.save(
-    filePath, 
-    keyName, 
-    password, 
-    mnemonic, 
-    coinType
-  )
+  await keystore.save(filePath, keyName, password, mnemonic, coinType)
   console.info(`saved!`)
 }

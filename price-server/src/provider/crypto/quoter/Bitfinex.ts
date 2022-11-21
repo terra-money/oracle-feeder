@@ -62,12 +62,7 @@ export class Bitfinex extends WebSocketQuoter {
   protected onData(data: StreamData): void {
     if (Array.isArray(data)) {
       // trade data
-      if (
-        data.length > 2 &&
-        data[1] === 'te' &&
-        Array.isArray(data[2]) &&
-        this.symbolByChanId[data[0]]
-      ) {
+      if (data.length > 2 && data[1] === 'te' && Array.isArray(data[2]) && this.symbolByChanId[data[0]]) {
         this.onTransaction(this.symbolByChanId[data[0]], data[2])
       }
 
@@ -114,16 +109,12 @@ export class Bitfinex extends WebSocketQuoter {
     // reference: https://docs.bitfinex.com/reference#rest-public-candles
     const base = this.getBaseCurrency(symbol)
     const quote = this.getQuoteCurrency(symbol)
-    const response = await fetch(
-      `https://api-pub.bitfinex.com/v2/candles/trade:1m:t${base}${quote}/hist`,
-      { timeout: this.options.timeout }
-    ).then((res) => res.json())
+    const response = await fetch(`https://api-pub.bitfinex.com/v2/candles/trade:1m:t${base}${quote}/hist`, {
+      timeout: this.options.timeout,
+    }).then((res) => res.json())
 
     if (!response || !Array.isArray(response) || response.length < 1) {
-      logger.error(
-        `${this.constructor.name}: wrong api response`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
       throw new Error(`${this.constructor.name}: invalid response`)
     }
 

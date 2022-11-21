@@ -1,9 +1,9 @@
-import { AggregateExchangeRatePrevote } from './AggregateExchangeRatePrevote';
-const data = require('./AggregateExchangeRatePrevote.data.json');
+import { AggregateExchangeRatePrevote } from './AggregateExchangeRatePrevote'
+import * as data from './AggregateExchangeRatePrevote.data.json'
 
 describe('AggregateExchangeRatePrevote', () => {
   it('deserializes', () => {
-    const obj = AggregateExchangeRatePrevote.fromAmino(data);
-    expect(obj.toAmino()).toMatchObject(data);
-  });
-});
+    const obj = AggregateExchangeRatePrevote.fromAmino(data)
+    expect(obj.toAmino()).toMatchObject(data)
+  })
+})

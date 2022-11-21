@@ -30,3 +30,9 @@ __pycache__/
 
 # log
 yarn-error.log
+
+
+# Files that must be skipped
+default.js
+.env
+voter.json

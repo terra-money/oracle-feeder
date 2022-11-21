@@ -27,16 +27,8 @@ export class Coinone extends Quoter {
       { timeout: this.options.timeout }
     ).then((res) => res.json())
 
-    if (
-      !response ||
-      !response.success ||
-      !Array.isArray(response.data) ||
-      response.data.length < 1
-    ) {
-      logger.error(
-        `${this.constructor.name}: wrong api response`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+    if (!response || !response.success || !Array.isArray(response.data) || response.data.length < 1) {
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
       throw new Error(`${this.constructor.name}: invalid response`)
     }
 

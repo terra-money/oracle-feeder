@@ -21,22 +21,16 @@ export class AlphaVantage extends Quoter {
       apikey: this.options.apiKey,
     }
 
-    const response: Response = await fetch(
-      `https://www.alphavantage.co/query?${toQueryString(params)}`,
-      {
-        timeout: this.options.timeout,
-      }
-    ).then((res) => res.json())
+    const response: Response = await fetch(`https://www.alphavantage.co/query?${toQueryString(params)}`, {
+      timeout: this.options.timeout,
+    }).then((res) => res.json())
 
     if (
       !response ||
       !response['Realtime Currency Exchange Rate'] ||
       !response['Realtime Currency Exchange Rate']['5. Exchange Rate']
     ) {
-      logger.error(
-        `${this.constructor.name}: wrong api response`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
       throw new Error('Invalid response from AlphaVantage')
     }
 
