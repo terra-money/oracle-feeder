@@ -23,45 +23,40 @@ module.exports = {
     url: '',
   },
   cryptoProvider: {
-    adjustTvwap: {
+    adjustTvwap: { symbols: [] },
+    huobi: {
       symbols: ['LUNA/USDT', 'BTC/USDT', 'ETH/USDT'],
     },
-    // huobi: {
-    //   symbols: [
-    //     'LUNA/USD',
-    //     'BTC/USD',
-    //     'ETH/USD'
-    //   ]
-    // },
     binance: {
-      symbols: ['LUNA/USDT', 'BTC/USDT', 'BTC/BUSD', 'ETH/USDT'],
+      symbols: ['LUNA/USDT', 'LUNA/BUSD', 'BTC/USDT', 'BTC/BUSD', 'ETH/USDT', 'ETH/BUSD', 'BUSD/USDT'],
     },
-    // kucoin: {
-    //   symbols: [
-    //     'LUNA-USDT',
-    //     'BTC-USDT',
-    //     'ETH-USDT'
-    //   ]
-    // },
-    // bitfinex: {
-    //   symbols: [
-    //     'USDT/USD'
-    //   ]
-    // },
-    // kraken: {
-    //   symbols: [
-    //     'USDT/USD'
-    //   ]
-    // },
+    kucoin: {
+      symbols: ['LUNA-USDT', 'BTC-USDT', 'ETH-USDT'],
+    },
+    bitfinex: {
+      symbols: ['USDT/USD', 'BTC/USDT', 'ETH/USDT'],
+    },
+    kraken: {
+      symbols: ['USDT/USD'],
+    },
   },
   fiatProvider: {
-    fallbackPriority: ['exchangerate'],
+    fallbackPriority: ['exchangerate', 'frankfurter', 'fer'],
+    // https://exchangerate.host/
     exchangerate: {
       symbols: fiatSymbols,
       interval: 60 * 1000,
       timeout: 5000,
-      // https://exchangerate.host/
+    },
+    // https://fer.ee/
+    fer: {
+      symbols: fiatSymbols.filter((f) => !f.includes('SDR')),
+      timeout: 5000,
+    },
+    // https://www.frankfurter.app/docs/
+    frankfurter: {
+      symbols: fiatSymbols.filter((f) => !f.includes('SDR')),
+      timeout: 5000,
     },
   },
-  fiatSymbols,
 }

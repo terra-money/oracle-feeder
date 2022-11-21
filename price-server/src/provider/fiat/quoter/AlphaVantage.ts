@@ -13,18 +13,16 @@ interface Response {
 
 export class AlphaVantage extends Quoter {
   private async updateLastPrice(symbol: string): Promise<void> {
-    const quote = symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', '')
+    const quote = symbol === 'SDR/USD' ? 'XDR' : symbol.replace('/USD', '')
     const params = {
       function: 'CURRENCY_EXCHANGE_RATE',
       from_currency: 'USD',
       to_currency: quote,
       apikey: this.options.apiKey,
     }
-
     const response: Response = await fetch(`https://www.alphavantage.co/query?${toQueryString(params)}`, {
       timeout: this.options.timeout,
     }).then((res) => res.json())
-
     if (
       !response ||
       !response['Realtime Currency Exchange Rate'] ||
