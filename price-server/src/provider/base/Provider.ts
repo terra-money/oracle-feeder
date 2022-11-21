@@ -11,7 +11,9 @@ import Quoter from './Quoter'
 const TVWAP_PERIOD = 3 * 60 * 1000 // 3 minutes
 
 export interface ProviderOptions {
-  adjustTvwapSymbols?: string[] // symbol list that adjust price using tvwap
+  adjustTvwap: {
+    symbols: string[] // symbol list that adjust price using tvwap
+  }
 }
 
 export class Provider {
@@ -70,9 +72,7 @@ export class Provider {
   }
 
   protected collectPrice(symbol: string): BigNumber[] {
-    return this.quoters
-      .map((quoter) => quoter.getPrice(symbol))
-      .filter((price) => price) as BigNumber[]
+    return this.quoters.map((quoter) => quoter.getPrice(symbol)).filter((price) => price) as BigNumber[]
   }
 
   protected adjustPrices(): void {
@@ -81,9 +81,7 @@ export class Provider {
     for (const symbol of this.symbols) {
       delete this.priceBySymbol[symbol]
 
-      let useTvwap = this.options.adjustTvwapSymbols
-        ? this.options.adjustTvwapSymbols.indexOf(symbol) !== -1
-        : false
+      let useTvwap = this.options.adjustTvwap.symbols ? this.options.adjustTvwap.symbols.indexOf(symbol) !== -1 : false
 
       if (useTvwap) {
         const trades = this.collectTrades(symbol).filter(
@@ -120,20 +118,15 @@ export class Provider {
 
     try {
       if (!this.reporter || !isSameDay(now, this.reportedAt)) {
-        this.reporter = createReporter(
-          `report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`,
-          [
-            'time',
-            ...this.symbols,
-            ...concat(
-              ...this.quoters.map((quoter) =>
-                concat(
-                  ...quoter.getSymbols().map((symbol) => `${quoter.constructor.name}\n${symbol}`)
-                )
-              )
-            ),
-          ]
-        )
+        this.reporter = createReporter(`report/${this.constructor.name}_${format(now, 'MM-dd_HHmm')}.csv`, [
+          'time',
+          ...this.symbols,
+          ...concat(
+            ...this.quoters.map((quoter) =>
+              concat(...quoter.getSymbols().map((symbol) => `${quoter.constructor.name}\n${symbol}`))
+            )
+          ),
+        ])
       }
 
       const report = {
@@ -142,14 +135,14 @@ export class Provider {
 
       // report adjust price
       for (const symbol of this.symbols) {
-        report[symbol] = this.priceBySymbol[symbol]?.toFixed(8)
+        report[symbol] = this.priceBySymbol[symbol]?.toFixed(6)
       }
 
       // report quoter's price
       for (const quoter of this.quoters) {
         for (const symbol of quoter.getSymbols()) {
           const key = `${quoter.constructor.name}\n${symbol}`
-          report[key] = quoter.getPrice(symbol)?.toFixed(8)
+          report[key] = quoter.getPrice(symbol)?.toFixed(6)
         }
       }
 

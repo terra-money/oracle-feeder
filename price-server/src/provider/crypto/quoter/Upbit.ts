@@ -67,9 +67,7 @@ export class Upbit extends WebSocketQuoter {
     super.onConnect()
 
     // subscribe transaction
-    const symbols = this.symbols
-      .map((symbol) => `"${getQuoteCurrency(symbol)}-${getBaseCurrency(symbol)}"`)
-      .join(',')
+    const symbols = this.symbols.map((symbol) => `"${getQuoteCurrency(symbol)}-${getBaseCurrency(symbol)}"`).join(',')
     this.ws.send(`[{"ticket":"UNIQUE_TICKET"},{"type":"trade","codes":[${symbols}]}]`)
   }
 
@@ -104,10 +102,7 @@ export class Upbit extends WebSocketQuoter {
     ).then((res) => res.json())
 
     if (!response || !Array.isArray(response) || response.length < 1) {
-      logger.error(
-        `${this.constructor.name}: invalid api response:`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+      logger.error(`${this.constructor.name}: invalid api response:`, response ? JSON.stringify(response) : 'empty')
       throw new Error(`${this.constructor.name}: invalid response`)
     }
 

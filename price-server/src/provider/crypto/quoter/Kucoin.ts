@@ -9,15 +9,7 @@ const url = 'https://api.kucoin.com'
 
 interface CandlesResponse {
   code: string
-  data?: [
-    time: string,
-    open: string,
-    close: string,
-    high: string,
-    low: string,
-    volume: string,
-    turnover: string
-  ][]
+  data?: [time: string, open: string, close: string, high: string, low: string, volume: string, turnover: string][]
 }
 
 interface WebSocketTokenResponse {
@@ -41,15 +33,7 @@ interface CandlestickStreamData {
   subject?: string
   data?: {
     symbol: string
-    candles: [
-      timestamp: string,
-      open: string,
-      close: string,
-      high: string,
-      low: string,
-      volume: string,
-      amount: string
-    ]
+    candles: [timestamp: string, open: string, close: string, high: string, low: string, volume: string, amount: string]
     time: number
   }
 }
@@ -89,9 +73,7 @@ export class Kucoin extends WebSocketQuoter {
       headers: { 'Content-Type': 'application/json' },
     }).then((res) => res.json())
 
-    const server = response?.data?.instanceServers?.find(
-      (server) => server.protocol === 'websocket'
-    )
+    const server = response?.data?.instanceServers?.find((server) => server.protocol === 'websocket')
 
     if (response?.code !== '200000' || !response?.data?.token || !server) {
       setTimeout(() => this.connect(wsUrl), 5000)
@@ -107,9 +89,7 @@ export class Kucoin extends WebSocketQuoter {
   protected onConnect(): void {
     super.onConnect()
 
-    const symbols = this.symbols
-      .map((symbol) => `${symbol.replace('/', '-').toUpperCase()}_1min`)
-      .join(',')
+    const symbols = this.symbols.map((symbol) => `${symbol.replace('/', '-').toUpperCase()}_1min`).join(',')
 
     // subscribe candles
     this.ws.send(
@@ -121,11 +101,7 @@ export class Kucoin extends WebSocketQuoter {
   }
 
   protected onData(streamData: CandlestickStreamData): void {
-    if (
-      streamData?.type !== 'message' ||
-      streamData?.subject !== 'trade.candles.update' ||
-      !streamData?.data
-    ) {
+    if (streamData?.type !== 'message' || streamData?.subject !== 'trade.candles.update' || !streamData?.data) {
       return
     }
 
@@ -151,21 +127,13 @@ export class Kucoin extends WebSocketQuoter {
 
     // Get candles from Kucoin
     // reference: https://docs.kucoin.com/#get-klines
-    const response: CandlesResponse = await fetch(
-      `${url}/api/v1/market/candles?${toQueryString(params)}`
-    ).then((res) => res.json())
+    const response: CandlesResponse = await fetch(`${url}/api/v1/market/candles?${toQueryString(params)}`).then((res) =>
+      res.json()
+    )
     // type=1min&symbol=BTC-USDT&startAt=1566703297&endAt=1566789757
 
-    if (
-      !response ||
-      response.code !== '200000' ||
-      !Array.isArray(response.data) ||
-      response.data.length < 1
-    ) {
-      logger.error(
-        `${this.constructor.name}: invalid api response:`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+    if (!response || response.code !== '200000' || !Array.isArray(response.data) || response.data.length < 1) {
+      logger.error(`${this.constructor.name}: invalid api response:`, response ? JSON.stringify(response) : 'empty')
       throw new Error(`${this.constructor.name}: invalid response`)
     }
 

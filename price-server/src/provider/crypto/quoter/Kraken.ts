@@ -117,10 +117,7 @@ export class Kraken extends WebSocketQuoter {
       !response.result[responseSymbol] ||
       !Array.isArray(response.result[responseSymbol])
     ) {
-      logger.error(
-        `${this.constructor.name}: invalid api response:`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+      logger.error(`${this.constructor.name}: invalid api response:`, response ? JSON.stringify(response) : 'empty')
       throw new Error(`${this.constructor.name}: invalid response`)
     }
 

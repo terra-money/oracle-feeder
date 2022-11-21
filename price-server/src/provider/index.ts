@@ -5,13 +5,11 @@ import { Provider } from './base'
 import { report } from './reporter'
 import FiatProvider from './fiat/FiatProvider'
 import CryptoProvider from './crypto/CryptoProvider'
-import LunaProvider from './crypto/LunaProvider'
 
 export const fiatProvider = new FiatProvider(config.fiatProvider)
 export const cryptoProvider = new CryptoProvider(config.cryptoProvider)
-export const lunaProvider = new LunaProvider(config.lunaProvider)
 
-const providers: Provider[] = [fiatProvider, cryptoProvider, lunaProvider]
+const providers: Provider[] = [fiatProvider, cryptoProvider]
 
 export async function initialize(): Promise<void> {
   for (const provider of providers) {

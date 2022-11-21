@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { MnemonicKey } from '@terra-money/terra.js'
+import { MnemonicKey } from '@terra-money/station.js'
 
 const KEY_SIZE = 256
 const ITERATIONS = 100
@@ -38,10 +38,7 @@ function decrypt(transitmessage, pass) {
 
   const encryptedText = transitmessage.substring(64)
   const cipher = crypto.createDecipheriv('AES-256-CBC', key, iv)
-  const decryptedText = Buffer.concat([
-    cipher.update(encryptedText, 'base64'),
-    cipher.final(),
-  ]).toString()
+  const decryptedText = Buffer.concat([cipher.update(encryptedText, 'base64'), cipher.final()]).toString()
 
   return decryptedText
 }
@@ -59,7 +56,8 @@ export async function save(
   filePath: string,
   name: string,
   password: string,
-  mnemonic: string
+  mnemonic: string,
+  coinType: string
 ): Promise<void> {
   const keys = loadEntities(filePath)
 
@@ -67,7 +65,7 @@ export async function save(
     throw new Error('Key already exists by that name')
   }
 
-  const mnemonicKey = new MnemonicKey({ mnemonic })
+  const mnemonicKey = new MnemonicKey({ mnemonic, coinType: Number(coinType) })
 
   const ciphertext = encrypt(
     JSON.stringify({
@@ -80,7 +78,7 @@ export async function save(
 
   keys.push({
     name,
-    address: mnemonicKey.accAddress,
+    address: mnemonicKey.accAddress('adr'),
     ciphertext,
   })
 

@@ -17,21 +17,15 @@ export class Fixer extends Quoter {
       access_key: this.options.apiKey,
       // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription, default: EUR
       symbols:
-        this.symbols
-          .map((symbol) => (symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', '')))
-          .join(',') + ',USD',
+        this.symbols.map((symbol) => (symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', ''))).join(',') + ',USD',
     }
 
-    const response: Response = await fetch(
-      `https://data.fixer.io/api/latest?${toQueryString(params)}`,
-      { timeout: this.options.timeout }
-    ).then((res) => res.json())
+    const response: Response = await fetch(`https://data.fixer.io/api/latest?${toQueryString(params)}`, {
+      timeout: this.options.timeout,
+    }).then((res) => res.json())
 
     if (!response || !response.success || !response.rates) {
-      logger.error(
-        `${this.constructor.name}: wrong api response`,
-        response ? JSON.stringify(response) : 'empty'
-      )
+      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
       throw new Error('Invalid response from Fixer')
     }
 

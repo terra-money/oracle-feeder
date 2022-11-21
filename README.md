@@ -1,6 +1,6 @@
 # Terra Oracle Feeder
 
-This contains the Oracle feeder software that is used internally by Terraform Labs' validator nodes for periodically submitting oracle votes for the exchange rate of LUNC (LUNA Classic). This implementation can be used as-is, but also can serve as a reference for creating your own custom oracle feeder. For more information regarding the oracle process, please refer to the [oracle module specs](https://docs.terra.money/dev/spec-oracle).
+This contains the Oracle feeder software that is used for periodically submitting oracle votes for the exchange rate of the different assets offered by the oracle chain. This implementation can be used as-is, but also can serve as a reference for creating your own custom oracle feeder.
 
 ## Overview
 
@@ -8,20 +8,18 @@ This solution has 2 components:
 
 1. [`price-server`](price-server/)
 
-   - Obtain information from various data sources (exchanges, forex data, etc)
-   - Use data to compute the exchange rates of LUNC for a given set of fiat denominations
-   - Most recent LUNC exchange rates are available through HTTP endpoint
+   - Obtain information from various data sources (exchanges, forex data, etc),
+   - Model the data,
+   - Enable a url to query the data,
 
 2. [`feeder`](feeder/)
 
-   - Reads LUNC exchange rates from a data source (`price-server`)
+   - Reads the exchange rates data from a data source (`price-server`)
    - Periodically submits vote and prevote messages following the oracle voting procedure
-
-You can easily modify the logic for how LUNC exchange rates are computed by either directly modifying `price-server` or replacing the input stream for `feeder`.
 
 ## Prerequisites
 
-- Install [Node.js version 12 or greater](https://nodejs.org/)
+- Install [Node.js version 18 or greater](https://nodejs.org/)
 
 ## Instructions
 
@@ -40,6 +38,7 @@ npm install
 
 # Copy sample config file
 cp ./config/default-sample.js ./config/default.js
+
 # make edits
 vim ./config/default.js
 
@@ -54,14 +53,15 @@ cd feeder
 npm install
 
 # configure to use feeder account
-npm start update-key
+npm start add-key
 
 # start voting
-npm start vote -- \
+$ npm start vote -- \
    --source http://localhost:8532/latest \
-   --lcd https://lcd.terra.dev \
-   --chain-id columbus-4 \
-   --validator terravaloper1xx \
-   --validator terravaloper1yy \
+   --lcd-url https://lcd-1.anr.dev \
+   --lcd-url https://lcd-2.anr.dev \
+   --chain-id andromeda-oralce-1 \
+   --validators anrvaloper1xx \
+   --validators anrvaloper1yy \
    --password "<password>"
 ```

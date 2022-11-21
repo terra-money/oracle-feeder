@@ -1,13 +1,32 @@
 # `feeder`
 
-This program will submit exchange rate prevotes and votes, implementing the [voting procedure](https://docs.terra.money/dev/spec-oracle.html#voting-procedure). 
+Submit exchange rate prevotes and votes, implementing the [voting procedure](https://github.com/terra-money/andromeda-oracle/blob/main/x/oracle/spec/01_concepts.md#voting-procedure).
 
 ## Requirements
+Every Oracle Chain validator must participate in the oracle process and periodically submit a vote for the exchange rate of Luna in all whitelisted denominations. Because this process occurs every 30 seconds, validators must set up an automated process to avoid getting slashed and jailed.
 
-Oracle Feeder requires the following:
+## Make a new key for oracle votes
 
-- Set up a running [`price-server`](../price-server/)
-- An account which has feeder rights for a validator (instructions [here](https://docs.terra.money/validator/setup.html#delegate-feeder-consent))
+You can separate the keys used for controlling a validator account from those that are submitting oracle votes on behalf of a validator. Run:
+
+```bash
+oracled keys add <feeder>
+```
+
+Show the feeder account details:
+
+```bash
+oracled keys show <feeder>
+```
+
+## Delegate feeder consent
+
+The account address used to submit oracle voting transactions is called a `feeder`. When you set up your oracle voting process for the first time, you must delegate the feeder permission to an account.
+
+```bash
+oracled tx oracle set-feeder <feeder-address> --from=<validator>
+```
+
 
 ## Instructions
 
@@ -22,7 +41,7 @@ npm install
 You need the mnemonic phrase for the **feeder account** for your validator.
 
 ```sh
-npm start update-key
+npm start add-key
 
 Enter a passphrase to encrypt your key to disk: ********
 Repeat the passphrase: ********
@@ -41,11 +60,11 @@ You can start feeder with arguments or env.
    ``` shell
    $ npm start vote -- \
       --source http://localhost:8532/latest \
-      --lcd https://lcd-1.terra.dev \
-      --lcd https://lcd-2.terra.dev \
-      --chain-id columbus-5 \
-      --validator terravaloper1xx \
-      --validator terravaloper1yy \
+      --lcd-url https://lcd-1.anr.dev \
+      --lcd-url https://lcd-2.anr.dev \
+      --chain-id andromeda-oralce-1 \
+      --validators anrvaloper1xx \
+      --validators anrvaloper1yy \
       --password "<password>"
    ```
 
@@ -56,11 +75,22 @@ You can start feeder with arguments or env.
    ```
 
 
-| Argument    | Env           | Description                                      | Example                      |
-| ----------- | ------------- | ------------------------------------------------ | ---------------------------- |
-| `source`    | `SOURCE`      | Price server URL.                                | http://localhost:8532/latest |
-| `lcd`       | `LCD_ADDRESS` | LCD server URL (can be multiple)                 | https://lcd.terra.dev        |
-| `chain-id`  | `CHAIN_ID`    | Chain ID.                                        | `columbus-5`                 |
-| `validator` | `VALIDATOR`   | Validator to submit prices for (can be multiple) | `terravaloper1xx...`         |
-| `password`  | `PASSPHRASE`  | Password for mnemonic (assigned in step #2)      | `12345678`                   |
-| `key-path`  | `KEY_PATH`    | signing key store path (default voter.json)      | `voter.json`                 |
+| Argument              | Env                | Description                                               | Example                      |
+| --------------------- | ------------------ | --------------------------------------------------------- | ---------------------------- |
+| `password`            | `PASSWORD`         | Password for mnemonic (assigned in step #2)               | `12345678`                   |
+| `data-source-url`     | `DATA_SOURCE_URL`  | Price server URL.                                         | http://localhost:8532/latest |
+| `lcd-url`             | `LCD_ADDRESS`      | LCD server URL (can be multiple)                          | https://lcd.anr.dev          |
+| `chain-id`            | `CHAIN_ID`         | Chain ID.                                                 | `andromeda-oralce-1`         |
+| `validators`          | `VALIDATOR`        | Validator to submit prices for (can be multiple)          | `anrvaloper1xx...`           |
+| `key-name`            | `KEY_NAME`         | name to be given to the key that will be encrypted in file| `voter`                      |
+| `coin-type`           | `COIN_TYPE`        | coin type used to derive the public address (default 118) | `118`                        |
+| `key-path`            | `KEY_PATH`         | signing key store path (default voter.json)               | `voter.json`                 |
+
+
+## Set up oracle feeder program
+
+To start submitting oracle messages with your feeder account, install and set up an oracle feeder.
+
+- Install Terra's Node.js [`oracle-feeder`](https://github.com/terra-money/oracle-feeder) by visiting [Terra's oracle feeder Github repo](https://github.com/terra-money/oracle-feeder).
+
+Validators are encouraged to set up their own oracle feeders.
