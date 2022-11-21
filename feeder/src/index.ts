@@ -57,8 +57,26 @@ function registerCommands(parser: ArgumentParser): void {
     required: false,
   })
 
+  voteCommand.addArgument([`-n`, `--key-name`], {
+    help: `name assigned to the generated key`,
+    dest: `keyName`,
+    defaultValue: `voter`,
+  })
+
   // Updating Key command
   const keyCommand = subparsers.addParser(`add-key`, { addHelp: true })
+
+  keyCommand.addArgument([`-n`, `--key-name`], {
+    help: `name to assigns to the generated key`,
+    dest: `keyName`,
+    defaultValue: `voter`,
+  })
+
+  keyCommand.addArgument([`-t`, `--coin-type`], {
+    help: `coin type used to derive the public address (https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki#path-levels)`,
+    dest: `coinType`,
+    defaultValue: `118`,
+  })
 
   keyCommand.addArgument([`-k`, `--key-path`], {
     help: `key store path to save encrypted key`,
@@ -99,10 +117,12 @@ async function main(): Promise<void> {
       args.validators || (process.env.VALIDATORS && process.env.VALIDATORS.split(','))
 
     args.prefix = process.env.ADDR_PREFIX;
+
+    args.keyName = process.env.KEY_NAME ? process.env.KEY_NAME : args.keyName;
     
     await vote(args)
   } else if (args.subparser_name === `add-key`) {
-    await addKey(args.keyPath)
+    await addKey(args.keyPath, args.coinType, args.keyName)
   }
 }
 

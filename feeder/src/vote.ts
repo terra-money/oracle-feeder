@@ -22,10 +22,14 @@ const ax = axios.create({
   },
 })
 
-async function initKey(keyPath: string, password?: string): Promise<RawKey> {
+async function initKey(
+  keyPath: string, 
+  name: string,
+  password?: string
+): Promise<RawKey> {
   const plainEntity = ks.load(
     keyPath,
-    'voter',
+    name,
     password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
   )
 
@@ -295,6 +299,7 @@ interface VoteArgs {
   dataSourceUrl: string[]
   password: string
   keyPath: string
+  keyName: string
 }
 
 function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, LCDClientConfig> {
@@ -310,7 +315,7 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, 
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
-  const rawKey: RawKey = await initKey(args.keyPath, args.password)
+  const rawKey: RawKey = await initKey(args.keyPath, args.keyName, args.password)
   const valAddrs: string[] = args.validator || [rawKey.valAddress(args.prefix)]
   const voterAddr = rawKey.accAddress(args.prefix);
 

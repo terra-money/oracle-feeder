@@ -59,7 +59,8 @@ export async function save(
   filePath: string,
   name: string,
   password: string,
-  mnemonic: string
+  mnemonic: string,
+  coinType: string
 ): Promise<void> {
   const keys = loadEntities(filePath)
 
@@ -67,7 +68,7 @@ export async function save(
     throw new Error('Key already exists by that name')
   }
 
-  const mnemonicKey = new MnemonicKey({ mnemonic, coinType: 118 })
+  const mnemonicKey = new MnemonicKey({ mnemonic, coinType: Number(coinType) })
 
   const ciphertext = encrypt(
     JSON.stringify({
