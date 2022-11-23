@@ -324,7 +324,7 @@ export async function vote(args: VoteArgs): Promise<void> {
       resetPrevote()
     })
 
-    await Bluebird.delay(Math.max(500, 500 - (Date.now() - startTime)))
+    await Bluebird.delay(Math.max(500, 1000 - (Date.now() - startTime)))
   }
 }
 

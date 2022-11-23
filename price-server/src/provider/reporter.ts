@@ -16,12 +16,12 @@ export function report(now: number): void {
   try {
     const cryptoPrices = reduce(
       getCryptoPrices(),
-      (result, value, key) => Object.assign(result, { [key]: value.toFixed(6) }),
+      (result, value, key) => Object.assign(result, { [key]: value.toFixed(8) }),
       {}
     )
     const fiatPrices = reduce(
       getFiatPrices(),
-      (result, value, key) => Object.assign(result, { [key]: value.toFixed(6) }),
+      (result, value, key) => Object.assign(result, { [key]: value.toFixed(8) }),
       {}
     )
     const prices = Object.assign(cryptoPrices, fiatPrices)
