@@ -6,7 +6,7 @@ class CryptoProvider extends Provider {
   constructor(options: ProviderOptions) {
     super(options)
     const { fallbackPriority } = options
-    
+
     // sort by fallback priority
     for (const name of fallbackPriority) {
       const option = config.cryptoProvider[name]
