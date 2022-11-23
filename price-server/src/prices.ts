@@ -1,34 +1,34 @@
 import { PriceBySymbol } from 'provider/base'
 import { fiatProvider, cryptoProvider } from 'provider'
 import { getBaseCurrency, getQuoteCurrency } from 'lib/currency'
-import * as _ from 'lodash';
-import BigNumber from 'bignumber.js';
+import * as _ from 'lodash'
+import BigNumber from 'bignumber.js'
 
-// TODO: maybe ?? for a future version of the method 
-// group prices by USD and get the average price of 
+// TODO: maybe ?? for a future version of the method
+// group prices by USD and get the average price of
 // the assets in USD before parsing from stablecoin to USD
 
 export function getCryptoPrices(): PriceBySymbol {
   // get crypto prices that can be priced in different
   // stable denom (USDT/USDC/BUSD) and even USD,
-  const cryptoPrices = cryptoProvider.getPrices();
+  const cryptoPrices = cryptoProvider.getPrices()
 
-  // Define a list where to store the end result of 
+  // Define a list where to store the end result of
   // parsing the USDT / USDC / BUSD to USD
   const CRYPTO_PRICES_TO_USD = new Array<PriceBySymbol>()
 
   for (const key in cryptoPrices) {
-    const price = cryptoPrices[key];
-    const isPricedInUSD = key.endsWith('/USD');
+    const price = cryptoPrices[key]
+    const isPricedInUSD = key.endsWith('/USD')
 
-    // When priced in USD: store the object directly in the array 
+    // When priced in USD: store the object directly in the array
     if (isPricedInUSD) CRYPTO_PRICES_TO_USD.push({ [key]: price })
     else {
       // Get base currency LUNA, ETH, BTC...
       const base = getBaseCurrency(key)
       // Get symbol USD, USDT, BUSD, USDC...
       const symbol = getQuoteCurrency(key)
-      // Create the key for the new asset e.g. LUNA/USD, BTC/USD, ETH/USD, ... 
+      // Create the key for the new asset e.g. LUNA/USD, BTC/USD, ETH/USD, ...
       const ASSET_KEY_USD = base + '/USD'
       // Since stable coins are also priced in USD
       // this creates the symbol to get its price e.g. USDT/USD, BUSD/USD, ...
@@ -38,7 +38,7 @@ export function getCryptoPrices(): PriceBySymbol {
       // find price of asset in USD denom e.g: BTC/USD = BTC/UST * UST/USD
       const TO_USD = price.multipliedBy(stableCoinPrice)
 
-      // store the object in the array 
+      // store the object in the array
       CRYPTO_PRICES_TO_USD.push({ [ASSET_KEY_USD]: TO_USD })
     }
   }
@@ -46,7 +46,7 @@ export function getCryptoPrices(): PriceBySymbol {
   const data: any = _.chain(CRYPTO_PRICES_TO_USD)
     // Filter out the crypto that failed to be
     // converted to USD (all values that are no a number)
-    .filter(crypto => {
+    .filter((crypto) => {
       const key = Object.keys(crypto)[0]
 
       return !crypto[key].isNaN()
@@ -60,11 +60,11 @@ export function getCryptoPrices(): PriceBySymbol {
         ]},
       ...]
     */
-    .groupBy(crypto => Object.keys(crypto)[0])
+    .groupBy((crypto) => Object.keys(crypto)[0])
     // iterate the grouped arrays ...
-    .flatMap(cryptoGroups => {
-      const key = Object.keys(cryptoGroups[0])[0];
-      const pricesFound = cryptoGroups.length;
+    .flatMap((cryptoGroups) => {
+      const key = Object.keys(cryptoGroups[0])[0]
+      const pricesFound = cryptoGroups.length
 
       // ... sum available prices ...
       const amount = _.reduce(cryptoGroups, (sum, price) => sum.plus(price[key]), BigNumber(0))
@@ -75,15 +75,14 @@ export function getCryptoPrices(): PriceBySymbol {
     // Transform the array of objects to a single object
     // with the keys being the pairs
     .reduce((memo, crypto) => {
-      console.log("name", crypto)
-      const key = Object.keys(crypto)[0];
-      const value = crypto[key];
+      const key = Object.keys(crypto)[0]
+      const value = crypto[key]
 
       return { ...memo, [key]: value }
     }, {})
-    .value();
+    .value()
 
-  return data;
+  return data
 }
 
 export function getFiatPrices(): PriceBySymbol {
