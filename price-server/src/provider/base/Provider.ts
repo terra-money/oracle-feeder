@@ -12,8 +12,9 @@ const TVWAP_PERIOD = 3 * 60 * 1000 // 3 minutes
 
 export interface ProviderOptions {
   adjustTvwap: {
-    symbols: string[] // symbol list that adjust price using tvwap
+    symbols: Array<string> // symbol list that adjust price using tvwap
   }
+  fallbackPriority: Array<string>
 }
 
 export class Provider {
@@ -135,14 +136,14 @@ export class Provider {
 
       // report adjust price
       for (const symbol of this.symbols) {
-        report[symbol] = this.priceBySymbol[symbol]?.toFixed(6)
+        report[symbol] = this.priceBySymbol[symbol]
       }
 
       // report quoter's price
       for (const quoter of this.quoters) {
         for (const symbol of quoter.getSymbols()) {
           const key = `${quoter.constructor.name}\n${symbol}`
-          report[key] = quoter.getPrice(symbol)?.toFixed(6)
+          report[key] = quoter.getPrice(symbol)
         }
       }
 

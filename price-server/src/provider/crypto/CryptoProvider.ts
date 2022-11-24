@@ -1,20 +1,28 @@
 import * as config from 'config'
 import { Provider, ProviderOptions } from 'provider/base'
-import { Upbit, Bithumb, Binance, Huobi, Bitfinex, Kraken, Kucoin } from './quoter'
+import { Upbit, Bithumb, Binance, Huobi, Bitfinex, Kraken, Kucoin, CoinGecko } from './quoter'
 
 class CryptoProvider extends Provider {
   constructor(options: ProviderOptions) {
     super(options)
+    const { fallbackPriority } = options
 
-    const { upbit, bithumb, binance, huobi, bitfinex, kraken, kucoin } = config.cryptoProvider
+    // sort by fallback priority
+    for (const name of fallbackPriority) {
+      const option = config.cryptoProvider[name]
+      if (!option) {
+        continue
+      }
 
-    upbit && this.quoters.push(new Upbit(upbit))
-    bithumb && this.quoters.push(new Bithumb(bithumb))
-    binance && this.quoters.push(new Binance(binance))
-    huobi && this.quoters.push(new Huobi(huobi))
-    bitfinex && this.quoters.push(new Bitfinex(bitfinex))
-    kraken && this.quoters.push(new Kraken(kraken))
-    kucoin && this.quoters.push(new Kucoin(kucoin))
+      name === 'upbit' && this.quoters.push(new Upbit(option))
+      name === 'bithumb' && this.quoters.push(new Bithumb(option))
+      name === 'binance' && this.quoters.push(new Binance(option))
+      name === 'huobi' && this.quoters.push(new Huobi(option))
+      name === 'bitfinex' && this.quoters.push(new Bitfinex(option))
+      name === 'kraken' && this.quoters.push(new Kraken(option))
+      name === 'kucoin' && this.quoters.push(new Kucoin(option))
+      name === 'coinGecko' && this.quoters.push(new CoinGecko(option))
+    }
   }
 }
 

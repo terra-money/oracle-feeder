@@ -14,16 +14,8 @@ export function report(now: number): void {
   }
 
   try {
-    const cryptoPrices = reduce(
-      getCryptoPrices(),
-      (result, value, key) => Object.assign(result, { [key]: value.toFixed(6) }),
-      {}
-    )
-    const fiatPrices = reduce(
-      getFiatPrices(),
-      (result, value, key) => Object.assign(result, { [key]: value.toFixed(6) }),
-      {}
-    )
+    const cryptoPrices = reduce(getCryptoPrices(), (result, value, key) => Object.assign(result, { [key]: value }), {})
+    const fiatPrices = reduce(getFiatPrices(), (result, value, key) => Object.assign(result, { [key]: value }), {})
     const prices = Object.assign(cryptoPrices, fiatPrices)
     logger.info(`[REPORTER]`, prices)
 
