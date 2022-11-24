@@ -48,8 +48,9 @@ async function loadOracleParams(client: LCDClient, oracle: OracleAPI, chainID: s
   const latestBlock = await client.tendermint.blockInfo(chainID)
 
   // the vote will be included in the next block
-  const nextBlockHeight = parseInt(latestBlock.block.header.height, 10) + 1
-  const currentVotePeriod = Math.floor(nextBlockHeight / oracleVotePeriod)
+  const blockHeight = parseInt(latestBlock.block.header.height, 10)
+  const nextBlockHeight = blockHeight + 1
+  const currentVotePeriod = Math.floor(blockHeight / oracleVotePeriod)
   const indexInVotePeriod = nextBlockHeight % oracleVotePeriod
 
   return {
@@ -179,7 +180,6 @@ export async function processVote(
   logger.info(`[PREVOTE] msg: ${JSON.stringify(msgs)}\n`)
   const tx = await wallet.createAndSignTx({
     msgs,
-    fee: new Fee((1 + msgs.length) * 200000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
     chainID: args.chainID,
   })
@@ -290,8 +290,8 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, 
     [args.chainID]: {
       lcd: args.lcdUrl[lcdIndex],
       chainID: args.chainID,
-      gasAdjustment: '1.2',
-      gasPrices: '200000',
+      gasAdjustment: '1.5',
+      gasPrices: { uadr: 0.0015 },
       prefix: args.prefix,
     },
   }
