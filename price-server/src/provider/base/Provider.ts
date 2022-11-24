@@ -136,14 +136,14 @@ export class Provider {
 
       // report adjust price
       for (const symbol of this.symbols) {
-        report[symbol] = this.priceBySymbol[symbol]?.toFixed(8)
+        report[symbol] = this.priceBySymbol[symbol]
       }
 
       // report quoter's price
       for (const quoter of this.quoters) {
         for (const symbol of quoter.getSymbols()) {
           const key = `${quoter.constructor.name}\n${symbol}`
-          report[key] = quoter.getPrice(symbol)?.toFixed(8)
+          report[key] = quoter.getPrice(symbol)
         }
       }
 

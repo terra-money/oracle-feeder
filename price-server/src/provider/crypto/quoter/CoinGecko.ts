@@ -11,7 +11,7 @@ export class CoinGecko extends Quoter {
   private async updatePrices(): Promise<void> {
     const params = {
       vs_currencies: 'usd',
-      precision: 8,
+      precision: 18,
       ids: this.symbols.map((symbol) => COIN_GECKO_IDS[symbol]).join(','),
     }
 
