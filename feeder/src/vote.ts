@@ -170,19 +170,21 @@ export async function processVote(
 
   // Build Exchange Rate Vote Msgs
   const voteMsgs: any[] = buildVoteMsgs(prices, valAddrs, voterAddr)
+  console.log(JSON.stringify(voteMsgs, null, ' '))
 
   logger.info(`[VOTE] Create transaction and sign`)
   // Build Exchange Rate Prevote Msgs
   const isPrevoteOnlyTx = previousVoteMsgs.length === 0
   const msgs = [...previousVoteMsgs, ...voteMsgs.map((vm) => vm.getPrevote())]
+  logger.info(`[PREVOTE] msg: ${JSON.stringify(msgs)}\n`)
   const tx = await wallet.createAndSignTx({
     msgs,
-    fee: new Fee((1 + msgs.length) * 50000, []),
+    fee: new Fee((1 + msgs.length) * 200000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
     chainID: args.chainID,
   })
 
-  const res = await client.tx.broadcastSync(tx, args.chainID).catch((err) => {
+  const res = await client.tx.broadcastBlock(tx, args.chainID).catch((err) => {
     logger.error(`broadcast error: ${err.message} ${tx.toData()}`)
     throw err
   })
