@@ -83,7 +83,7 @@ export class Binance extends WebSocketQuoter {
   }
 
   private async fetchLatestTrades(symbol: string): Promise<Trades> {
-    const params = { symbol: symbol.replace('/', ''), interval: '1m', limit: 10 }
+    const params = { symbol: symbol.replace('/', ''), interval: '1m', limit: 200 }
 
     // Get candles from Binance
     // reference: https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-data

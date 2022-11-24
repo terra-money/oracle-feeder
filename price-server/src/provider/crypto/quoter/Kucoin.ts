@@ -59,7 +59,10 @@ export class Kucoin extends WebSocketQuoter {
           this.setPrice(symbol, trades[trades.length - 1].price)
           // this.calculateKRWPrice(symbol)
         })
-        .catch(errorHandler)
+        .catch((error) => {
+          console.log('[symbol]', symbol)
+          errorHandler(error)
+        })
     }
     this.isUpdated = true
 

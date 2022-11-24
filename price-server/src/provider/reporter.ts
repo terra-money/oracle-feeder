@@ -17,7 +17,6 @@ export function report(now: number): void {
     const cryptoPrices = reduce(getCryptoPrices(), (result, value, key) => Object.assign(result, { [key]: value }), {})
     const fiatPrices = reduce(getFiatPrices(), (result, value, key) => Object.assign(result, { [key]: value }), {})
     const prices = Object.assign(cryptoPrices, fiatPrices)
-    logger.info(`[REPORTER]`, prices)
 
     if (!config.report) {
       reportedAt = now
