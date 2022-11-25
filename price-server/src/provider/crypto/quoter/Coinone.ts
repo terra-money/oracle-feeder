@@ -52,7 +52,10 @@ export class Coinone extends Quoter {
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
         })
-        .catch(errorHandler)
+        .catch((err) => {
+          logger.error(`${this.constructor.name}[symbol]`, symbol)
+          errorHandler(err)
+        })
     }
 
     return true

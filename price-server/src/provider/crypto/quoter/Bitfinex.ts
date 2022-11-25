@@ -114,7 +114,7 @@ export class Bitfinex extends WebSocketQuoter {
     }).then((res) => res.json())
 
     if (!response || !Array.isArray(response) || response.length < 1) {
-      logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
+      logger.error(`${this.constructor.name}[symbol]`, symbol)
       throw new Error(`${this.constructor.name}: invalid response`)
     }
 
