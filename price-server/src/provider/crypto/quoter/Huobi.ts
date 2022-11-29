@@ -45,9 +45,11 @@ export class Huobi extends WebSocketQuoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-          // this.calculateKRWPrice(symbol)
         })
-        .catch(errorHandler)
+        .catch((err) => {
+          logger.error(`${this.constructor.name}[symbol]`, symbol)
+          errorHandler(err)
+        })
     }
     this.isUpdated = true
 
@@ -99,7 +101,6 @@ export class Huobi extends WebSocketQuoter {
 
       this.setTrade(symbol, timestamp, price, volume, true)
       this.setPrice(symbol, price)
-      // this.calculateKRWPrice(symbol)
 
       this.isUpdated = true
     } else {

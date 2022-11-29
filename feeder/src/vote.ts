@@ -5,7 +5,7 @@ import * as http from 'http'
 import * as https from 'https'
 import axios from 'axios'
 import * as ks from './keystore'
-import { LCDClient, RawKey, Wallet, Fee, isTxError, LCDClientConfig } from '@terra-money/station.js'
+import { LCDClient, RawKey, Wallet, isTxError, LCDClientConfig } from '@terra-money/station.js'
 import * as packageInfo from '../package.json'
 import { MsgAggregateExchangeRateVote } from './oracle/msgs'
 import * as logger from './logger'
@@ -171,7 +171,6 @@ export async function processVote(
 
   // Build Exchange Rate Vote Msgs
   const voteMsgs: any[] = buildVoteMsgs(prices, valAddrs, voterAddr)
-  console.log(JSON.stringify(voteMsgs, null, ' '))
 
   logger.info(`[VOTE] Create transaction and sign`)
   // Build Exchange Rate Prevote Msgs

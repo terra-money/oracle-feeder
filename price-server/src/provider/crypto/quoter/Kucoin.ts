@@ -48,7 +48,6 @@ export class Kucoin extends WebSocketQuoter {
     for (const symbol of this.symbols) {
       this.setTrades(symbol, [])
 
-      // update last trades and price of symbol/USDT
       await this.fetchLatestTrades(symbol)
         .then((trades) => {
           if (!trades.length) {
@@ -57,9 +56,11 @@ export class Kucoin extends WebSocketQuoter {
 
           this.setTrades(symbol, trades)
           this.setPrice(symbol, trades[trades.length - 1].price)
-          // this.calculateKRWPrice(symbol)
         })
-        .catch(errorHandler)
+        .catch((error) => {
+          logger.error(`${this.constructor.name}[symbol]`, symbol)
+          errorHandler(error)
+        })
     }
     this.isUpdated = true
 

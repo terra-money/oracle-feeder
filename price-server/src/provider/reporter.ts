@@ -1,9 +1,9 @@
 import * as config from 'config'
-import { reduce } from 'lodash'
+import * as _ from 'lodash'
 import { format, isSameDay, isSameMinute, addMinutes } from 'date-fns'
 import * as logger from 'lib/logger'
 import { createReporter } from 'lib/reporter'
-import { getCryptoPrices, getFiatPrices } from 'prices'
+import PricesProvider from './PricesProvider'
 
 let reporter
 let reportedAt = Date.now()
@@ -14,10 +14,17 @@ export function report(now: number): void {
   }
 
   try {
-    const cryptoPrices = reduce(getCryptoPrices(), (result, value, key) => Object.assign(result, { [key]: value }), {})
-    const fiatPrices = reduce(getFiatPrices(), (result, value, key) => Object.assign(result, { [key]: value }), {})
+    const cryptoPrices = _.reduce(
+      PricesProvider.getCryptoPrices(),
+      (result, value, key) => Object.assign(result, { [key]: value }),
+      {}
+    )
+    const fiatPrices = _.reduce(
+      PricesProvider.getFiatPrices(),
+      (result, value, key) => Object.assign(result, { [key]: value }),
+      {}
+    )
     const prices = Object.assign(cryptoPrices, fiatPrices)
-    logger.info(`[REPORTER]`, prices)
 
     if (!config.report) {
       reportedAt = now
