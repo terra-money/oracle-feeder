@@ -140,7 +140,6 @@ const COIN_GECKO_IDS = {
   'INJ/USD': 'injective-protocol',
   'SCRT/USD': 'secret',
   'JUNO/USD': 'juno-network',
-  'CTK/USD': 'certik',
   'STARS/USD': 'stargaze',
   'AKT/USD': 'akash-network',
 }
