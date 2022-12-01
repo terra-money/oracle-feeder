@@ -290,7 +290,7 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, 
       lcd: args.lcdUrl[lcdIndex],
       chainID: args.chainID,
       gasAdjustment: '1.5',
-      gasPrices: { uadr: 0.0015 },
+      gasPrices: { ucandle: 0.0015 },
       prefix: args.prefix,
     },
   }

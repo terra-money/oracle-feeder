@@ -1,7 +1,7 @@
 import * as keystore from './keystore'
 import * as promptly from 'promptly'
 
-export async function addKey(filePath: string, coinType: string, keyName: string): Promise<void> {
+export async function addKey(filePath: string, coinType: string, keyName: string, prefix: string): Promise<void> {
   let password = process.env.PASSWORD || ''
   let mnemonic = process.env.MNEMONIC || ''
 
@@ -34,6 +34,6 @@ export async function addKey(filePath: string, coinType: string, keyName: string
     return
   }
 
-  await keystore.save(filePath, keyName, password, mnemonic, coinType)
+  await keystore.save(filePath, keyName, password, mnemonic, coinType, prefix)
   console.info(`saved!`)
 }

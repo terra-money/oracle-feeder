@@ -57,7 +57,8 @@ export async function save(
   name: string,
   password: string,
   mnemonic: string,
-  coinType: string
+  coinType: string,
+  prefix: string
 ): Promise<void> {
   const keys = loadEntities(filePath)
 
@@ -78,7 +79,7 @@ export async function save(
 
   keys.push({
     name,
-    address: mnemonicKey.accAddress('adr'),
+    address: mnemonicKey.accAddress(prefix),
     ciphertext,
   })
 
