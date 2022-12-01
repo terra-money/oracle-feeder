@@ -25,7 +25,7 @@ module.exports = {
   },
   cryptoProvider: {
     adjustTvwap: { symbols: [] },
-    fallbackPriority: ['binance', 'kraken', 'bitfinex', 'huobi', 'kucoin', 'coinGecko'],
+    fallbackPriority: ['binance', 'osmosis', 'kraken', 'bitfinex', 'huobi', 'kucoin', 'coinGecko'],
     coinGecko: {
       interval: 6 * 1000,
       symbols: [
@@ -122,8 +122,26 @@ module.exports = {
         'INJ/USD',
         'SCRT/USD',
         'JUNO/USD',
+        'CTK/USD',
         'STARS/USD',
         'AKT/USD',
+      ],
+    },
+    osmosis: {
+      interval: 6 * 1000,
+      symbols: [
+        'ATOM/USDC',
+        'AKT/USDC',
+        'JUNO/USDC',
+        'SCRT/USDC',
+        'STARS/USDC',
+        'OSMO/USDC',
+        'INJ/USDC',
+        'LUNA/USDC',
+        'KAVA/USDC',
+        'LINK/USDC',
+        'DOT/USDC',
+        'LUNC/USDC',
       ],
     },
     binance: {
@@ -227,6 +245,8 @@ module.exports = {
         'FIL/USDT',
         'INJ/BUSD',
         'INJ/USDT',
+        'CTK/BUSD',
+        'CTK/USDT',
         'AXS/BUSD',
         'AXS/USDT',
         'GRT/USDT',

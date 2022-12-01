@@ -1,10 +1,8 @@
 import fetch from 'lib/fetch'
 import { errorHandler } from 'lib/error'
 import * as logger from 'lib/logger'
-import { num } from 'lib/num'
-import { toQueryString } from 'lib/fetch'
 import { Quoter } from 'provider/base'
-import { map } from 'bluebird'
+import BigNumber from 'bignumber.js'
 
 interface Response {
   pools: Array<{
@@ -16,6 +14,7 @@ interface Response {
 interface PoolWithDenom {
   id: string
   denom: string
+  price: BigNumber
   pool_assets: Array<PoolAsset>
 }
 
@@ -41,10 +40,32 @@ export class Osmosis extends Quoter {
     const response: Response = await fetch(url, { timeout: this.options.timeout }).then((res) => res.json())
     if (!response) {
       logger.error(`${this.constructor.name}: wrong api response`, response ? JSON.stringify(response) : 'empty')
-      throw new Error('Invalid response from Coingecko')
+      throw new Error('Invalid response from Osmosis')
     }
-    const pools = this.getWhitelistedPools(response)
-    console.log(response)
+    let pools = this.getWhitelistedPools(response)
+
+    pools = pools.map((pool) => {
+      const asset1 = pool.pool_assets[0]
+      const asset2 = pool.pool_assets[1]
+
+      pool.price =
+        asset1.token.denom === 'uosmo'
+          ? BigNumber(asset1.token.amount).dividedBy(BigNumber(asset2.token.amount))
+          : BigNumber(asset2.token.amount).dividedBy(BigNumber(asset1.token.amount))
+
+      return pool
+    })
+
+    const OSMO_USDC = pools.find((pool) => pool.denom === 'OSMO/USDC')
+
+    if (OSMO_USDC) {
+      pools.forEach((pool) => {
+        const price = pool.denom === 'OSMO/USDC' ? pool.price : OSMO_USDC.price.multipliedBy(pool.price)
+
+        console.log(pool.denom, price.toString())
+        this.setPrice(pool.denom, price)
+      })
+    } else throw new Error('OSMO/USDC not found in the list of pools')
   }
 
   /**
@@ -82,7 +103,7 @@ export class Osmosis extends Quoter {
     filteredPools.forEach((pool) => {
       for (const symbol in OSMOSIS_POOL_IDS) {
         if (OSMOSIS_POOL_IDS[symbol] === pool.id) {
-          res.push({ ...pool, denom: symbol })
+          res.push({ ...pool, denom: symbol, price: BigNumber(0) })
         }
       }
     })
@@ -98,22 +119,22 @@ export class Osmosis extends Quoter {
 }
 
 const OSMOSIS_POOL_IDS = {
-  'ATOM/USD': '1',
-  'AKT/USD': '3',
-  'CRO/USD': '9',
-  'JUNO/USD': '497',
-  'USTC/USD': '560',
-  'SCRT/USD': '584',
-  'STARS/USD': '604',
-  'DAI/USD': '674',
-  'OSMO/USD': '678',
-  'EVMOS/USD': '722',
-  'INJ/USD': '725',
-  'LUNA/USD': '726',
-  'KAVA/USD': '730',
-  'LINK/USD': '731',
-  'MKR/USD': '733',
-  'DOT/USD': '773',
-  'LUNC/USD': '800',
+  'ATOM/USDC': '1',
+  'AKT/USDC': '3',
+  // 'CRO/USDC': '9',      // DOUBLE CHECK
+  'JUNO/USDC': '497',
+  // 'USTC/USDC': '560',   // DOUBLE CHECK
+  'SCRT/USDC': '584',
+  'STARS/USDC': '604',
+  // 'DAI/USDC': '674',    // DOUBLE CHECK
+  'OSMO/USDC': '678',
+  // 'EVMOS/USDC': '722',  // DOUBLE CHECK
+  'INJ/USDC': '725',
+  'LUNA/USDC': '726',
+  'KAVA/USDC': '730',
+  'LINK/USDC': '731',
+  // 'MKR/USDC': '733',    // DOUBLE CHECK
+  // 'DOT/USDC': '773',    // DOUBLE CHECK
+  'LUNC/USDC': '800',
 }
 export default Osmosis
