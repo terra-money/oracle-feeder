@@ -62,7 +62,6 @@ export class Osmosis extends Quoter {
       pools.forEach((pool) => {
         const price = pool.denom === 'OSMO/USDC' ? pool.price : OSMO_USDC.price.multipliedBy(pool.price)
 
-        console.log(pool.denom, price.toString())
         this.setPrice(pool.denom, price)
       })
     } else throw new Error('OSMO/USDC not found in the list of pools')
