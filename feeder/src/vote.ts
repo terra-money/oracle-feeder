@@ -244,7 +244,7 @@ async function validateTx(
 
     // FIX-ME: replace this rest request with a station.js request. At the moment
     // station.js does not accept custom models which means that it will fail
-    // parsing the /oracle.oracle.MsgAggregateExchangeRatePrevote and as a
+    // parsing the /candle.oracle.MsgAggregateExchangeRatePrevote and as a
     // consequence will not return the height which is the parameter we need
     // to operate on.
     await ax

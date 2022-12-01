@@ -50,7 +50,7 @@ export class MsgAggregateExchangeRatePrevote extends JSONSerializable<
   public toData(): MsgAggregateExchangeRatePrevote.Data {
     const { hash, feeder, validator } = this
     return {
-      '@type': '/oracle.oracle.MsgAggregateExchangeRatePrevote',
+      '@type': '/candle.oracle.MsgAggregateExchangeRatePrevote',
       hash,
       feeder,
       validator,
@@ -72,7 +72,7 @@ export class MsgAggregateExchangeRatePrevote extends JSONSerializable<
 
   public packAny(): Any {
     return Any.fromPartial({
-      typeUrl: '/oracle.oracle.MsgAggregateExchangeRatePrevote',
+      typeUrl: '/candle.oracle.MsgAggregateExchangeRatePrevote',
       value: MsgAggregateExchangeRatePrevote_pb.encode(this.toProto()).finish(),
     })
   }
@@ -93,7 +93,7 @@ export namespace MsgAggregateExchangeRatePrevote {
   }
 
   export interface Data {
-    '@type': '/oracle.oracle.MsgAggregateExchangeRatePrevote'
+    '@type': '/candle.oracle.MsgAggregateExchangeRatePrevote'
     hash: string
     feeder: AccAddress
     validator: ValAddress

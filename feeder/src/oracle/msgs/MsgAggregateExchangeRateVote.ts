@@ -74,7 +74,7 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
     const { exchange_rates, salt, feeder, validator } = this
 
     return {
-      '@type': '/oracle.oracle.MsgAggregateExchangeRateVote',
+      '@type': '/candle.oracle.MsgAggregateExchangeRateVote',
       exchange_rates: exchange_rates.toDecCoins().toString(),
       salt,
       feeder,
@@ -120,7 +120,7 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
 
   public packAny(): Any {
     return Any.fromPartial({
-      typeUrl: '/oracle.oracle.MsgAggregateExchangeRateVote',
+      typeUrl: '/candle.oracle.MsgAggregateExchangeRateVote',
       value: MsgAggregateExchangeRateVote_pb.encode(this.toProto()).finish(),
     })
   }
@@ -142,7 +142,7 @@ export namespace MsgAggregateExchangeRateVote {
   }
 
   export interface Data {
-    '@type': '/oracle.oracle.MsgAggregateExchangeRateVote'
+    '@type': '/candle.oracle.MsgAggregateExchangeRateVote'
     exchange_rates: string
     salt: string
     feeder: AccAddress
