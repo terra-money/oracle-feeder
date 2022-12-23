@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { MnemonicKey } from '@terra-money/station.js'
+import { MnemonicKey } from '@terra-money/feather.js'
 
 const KEY_SIZE = 256
 const ITERATIONS = 100

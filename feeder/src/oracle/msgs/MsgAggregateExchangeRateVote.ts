@@ -1,6 +1,6 @@
 import { SHA256 } from 'jscrypto/SHA256'
-import { ValAddress, AccAddress, Coins } from '@terra-money/station.js'
-import { JSONSerializable } from '@terra-money/station.js/dist/util/json'
+import { ValAddress, AccAddress, Coins } from '@terra-money/feather.js'
+import { JSONSerializable } from '@terra-money/feather.js/dist/util/json'
 import { MsgAggregateExchangeRatePrevote } from './MsgAggregateExchangeRatePrevote'
 import { Any } from '@terra-money/legacy.proto/google/protobuf/any'
 import { MsgAggregateExchangeRateVote as MsgAggregateExchangeRateVote_pb } from '@terra-money/legacy.proto/terra/oracle/v1beta1/tx'

@@ -1,5 +1,5 @@
-import { ValAddress, Denom, Numeric, Dec } from '@terra-money/station.js'
-import { JSONSerializable } from '@terra-money/station.js/dist/util/json'
+import { ValAddress, Denom, Numeric, Dec } from '@terra-money/feather.js'
+import { JSONSerializable } from '@terra-money/feather.js/dist/util/json'
 import {
   ExchangeRateTuple as ExchangeRateTuple_pb,
   AggregateExchangeRateVote as AggregateExchangeRateVote_pb,
