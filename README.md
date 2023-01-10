@@ -58,9 +58,8 @@ npm start add-key
 # start voting
 $ npm start vote -- \
    --source http://localhost:8532/latest \
-   --lcd-url https://lcd-1.anr.dev \
-   --lcd-url https://lcd-2.anr.dev \
-   --chain-id andromeda-oralce-1 \
+   --lcd-url https://columbus-lcd.terra.dev \
+   --chain-id columbus-5 \
    --validators anrvaloper1xx \
    --validators anrvaloper1yy \
    --password "<password>"

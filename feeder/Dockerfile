@@ -1,7 +1,7 @@
 FROM node:14-alpine
 
 ENV ORACLE_FEEDER_DATA_SOURCE_URL=http://localhost:8532/latest
-ENV	ORACLE_FEEDER_LCD_ADDRESS=https://lcd.terra.dev
+ENV	ORACLE_FEEDER_LCD_ADDRESS=https://columbus-lcd.terra.dev
 ENV ORACLE_FEEDER_CHAIN_ID=columbus-5
 ENV ORACLE_FEEDER_VALIDATORS=terravaloper1xx
 ENV ORACLE_FEEDER_KEY_NAME=voter
