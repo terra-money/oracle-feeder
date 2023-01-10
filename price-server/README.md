@@ -45,6 +45,7 @@ module.exports = {
     adjustTvwap: {
       symbols: [
         'LUNA/USDT',
+        'LUNC/USDT',
         'BTC/USDT',
         'ETH/USDT',
       ]
@@ -52,6 +53,7 @@ module.exports = {
     huobi: {
       symbols: [
         'LUNA/USDT',
+        'LUNC/USDT',
         'BTC/USDT',
         'ETH/USDT'
       ]
@@ -59,6 +61,7 @@ module.exports = {
     binance: {
       symbols: [
         'LUNA/USDT',
+        'LUNC/USDT',
         'BTC/USDT',
         'ETH/USDT'
       ]
