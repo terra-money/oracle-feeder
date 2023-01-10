@@ -1,13 +1,14 @@
 FROM node:14-alpine
 
-ENV DATA_SOURCE_URL=http://localhost:8532/latest
-ENV	LCD_ADDRESS=https://lcd.terra.dev
-ENV CHAIN_ID=columbus-5
-ENV VALIDATOR=terravaloper1xx
-ENV KEY_NAME=voter
-ENV KEY_PATH=voter.json
-ENV COIN_TYPE=118
-ENV PASSPHRASE=not2secure
+ENV ORACLE_FEEDER_DATA_SOURCE_URL=http://localhost:8532/latest
+ENV	ORACLE_FEEDER_LCD_ADDRESS=https://lcd.terra.dev
+ENV ORACLE_FEEDER_CHAIN_ID=columbus-5
+ENV ORACLE_FEEDER_VALIDATORS=terravaloper1xx
+ENV ORACLE_FEEDER_KEY_NAME=voter
+ENV ORACLE_FEEDER_KEY_PATH=voter.json
+ENV ORACLE_FEEDER_COIN_TYPE=118
+ENV ORACLE_FEEDER_PASSWORD=not2secure
+ENV ORACLE_FEEDER_MNENOMIC="torch swamp cancel lift never october child harsh rib aspect luxury word peanut length bamboo hawk material vehicle glue above west random sketch author"
 
 WORKDIR /app
 
