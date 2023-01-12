@@ -2,9 +2,6 @@ import * as fs from 'fs'
 import * as crypto from 'crypto'
 import { MnemonicKey } from '@terra-money/station.js'
 
-const KEY_SIZE = 256
-const ITERATIONS = 100
-
 interface Entity {
   name: string
   address: string
@@ -18,31 +15,31 @@ interface PlainEntity {
   terraValAddress: string
 }
 
-const resizedIV = Buffer.allocUnsafe(16);
-const iv = crypto.createHash('sha256').update('myHashedIV').digest();
+const resizedIV = Buffer.allocUnsafe(16)
+const iv = crypto.createHash('sha256').update('myHashedIV').digest()
 
-iv.copy(resizedIV);
+iv.copy(resizedIV)
 
-function encrypt(plainText, pass): string {  
-  const key = crypto.createHash('sha256').update(pass).digest();
-  const cipher = crypto.createCipheriv('aes256', key, resizedIV);
-  const msg: string[] = [];
+function encrypt(plainText, pass): string {
+  const key = crypto.createHash('sha256').update(pass).digest()
+  const cipher = crypto.createCipheriv('aes256', key, resizedIV)
+  const msg: string[] = []
 
-  msg.push(cipher.update(plainText, 'binary', 'hex'));
-  msg.push(cipher.final('hex'));
+  msg.push(cipher.update(plainText, 'binary', 'hex'))
+  msg.push(cipher.final('hex'))
 
-  return msg.join('');
+  return msg.join('')
 }
 
 function decrypt(transitmessage, pass) {
-  const key = crypto.createHash('sha256').update(pass).digest();
-  const decipher = crypto.createDecipheriv('aes256', key, resizedIV);
-  const msg: string[] = [];
+  const key = crypto.createHash('sha256').update(pass).digest()
+  const decipher = crypto.createDecipheriv('aes256', key, resizedIV)
+  const msg: string[] = []
 
-  msg.push(decipher.update(transitmessage, 'hex', 'binary'));
-  msg.push(decipher.final('binary'));
+  msg.push(decipher.update(transitmessage, 'hex', 'binary'))
+  msg.push(decipher.final('binary'))
 
-  return msg.join('');
+  return msg.join('')
 }
 
 function loadEntities(path: string): Entity[] {
@@ -61,8 +58,7 @@ export async function save(
   mnemonic: string,
   coinType: string
 ): Promise<void> {
-  if(!fs.existsSync(filePath))
-  {
+  if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, '')
   }
 
