@@ -1,6 +1,9 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
 import { MnemonicKey } from '@terra-money/station.js'
+import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+
+dotenv.config()
 
 interface Entity {
   name: string
@@ -15,8 +18,9 @@ interface PlainEntity {
   terraValAddress: string
 }
 
+const ivSalt = process.env.ORACLE_FEEDER_IV_SALT || 'myHashedIV'
 const resizedIV = Buffer.allocUnsafe(16)
-const iv = crypto.createHash('sha256').update('myHashedIV').digest()
+const iv = crypto.createHash('sha256').update(ivSalt).digest()
 
 iv.copy(resizedIV)
 

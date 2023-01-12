@@ -9,6 +9,7 @@ ENV ORACLE_FEEDER_KEY_PATH=voter.json
 ENV ORACLE_FEEDER_COIN_TYPE=118
 ENV ORACLE_FEEDER_PASSWORD=not2secure
 ENV ORACLE_FEEDER_MNENOMIC="torch swamp cancel lift never october child harsh rib aspect luxury word peanut length bamboo hawk material vehicle glue above west random sketch author"
+ENV ORACLE_FEEDER_IV_SALT="myHashedIV"
 
 WORKDIR /app
 
