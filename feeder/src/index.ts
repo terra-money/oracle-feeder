@@ -96,10 +96,13 @@ async function main(): Promise<void> {
   const args = parser.parseArgs()
 
   if (args.subparser_name === `vote`) {
-    args.lcdUrl = args.lcdUrl || (process.env.ORACLE_FEEDER_LCD_ADDRESS && process.env.ORACLE_FEEDER_LCD_ADDRESS.split(',')) || []
+    args.lcdUrl =
+      args.lcdUrl || (process.env.ORACLE_FEEDER_LCD_ADDRESS && process.env.ORACLE_FEEDER_LCD_ADDRESS.split(',')) || []
 
     args.dataSourceUrl =
-      args.dataSourceUrl || (process.env.ORACLE_FEEDER_DATA_SOURCE_URL && process.env.ORACLE_FEEDER_DATA_SOURCE_URL.split(',')) || []
+      args.dataSourceUrl ||
+      (process.env.ORACLE_FEEDER_DATA_SOURCE_URL && process.env.ORACLE_FEEDER_DATA_SOURCE_URL.split(',')) ||
+      []
     args.chainID = args.chainID || process.env.ORACLE_FEEDER_CHAIN_ID || 'columbus-5'
     if (args.lcdUrl?.length === 0 || args.dataSourceUrl?.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --data-source-url')
@@ -114,7 +117,8 @@ async function main(): Promise<void> {
     }
 
     // validators is skippable and default value will be extracted from the key
-    args.validators = args.validators || (process.env.ORACLE_FEEDER_VALIDATORS && process.env.ORACLE_FEEDER_VALIDATORS.split(','))
+    args.validators =
+      args.validators || (process.env.ORACLE_FEEDER_VALIDATORS && process.env.ORACLE_FEEDER_VALIDATORS.split(','))
 
     args.prefix = process.env.ADDR_PREFIX
 
