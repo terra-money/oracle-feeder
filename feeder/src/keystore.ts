@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { MnemonicKey } from '@terra-money/station.js'
+import { MnemonicKey } from '@terra-money/feather.js'
 
 const KEY_SIZE = 256
 const ITERATIONS = 100
@@ -57,7 +57,8 @@ export async function save(
   name: string,
   password: string,
   mnemonic: string,
-  coinType: string
+  coinType: string,
+  prefix: string
 ): Promise<void> {
   const keys = loadEntities(filePath)
 
@@ -78,7 +79,7 @@ export async function save(
 
   keys.push({
     name,
-    address: mnemonicKey.accAddress('adr'),
+    address: mnemonicKey.accAddress(prefix),
     ciphertext,
   })
 

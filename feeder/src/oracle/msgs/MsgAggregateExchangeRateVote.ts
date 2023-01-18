@@ -1,6 +1,6 @@
 import { SHA256 } from 'jscrypto/SHA256'
-import { ValAddress, AccAddress, Coins } from '@terra-money/station.js'
-import { JSONSerializable } from '@terra-money/station.js/dist/util/json'
+import { ValAddress, AccAddress, Coins } from '@terra-money/feather.js'
+import { JSONSerializable } from '@terra-money/feather.js/dist/util/json'
 import { MsgAggregateExchangeRatePrevote } from './MsgAggregateExchangeRatePrevote'
 import { Any } from '@terra-money/legacy.proto/google/protobuf/any'
 import { MsgAggregateExchangeRateVote as MsgAggregateExchangeRateVote_pb } from '@terra-money/legacy.proto/terra/oracle/v1beta1/tx'
@@ -74,7 +74,7 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
     const { exchange_rates, salt, feeder, validator } = this
 
     return {
-      '@type': '/oracle.oracle.MsgAggregateExchangeRateVote',
+      '@type': '/candle.oracle.MsgAggregateExchangeRateVote',
       exchange_rates: exchange_rates.toDecCoins().toString(),
       salt,
       feeder,
@@ -120,7 +120,7 @@ export class MsgAggregateExchangeRateVote extends JSONSerializable<
 
   public packAny(): Any {
     return Any.fromPartial({
-      typeUrl: '/oracle.oracle.MsgAggregateExchangeRateVote',
+      typeUrl: '/candle.oracle.MsgAggregateExchangeRateVote',
       value: MsgAggregateExchangeRateVote_pb.encode(this.toProto()).finish(),
     })
   }
@@ -142,7 +142,7 @@ export namespace MsgAggregateExchangeRateVote {
   }
 
   export interface Data {
-    '@type': '/oracle.oracle.MsgAggregateExchangeRateVote'
+    '@type': '/candle.oracle.MsgAggregateExchangeRateVote'
     exchange_rates: string
     salt: string
     feeder: AccAddress

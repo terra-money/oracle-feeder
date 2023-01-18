@@ -95,12 +95,14 @@ async function main(): Promise<void> {
   registerCommands(parser)
   const args = parser.parseArgs()
 
+  args.prefix = process.env.ADDR_PREFIX
+
   if (args.subparser_name === `vote`) {
     args.lcdUrl = args.lcdUrl || (process.env.LCD_URL && process.env.LCD_URL.split(',')) || []
 
     args.dataSourceUrl =
       args.dataSourceUrl || (process.env.DATA_SOURCE_URL && process.env.DATA_SOURCE_URL.split(',')) || []
-    args.chainID = args.chainID || process.env.CHAIN_ID || 'andromeda-oracle-1'
+    args.chainID = args.chainID || process.env.CHAIN_ID || 'candled-testnet-1'
     if (args.lcdUrl?.length === 0 || args.dataSourceUrl?.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --data-source-url')
       return
@@ -116,13 +118,11 @@ async function main(): Promise<void> {
     // validators is skippable and default value will be extracted from the key
     args.validators = args.validators || (process.env.VALIDATORS && process.env.VALIDATORS.split(','))
 
-    args.prefix = process.env.ADDR_PREFIX
-
     args.keyName = process.env.KEY_NAME ? process.env.KEY_NAME : args.keyName
 
     await vote(args)
   } else if (args.subparser_name === `add-key`) {
-    await addKey(args.keyPath, args.coinType, args.keyName)
+    await addKey(args.keyPath, args.coinType, args.keyName, args.prefix)
   }
 }
 

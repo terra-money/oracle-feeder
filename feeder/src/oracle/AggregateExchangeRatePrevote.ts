@@ -1,5 +1,5 @@
-import { ValAddress } from '@terra-money/station.js'
-import { JSONSerializable } from '@terra-money/station.js/dist/util/json'
+import { ValAddress } from '@terra-money/feather.js'
+import { JSONSerializable } from '@terra-money/feather.js/dist/util/json'
 import { AggregateExchangeRatePrevote as AggregateExchangeRatePrevote_pb } from '@terra-money/legacy.proto/terra/oracle/v1beta1/oracle'
 import * as Long from 'long'
 

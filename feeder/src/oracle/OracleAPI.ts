@@ -1,6 +1,6 @@
-import { ValAddress, Denom, Coin, Coins, AccAddress, Dec, LCDClient } from '@terra-money/station.js'
-import { BaseAPI } from '@terra-money/station.js/dist/client/lcd/api/BaseAPI'
-import { APIParams, APIRequester } from '@terra-money/station.js/dist/client/lcd/APIRequester'
+import { ValAddress, Denom, Coin, Coins, AccAddress, Dec, LCDClient } from '@terra-money/feather.js'
+import { BaseAPI } from '@terra-money/feather.js/dist/client/lcd/api/BaseAPI'
+import { APIParams, APIRequester } from '@terra-money/feather.js/dist/client/lcd/APIRequester'
 import { AggregateExchangeRatePrevote } from './AggregateExchangeRatePrevote'
 import { AggregateExchangeRateVote } from './AggregateExchangeRateVote'
 
