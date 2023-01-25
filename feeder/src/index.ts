@@ -95,7 +95,7 @@ async function main(): Promise<void> {
   registerCommands(parser)
   const args = parser.parseArgs()
 
-  args.prefix = process.env.ADDR_PREFIX
+  args.prefix = args.prefix || process.env.ADDR_PREFIX
 
   if (args.subparser_name === `vote`) {
     args.lcdUrl = args.lcdUrl || (process.env.LCD_URL && process.env.LCD_URL.split(',')) || []
