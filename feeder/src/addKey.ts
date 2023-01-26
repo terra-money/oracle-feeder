@@ -34,6 +34,10 @@ export async function addKey(filePath: string, coinType: string, keyName: string
     return
   }
 
+  if (!prefix) {
+    prefix = await promptly.prompt(`\nEnter the address prefix: `)
+  }
+
   await keystore.save(filePath, keyName, password, mnemonic, coinType, prefix)
   console.info(`saved!`)
 }
