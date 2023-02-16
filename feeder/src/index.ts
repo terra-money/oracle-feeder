@@ -98,10 +98,13 @@ async function main(): Promise<void> {
   args.prefix = args.prefix || process.env.ORACLE_FEEDER_ADDR_PREFIX
 
   if (args.subparser_name === `vote`) {
-    args.lcdUrl = args.lcdUrl || (process.env.ORACLE_FEEDER_LCD_ADDRESS && process.env.ORACLE_FEEDER_LCD_ADDRESS.split(',')) || []
+    args.lcdUrl =
+      args.lcdUrl || (process.env.ORACLE_FEEDER_LCD_ADDRESS && process.env.ORACLE_FEEDER_LCD_ADDRESS.split(',')) || []
 
     args.dataSourceUrl =
-      args.dataSourceUrl || (process.env.ORACLE_FEEDER_DATA_SOURCE_URL && process.env.ORACLE_FEEDER_DATA_SOURCE_URL.split(',')) || []
+      args.dataSourceUrl ||
+      (process.env.ORACLE_FEEDER_DATA_SOURCE_URL && process.env.ORACLE_FEEDER_DATA_SOURCE_URL.split(',')) ||
+      []
     args.chainID = args.chainID || process.env.ORACLE_FEEDER_CHAIN_ID || 'columbus-5'
     if (args.lcdUrl?.length === 0 || args.dataSourceUrl?.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --data-source-url')

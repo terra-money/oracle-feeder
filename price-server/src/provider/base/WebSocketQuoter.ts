@@ -21,7 +21,7 @@ export class WebSocketQuoter extends Quoter {
     this.wsUrl = wsUrl
 
     this.ws.on('open', () => this.onConnect())
-    this.ws.on('close', (code, reason) => this.onDisconnect(code, reason))
+    this.ws.on('close', (code) => this.onDisconnect(code))
     this.ws.on('error', (error) => this.onError(error))
     this.ws.on('message', (raw) => this.onRawData(raw))
     this.ws.on('ping', () => this.ws.pong())
@@ -49,31 +49,30 @@ export class WebSocketQuoter extends Quoter {
     this.alive()
   }
 
-  protected onDisconnect(code: number, reason: string): void {
-    logger.info(`${this.constructor.name}: websocket disconnected (${code}: ${reason})`)
+  protected onDisconnect(code: number): void {
+    logger.info(`${this.constructor.name}: websocket disconnected (${code})`)
 
     // if disconnected, try connect again
     setTimeout(() => this.connect(this.wsUrl), 1000)
   }
 
-  // eslint-disable-next-line
-  protected onError(error): void {
+  protected onError(error: Error): void {
     logger.error(`${this.constructor.name} websocket: `, error)
   }
 
   // eslint-disable-next-line
-  protected onData(data: object): void {
+  protected onData(data: any): void {
     // do nothing
   }
 
-  // eslint-disable-next-line
-  protected onRawData(raw): void {
+  protected onRawData(rawData: WebSocket.RawData): void {
     let data
+    const rawText = rawData.toString()
 
     try {
-      data = JSON.parse(raw)
+      data = JSON.parse(rawText)
     } catch (error) {
-      logger.error(`${this.constructor.name}: JSON parse error ${raw}`)
+      logger.error(`${this.constructor.name}: JSON parse error ${rawText}`)
       return
     }
 
