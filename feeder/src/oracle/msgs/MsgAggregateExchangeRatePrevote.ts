@@ -1,5 +1,5 @@
-import { ValAddress, AccAddress } from '@terra-money/station.js'
-import { JSONSerializable } from '@terra-money/station.js/dist/util/json'
+import { ValAddress, AccAddress } from '@terra-money/feather.js'
+import { JSONSerializable } from '@terra-money/feather.js/dist/util/json'
 import { Any } from '@terra-money/legacy.proto/google/protobuf/any'
 import { MsgAggregateExchangeRatePrevote as MsgAggregateExchangeRatePrevote_pb } from '@terra-money/legacy.proto/terra/oracle/v1beta1/tx'
 

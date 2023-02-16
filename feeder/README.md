@@ -84,6 +84,7 @@ You can start feeder with arguments or env.
 | `key-name`            | `ORACLE_FEEDER_KEY_NAME`         | name to be given to the key that will be encrypted in file| `voter`                        |
 | `coin-type`           | `ORACLE_FEEDER_COIN_TYPE`        | coin type used to derive the public address (default 118) | `118`                          |
 | `key-path`            | `ORACLE_FEEDER_KEY_PATH`         | signing key store path (default voter.json)               | `voter.json`                   |
+| Unsupported           | `ORACLE_FEEDER_ADDR_PREFIX`      |                                                           | ``                             |
 | Unsupported           | `ORACLE_FEEDER_IV_SALT`          | salt used in IV vector                                    | `myHashedIV`                   |
 
 

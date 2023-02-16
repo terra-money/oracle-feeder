@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { MnemonicKey } from '@terra-money/station.js'
+import { MnemonicKey } from '@terra-money/feather.js'
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 
 dotenv.config()
@@ -60,7 +60,8 @@ export async function save(
   name: string,
   password: string,
   mnemonic: string,
-  coinType: string
+  coinType: string,
+  prefix: string
 ): Promise<void> {
   if(!fs.existsSync(filePath))
   {
@@ -86,7 +87,7 @@ export async function save(
 
   keys.push({
     name,
-    address: mnemonicKey.accAddress('adr'),
+    address: mnemonicKey.accAddress(prefix),
     ciphertext,
   })
 

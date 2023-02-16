@@ -5,14 +5,14 @@ services:
    oracle-price-server:
      image: terraclassic.oracle-price-server
      build: 
-      context: ../price-server
+      context: price-server
       dockerfile: Dockerfile
       labels:
         - "terraclassic.oracle-price-server.description=Contains everything needed to run the Oracle price server"
    oracle-feeder:
      image: terraclassic.oracle-feeder
      build: 
-       context: ../feeder
+       context: feeder
        dockerfile: Dockerfile
        labels:
         - "terraclassic.oracle-feeder.description=Contains everything needed to run the Oracle 'feeder' (voting) dapp"

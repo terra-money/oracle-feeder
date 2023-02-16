@@ -5,7 +5,7 @@ import * as http from 'http'
 import * as https from 'https'
 import axios from 'axios'
 import * as ks from './keystore'
-import { LCDClient, RawKey, Wallet, isTxError, LCDClientConfig } from '@terra-money/station.js'
+import { LCDClient, RawKey, Wallet, isTxError, LCDClientConfig } from '@terra-money/feather.js'
 import * as packageInfo from '../package.json'
 import { MsgAggregateExchangeRateVote } from './oracle/msgs'
 import * as logger from './logger'
@@ -290,7 +290,7 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, 
       lcd: args.lcdUrl[lcdIndex],
       chainID: args.chainID,
       gasAdjustment: '1.5',
-      gasPrices: { uadr: 0.0015 },
+      gasPrices: { ucandle: 0.0015 },
       prefix: args.prefix,
     },
   }
