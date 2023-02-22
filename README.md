@@ -2,6 +2,8 @@
 
 This contains the Oracle feeder software that is used for periodically submitting oracle votes for the exchange rate of the different assets offered by the oracle chain. This implementation can be used as-is, but also can serve as a reference for creating your own custom oracle feeder.
 
+Every validator must participate in the oracle process and periodically submit a vote for the exchange rate of LUNC in all whitelisted denominations. Because this process occurs every 30 seconds, validators must set up an automated process to avoid getting slashed and jailed.
+
 ## Overview
 
 This solution has 2 components:
@@ -17,11 +19,16 @@ This solution has 2 components:
    - Reads the exchange rates data from a data source (`price-server`)
    - Periodically submits vote and prevote messages following the oracle voting procedure
 
-## Prerequisites
-
-- Install [Node.js version 18 or greater](https://nodejs.org/)
+## Requirements
+1. Validator node setup
+2. Public / private network 
+3. Instance for blockchain node(s) that will be used for broadcasting the transaction.
+4. Instance for running price server bounded to the internet.
+5. Instance for running feeder in the private network, which can be used with the validator node. The important part is that it should stay in the private network.
 
 ## Instructions
+
+- Install [Node.js version 18 or greater](https://nodejs.org/)
 
 1. Clone this repository
 

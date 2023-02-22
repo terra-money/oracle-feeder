@@ -5,11 +5,10 @@ import * as http from 'http'
 import * as https from 'https'
 import axios from 'axios'
 import * as ks from './keystore'
-import { LCDClient, RawKey, Wallet, isTxError, LCDClientConfig } from '@terra-money/feather.js'
+import { LCDClient, RawKey, Wallet, isTxError, LCDClientConfig } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
-import { MsgAggregateExchangeRateVote } from './oracle/msgs'
 import * as logger from './logger'
-import { OracleAPI } from './oracle/OracleAPI'
+import { OracleAPI, MsgAggregateExchangeRateVote } from '@terra-money/terra.js'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
