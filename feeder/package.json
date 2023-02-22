@@ -7,7 +7,7 @@
     "start": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@terra-money/station.js": "^1.0.0-beta.1",
+    "@terra-money/terra.js": "^3.1.7",
     "argparse": "^1.0.10",
     "axios": "^0.21.3",
     "bluebird": "^3.7.2",

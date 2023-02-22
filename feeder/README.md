@@ -2,9 +2,6 @@
 
 Submit exchange rate prevotes and votes, implementing the [voting procedure](https://github.com/terra-money/andromeda-oracle/blob/main/x/oracle/spec/01_concepts.md#voting-procedure).
 
-## Requirements
-Every Oracle Chain validator must participate in the oracle process and periodically submit a vote for the exchange rate of Luna in all whitelisted denominations. Because this process occurs every 30 seconds, validators must set up an automated process to avoid getting slashed and jailed.
-
 ## Make a new key for oracle votes
 
 You can separate the keys used for controlling a validator account from those that are submitting oracle votes on behalf of a validator. Run:
@@ -85,12 +82,3 @@ You can start feeder with arguments or env.
 | `coin-type`           | `ORACLE_FEEDER_COIN_TYPE`        | coin type used to derive the public address (default 118) | `118`                          |
 | `key-path`            | `ORACLE_FEEDER_KEY_PATH`         | signing key store path (default voter.json)               | `voter.json`                   |
 | Unsupported           | `ORACLE_FEEDER_IV_SALT`          | salt used in IV vector                                    | `myHashedIV`                   |
-
-
-## Set up oracle feeder program
-
-To start submitting oracle messages with your feeder account, install and set up an oracle feeder.
-
-- Install Terra's Node.js [`oracle-feeder`](https://github.com/terra-money/oracle-feeder) by visiting [Terra's oracle feeder Github repo](https://github.com/terra-money/oracle-feeder).
-
-Validators are encouraged to set up their own oracle feeders.

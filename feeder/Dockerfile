@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:18-alpine
 
 ENV ORACLE_FEEDER_DATA_SOURCE_URL=http://localhost:8532/latest
 ENV	ORACLE_FEEDER_LCD_ADDRESS=https://columbus-lcd.terra.dev
