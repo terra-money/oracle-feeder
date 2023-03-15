@@ -51,12 +51,7 @@ async function loadOracleParams(client: LCDClient, oracle: OracleAPI): Promise<O
   const oracleParams = await oracle.parameters()
   const oracleVotePeriod = oracleParams.vote_period
   const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
-
-  console.log('got oracle params')
-
   const latestBlock = await client.tendermint.blockInfo()
-
-  console.log(latestBlock, 'got latest block')
 
   // the vote will be included in the next block
   const blockHeight = parseInt(latestBlock.block.header.height, 10)
@@ -312,15 +307,11 @@ export async function vote(args: VoteArgs): Promise<void> {
   const valAddrs: string[] = args.validator || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
 
-  console.log(rawKey, valAddrs, voterAddr)
-
   const lcdRotate = {
     client: new LCDClient(buildLCDClientConfig(args, 0)[args.chainID]),
     current: 0,
     max: args.lcdUrl.length - 1,
   }
-
-  console.log(lcdRotate)
 
   while (true) {
     const startTime = Date.now()
