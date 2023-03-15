@@ -94,8 +94,10 @@ async function main(): Promise<void> {
 
   registerCommands(parser)
   const args = parser.parseArgs()
-  
+
   args.prefix = args.prefix || process.env.ORACLE_FEEDER_ADDR_PREFIX
+
+  args.prefix = args.prefix || process.env.ADDR_PREFIX
 
   if (args.subparser_name === `vote`) {
     args.lcdUrl =
@@ -119,7 +121,8 @@ async function main(): Promise<void> {
     }
 
     // validators is skippable and default value will be extracted from the key
-    args.validators = args.validators || (process.env.ORACLE_FEEDER_VALIDATORS && process.env.ORACLE_FEEDER_VALIDATORS.split(','))
+    args.validators =
+      args.validators || (process.env.ORACLE_FEEDER_VALIDATORS && process.env.ORACLE_FEEDER_VALIDATORS.split(','))
     args.keyName = process.env.ORACLE_FEEDER_KEY_NAME ? process.env.ORACLE_FEEDER_KEY_NAME : args.keyName
 
     await vote(args)

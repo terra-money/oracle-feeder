@@ -13,7 +13,6 @@ export default class PricesProvider {
     // get crypto prices that can be priced in different
     // stable denom (USDT/USDC/BUSD) and even USD,
     const cryptoPrices = cryptoProvider.getPrices()
-
     // Define a list where to store the end result of
     // parsing the USDT / USDC / BUSD to USD
     const CRYPTO_PRICES_TO_USD = new Array<PriceBySymbol>()
@@ -43,12 +42,12 @@ export default class PricesProvider {
         CRYPTO_PRICES_TO_USD.push({ [ASSET_KEY_USD]: TO_USD })
       }
     }
+
     const data: any = _.chain(CRYPTO_PRICES_TO_USD)
       // Filter out the crypto that failed to be
       // converted to USD (all values that are no a number)
       .filter((crypto) => {
         const key = Object.keys(crypto)[0]
-
         return !crypto[key].isNaN()
       })
       /** roup DENOM/USD occurrences in arrays of objects e.g.: 
@@ -65,6 +64,7 @@ export default class PricesProvider {
       .flatMap((cryptoGroups) => {
         const key = Object.keys(cryptoGroups[0])[0]
         const pricesFound = cryptoGroups.length
+
         // ... sum available prices ...
         const amount = _.reduce(cryptoGroups, (sum, price) => sum.plus(price[key]), num(0))
 
