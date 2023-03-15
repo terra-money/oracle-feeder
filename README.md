@@ -2,6 +2,8 @@
 
 This contains the Oracle feeder software that is used for periodically submitting oracle votes for the exchange rate of the different assets offered by the oracle chain. This implementation can be used as-is, but also can serve as a reference for creating your own custom oracle feeder.
 
+Every validator must participate in the oracle process and periodically submit a vote for the exchange rate of LUNC in all whitelisted denominations. Because this process occurs every 30 seconds, validators must set up an automated process to avoid getting slashed and jailed.
+
 ## Overview
 
 This solution has 2 components:
@@ -17,11 +19,16 @@ This solution has 2 components:
    - Reads the exchange rates data from a data source (`price-server`)
    - Periodically submits vote and prevote messages following the oracle voting procedure
 
-## Prerequisites
-
-- Install [Node.js version 18 or greater](https://nodejs.org/)
+## Requirements
+1. Validator node setup
+2. Public / private network 
+3. Instance for blockchain node(s) that will be used for broadcasting the transaction.
+4. Instance for running price server bounded to the internet.
+5. Instance for running feeder in the private network, which can be used with the validator node. The important part is that it should stay in the private network.
 
 ## Instructions
+
+- Install [Node.js version 18 or greater](https://nodejs.org/)
 
 1. Clone this repository
 
@@ -63,4 +70,61 @@ $ npm start vote -- \
    --validators anrvaloper1xx \
    --validators anrvaloper1yy \
    --password "<password>"
+```
+
+## Using `docker-compose` (Recommended)
+
+1. Install Docker
+
+	- [Docker Install documentation](https://docs.docker.com/install/)
+	- [Docker-Compose Install documentation](https://docs.docker.com/compose/install/)
+
+2. Create a new folder on your local machine and copy docker-compose\docker-compose.yml
+
+3. Review the docker-compose.yml contents
+
+4. Bring up your stack by running
+
+	```bash
+	docker-compose up -d
+	```
+
+### Cheat Sheet:
+
+#### Start
+
+```bash
+docker-compose up -d
+```
+
+#### Stop
+
+```bash
+docker-compose stop
+```
+
+#### Clean
+
+```bash
+docker-compose down
+```
+
+#### View Logs
+
+```bash
+docker-compose logs -f
+```
+
+#### Upgrade
+
+```bash
+docker-compose down
+docker-compose pull
+docker-compose up -d
+```
+
+#### Build from source
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.build.yml build --no-cache
 ```

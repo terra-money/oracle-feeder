@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as crypto from 'crypto'
-import { MnemonicKey } from '@terra-money/station.js'
+import { MnemonicKey } from '@terra-money/terra.js'
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 
 dotenv.config()
@@ -24,8 +24,8 @@ const iv = crypto.createHash('sha256').update(ivSalt).digest()
 
 iv.copy(resizedIV)
 
-function encrypt(plainText, pass): string {
-  const key = crypto.createHash('sha256').update(pass).digest()
+function encrypt(plainText: string, password: string): string {
+  const key = crypto.createHash('sha256').update(password).digest()
   const cipher = crypto.createCipheriv('aes256', key, resizedIV)
   const msg: string[] = []
 
@@ -35,12 +35,12 @@ function encrypt(plainText, pass): string {
   return msg.join('')
 }
 
-function decrypt(transitmessage, pass) {
-  const key = crypto.createHash('sha256').update(pass).digest()
+function decrypt(encryptedText: string, password: string): string {
+  const key = crypto.createHash('sha256').update(password).digest()
   const decipher = crypto.createDecipheriv('aes256', key, resizedIV)
   const msg: string[] = []
 
-  msg.push(decipher.update(transitmessage, 'hex', 'binary'))
+  msg.push(decipher.update(encryptedText, 'hex', 'binary'))
   msg.push(decipher.final('binary'))
 
   return msg.join('')
@@ -60,7 +60,8 @@ export async function save(
   name: string,
   password: string,
   mnemonic: string,
-  coinType: string
+  coinType: string,
+  prefix: string
 ): Promise<void> {
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, '')
@@ -85,7 +86,7 @@ export async function save(
 
   keys.push({
     name,
-    address: mnemonicKey.accAddress('adr'),
+    address: mnemonicKey.accAddress(prefix),
     ciphertext,
   })
 
