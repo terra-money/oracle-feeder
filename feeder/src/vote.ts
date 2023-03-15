@@ -5,10 +5,18 @@ import * as http from 'http'
 import * as https from 'https'
 import axios from 'axios'
 import * as ks from './keystore'
-import { LCDClient, RawKey, Wallet, isTxError, LCDClientConfig } from '@terra-money/terra.js'
+import {
+  LCDClient,
+  RawKey,
+  Wallet,
+  isTxError,
+  LCDClientConfig,
+  OracleAPI,
+  MsgAggregateExchangeRateVote,
+  Fee,
+} from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 import * as logger from './logger'
-import { OracleAPI, MsgAggregateExchangeRateVote } from '@terra-money/terra.js'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -39,12 +47,11 @@ interface OracleParameters {
   nextBlockHeight: number
 }
 
-async function loadOracleParams(client: LCDClient, oracle: OracleAPI, chainID: string): Promise<OracleParameters> {
+async function loadOracleParams(client: LCDClient, oracle: OracleAPI): Promise<OracleParameters> {
   const oracleParams = await oracle.parameters()
   const oracleVotePeriod = oracleParams.vote_period
-  const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.denom)
-
-  const latestBlock = await client.tendermint.blockInfo(chainID)
+  const oracleWhitelist: string[] = oracleParams.whitelist.map((e) => e.name)
+  const latestBlock = await client.tendermint.blockInfo()
 
   // the vote will be included in the next block
   const blockHeight = parseInt(latestBlock.block.header.height, 10)
@@ -144,10 +151,10 @@ export async function processVote(
   valAddrs: string[],
   voterAddr: string
 ): Promise<void> {
-  const oracle = new OracleAPI(client, args.chainID)
+  const oracle = new OracleAPI(client)
   logger.info(`[VOTE] Requesting on chain data`)
   const { oracleVotePeriod, oracleWhitelist, currentVotePeriod, indexInVotePeriod, nextBlockHeight } =
-    await loadOracleParams(client, oracle, args.chainID)
+    await loadOracleParams(client, oracle)
 
   // Skip until new voting period
   // Skip when index [0, oracleVotePeriod - 1] is bigger than oracleVotePeriod - 2 or index is 0
@@ -178,11 +185,11 @@ export async function processVote(
   logger.info(`[PREVOTE] msg: ${JSON.stringify(msgs)}\n`)
   const tx = await wallet.createAndSignTx({
     msgs,
+    fee: new Fee((1 + msgs.length) * 50000, []),
     memo: `${packageInfo.name}@${packageInfo.version}`,
-    chainID: args.chainID,
   })
 
-  const res = await client.tx.broadcastBlock(tx, args.chainID).catch((err) => {
+  const res = await client.tx.broadcastBlock(tx).catch((err) => {
     logger.error(`broadcast error: ${err.message} ${tx.toData()}`)
     throw err
   })
@@ -228,7 +235,7 @@ async function validateTx(
   while (!inclusionHeight && lastCheckHeight < maxBlockHeight) {
     await Bluebird.delay(1500)
 
-    const lastBlock = await client.tendermint.blockInfo(args.chainID)
+    const lastBlock = await client.tendermint.blockInfo()
     const latestBlockHeight = parseInt(lastBlock.block.header.height, 10)
 
     if (latestBlockHeight <= lastCheckHeight) {
@@ -286,22 +293,22 @@ interface VoteArgs {
 function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, LCDClientConfig> {
   return {
     [args.chainID]: {
-      lcd: args.lcdUrl[lcdIndex],
+      URL: args.lcdUrl[lcdIndex],
       chainID: args.chainID,
       gasAdjustment: '1.5',
       gasPrices: { ucandle: 0.0015 },
-      prefix: args.prefix,
+      isClassic: true,
     },
   }
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.keyName, args.password)
-  const valAddrs: string[] = args.validator || [rawKey.valAddress(args.prefix)]
-  const voterAddr = rawKey.accAddress(args.prefix)
+  const valAddrs: string[] = args.validator || [rawKey.valAddress]
+  const voterAddr = rawKey.accAddress
 
   const lcdRotate = {
-    client: new LCDClient(buildLCDClientConfig(args, 0)),
+    client: new LCDClient(buildLCDClientConfig(args, 0)[args.chainID]),
     current: 0,
     max: args.lcdUrl.length - 1,
   }
@@ -333,7 +340,7 @@ function rotateLCD(args: VoteArgs, lcdRotate: { client: LCDClient; current: numb
     lcdRotate.current = 0
   }
 
-  lcdRotate.client = new LCDClient(buildLCDClientConfig(args, lcdRotate.current))
+  lcdRotate.client = new LCDClient(buildLCDClientConfig(args, lcdRotate.current)[args.chainID])
   logger.info('Switched to LCD address ' + lcdRotate.current + '(' + args.lcdUrl[lcdRotate.current] + ')')
 
   return

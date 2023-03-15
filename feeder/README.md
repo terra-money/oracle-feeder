@@ -61,7 +61,7 @@ You can start feeder with arguments or env.
       --chain-id colmbus-5 \
       --validators anrvaloper1xx \
       --validators anrvaloper1yy \
-      --password "<password>"
+      --password "12345678"
    ```
 
 * Env

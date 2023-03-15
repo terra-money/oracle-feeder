@@ -39,6 +39,5 @@ export async function addKey(filePath: string, coinType: string, keyName: string
   }
 
   await keystore.save(filePath, keyName, password, mnemonic, coinType, prefix)
-
   console.info(`saved!`)
 }
