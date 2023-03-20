@@ -3,10 +3,10 @@ import * as polka from 'polka'
 import * as send from '@polka/send-type'
 import * as bluebird from 'bluebird'
 import * as config from 'config'
-import * as logger from 'lib/logger'
+import * as logger from './lib/logger'
 import PricesProvider from './provider/PricesProvider'
-import { countAllRequests } from 'lib/metrics'
-import { getBaseCurrency } from 'lib/currency'
+import { countAllRequests } from './lib/metrics'
+import { getBaseCurrency } from './lib/currency'
 
 bluebird.config({ longStackTraces: true })
 

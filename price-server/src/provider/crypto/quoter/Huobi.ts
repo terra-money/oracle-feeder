@@ -1,10 +1,10 @@
 import * as pako from 'pako'
-import fetch from 'lib/fetch'
-import { num } from 'lib/num'
-import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
-import { toQueryString } from 'lib/fetch'
-import { WebSocketQuoter, Trades } from 'provider/base'
+import fetch from './../../../lib/fetch'
+import { num } from './../../../lib/num'
+import { errorHandler } from './../../../lib/error'
+import * as logger from './../../../lib/logger'
+import { toQueryString } from './../../../lib/fetch'
+import { WebSocketQuoter, Trades } from './../../base'
 
 interface StreamData {
   ch?: string // channel name

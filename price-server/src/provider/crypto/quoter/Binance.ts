@@ -1,9 +1,9 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
-import { Quoter } from 'provider/base'
+import fetch from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import * as logger from './../../../lib/logger'
+import { Quoter } from './../../base'
 import * as _ from 'lodash'
-import { num } from 'lib/num'
+import { num } from './../../../lib/num'
 
 type Response = Array<{ symbol: string; price: string }> | { msg: string; code: number }
 

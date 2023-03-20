@@ -1,6 +1,6 @@
 import * as WebSocket from 'ws'
-import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
+import { errorHandler } from './../../lib/error'
+import * as logger from './../../lib/logger'
 import Quoter, { QuoterOptions } from './Quoter'
 
 export class WebSocketQuoter extends Quoter {

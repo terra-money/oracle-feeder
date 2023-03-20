@@ -1,9 +1,9 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import { toQueryString } from 'lib/fetch'
-import * as logger from 'lib/logger'
-import { num } from 'lib/num'
-import { Quoter } from 'provider/base'
+import fetch from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import { toQueryString } from './../../../lib/fetch'
+import * as logger from './../../../lib/logger'
+import { num } from './../../../lib/num'
+import { Quoter } from './../../base'
 
 interface Response {
   'Realtime Currency Exchange Rate': {

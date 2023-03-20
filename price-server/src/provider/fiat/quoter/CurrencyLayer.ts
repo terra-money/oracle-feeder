@@ -1,9 +1,9 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import { toQueryString } from 'lib/fetch'
-import { num } from 'lib/num'
-import * as logger from 'lib/logger'
-import { Quoter } from 'provider/base'
+import fetch from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import { toQueryString } from './../../../lib/fetch'
+import { num } from './../../../lib/num'
+import * as logger from './../../../lib/logger'
+import { Quoter } from './../../base'
 
 interface Response {
   success: boolean

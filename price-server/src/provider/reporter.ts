@@ -1,8 +1,8 @@
 import * as config from 'config'
 import * as _ from 'lodash'
 import { format, isSameDay, isSameMinute, addMinutes } from 'date-fns'
-import * as logger from 'lib/logger'
-import { createReporter } from 'lib/reporter'
+import * as logger from './../lib/logger'
+import { createReporter } from './../lib/reporter'
 import PricesProvider from './PricesProvider'
 
 let reporter

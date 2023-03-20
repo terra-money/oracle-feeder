@@ -36,3 +36,4 @@ yarn-error.log
 default.js
 .env
 voter.json
+dist/

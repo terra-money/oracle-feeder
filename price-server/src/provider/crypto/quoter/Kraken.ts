@@ -1,8 +1,8 @@
-import fetch, { toQueryString } from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
-import { num } from 'lib/num'
-import { Quoter } from 'provider/base'
+import fetch, { toQueryString } from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import * as logger from './../../../lib/logger'
+import { num } from './../../../lib/num'
+import { Quoter } from './../../base'
 import _ from 'lodash'
 
 interface Response {

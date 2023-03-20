@@ -1,9 +1,9 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
-import { num } from 'lib/num'
-import { toQueryString } from 'lib/fetch'
-import { Quoter } from 'provider/base'
+import fetch from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import * as logger from './../../../lib/logger'
+import { num } from './../../../lib/num'
+import { toQueryString } from './../../../lib/fetch'
+import { Quoter } from './../../base'
 
 type Response = Record<string, { usd: number }>
 

@@ -1,7 +1,7 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
-import { Quoter } from 'provider/base'
+import fetch from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import * as logger from './../../../lib/logger'
+import { Quoter } from './../../base'
 import BigNumber from 'bignumber.js'
 
 interface Response {

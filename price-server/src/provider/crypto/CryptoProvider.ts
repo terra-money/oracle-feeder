@@ -1,5 +1,5 @@
 import * as config from 'config'
-import { Provider, ProviderOptions } from 'provider/base'
+import { Provider, ProviderOptions } from './../base'
 import { Upbit, Bithumb, Binance, Huobi, Bitfinex, Kraken, Kucoin, CoinGecko, Osmosis } from './quoter'
 
 class CryptoProvider extends Provider {
