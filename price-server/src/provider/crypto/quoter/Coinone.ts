@@ -1,9 +1,9 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import { num } from 'lib/num'
-import * as logger from 'lib/logger'
-import { Quoter, Trades } from 'provider/base'
-import { getBaseCurrency } from 'lib/currency'
+import fetch from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import { num } from './../../../lib/num'
+import * as logger from './../../../lib/logger'
+import { Quoter, Trades } from './../../base'
+import { getBaseCurrency } from './../../../lib/currency'
 
 interface CandlestickResponse {
   success: boolean

@@ -1,4 +1,4 @@
-import fetch, { Response } from 'lib/fetch'
+import fetch, { Response } from './fetch'
 import * as config from 'config'
 
 export function sendSlack(message: string): Promise<Response | void> {

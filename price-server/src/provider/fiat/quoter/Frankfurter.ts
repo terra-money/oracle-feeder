@@ -1,10 +1,9 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import { toQueryString } from 'lib/fetch'
-import * as logger from 'lib/logger'
-import { num } from 'lib/num'
-import { Quoter } from 'provider/base'
-import { getBaseCurrency, getQuoteCurrency } from 'lib/currency'
+import fetch, { toQueryString } from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import * as logger from './../../../lib/logger'
+import { num } from './../../../lib/num'
+import { Quoter } from './../../base'
+import { getBaseCurrency, getQuoteCurrency } from './../../../lib/currency'
 
 interface Response {
   date: string

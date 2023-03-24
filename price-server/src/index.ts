@@ -1,13 +1,13 @@
 import * as bluebird from 'bluebird'
 import * as config from 'config'
-import * as logger from 'lib/logger'
-import { init as initErrorHandler, errorHandler } from 'lib/error'
-import { initialize as initializeProviders, tick } from 'provider'
+import * as logger from './lib/logger'
+import { init as initErrorHandler, errorHandler } from './lib/error'
+import { initialize as initializeProviders, tick } from './provider'
 import { createServer } from './server'
-import { setupMetricsServer } from 'lib/metrics'
+import { setupMetricsServer } from './lib/metrics'
 
 bluebird.config({ longStackTraces: true })
-global.Promise = bluebird
+global.Promise = bluebird as any
 
 async function main(): Promise<void> {
   logger.info('price server start')

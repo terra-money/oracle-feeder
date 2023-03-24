@@ -1,6 +1,5 @@
 import * as crypto from 'crypto'
 import * as Bluebird from 'bluebird'
-import * as promptly from 'promptly'
 import * as http from 'http'
 import * as https from 'https'
 import axios from 'axios'
@@ -21,16 +20,6 @@ const ax = axios.create({
     },
   },
 })
-
-async function initKey(keyPath: string, name: string, password?: string): Promise<RawKey> {
-  const plainEntity = ks.load(
-    keyPath,
-    name,
-    password || (await promptly.password(`Enter a passphrase:`, { replace: `*` }))
-  )
-
-  return new RawKey(Buffer.from(plainEntity.privateKey, 'hex'))
-}
 
 interface OracleParameters {
   oracleVotePeriod: number
@@ -275,13 +264,14 @@ async function validateTx(
 
 interface VoteArgs {
   lcdUrl: string[]
-  prefix: string
   chainID: string
-  validator: string[]
+  validators: string[]
   dataSourceUrl: string[]
   password: string
   keyPath: string
   keyName: string
+  prefix: string
+  voter: string
 }
 
 function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, LCDClientConfig> {
@@ -297,9 +287,10 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, 
 }
 
 export async function vote(args: VoteArgs): Promise<void> {
-  const rawKey: RawKey = await initKey(args.keyPath, args.keyName, args.password)
-  const valAddrs: string[] = args.validator || [rawKey.valAddress(args.prefix)]
-  const voterAddr = rawKey.accAddress(args.prefix)
+  const plainEntity = ks.load(args)
+  const rawKey: RawKey = new RawKey(Buffer.from(plainEntity.privateKey, 'hex'))
+  const valAddrs: string[] = args.validators || [plainEntity.valAddress]
+  const voterAddr = args.voter || plainEntity.address
 
   const lcdRotate = {
     client: new LCDClient(buildLCDClientConfig(args, 0)),

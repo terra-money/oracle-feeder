@@ -1,5 +1,5 @@
 import * as config from 'config'
-import { Provider, ProviderOptions } from 'provider/base'
+import { Provider, ProviderOptions } from './../base'
 import { CurrencyLayer, AlphaVantage, Fixer, ExchangeRate, Fer, Frankfurter } from './quoter'
 
 class FiatProvider extends Provider {

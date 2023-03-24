@@ -13,9 +13,14 @@ interface Entity {
 
 interface PlainEntity {
   privateKey: string
-  publicKey: string
-  terraAddress: string
-  terraValAddress: string
+  address: string
+  valAddress: string
+}
+interface KeyArgs {
+  keyName: string
+  coinType: string
+  keyPath: string
+  prefix: string
 }
 
 function encrypt(plainText, pass): string {
@@ -44,58 +49,44 @@ function decrypt(transitmessage, pass) {
 }
 
 function loadEntities(path: string): Entity[] {
-  try {
-    return JSON.parse(fs.readFileSync(path, `utf8`) || `[]`)
-  } catch (e) {
-    console.error('loadKeys', e.message)
-    return []
-  }
+  if (fs.existsSync(path)) return JSON.parse(fs.readFileSync(path, `utf8`))
+  else return []
 }
 
-export async function save(
-  filePath: string,
-  name: string,
-  password: string,
-  mnemonic: string,
-  coinType: string,
-  prefix: string
-): Promise<void> {
-  const keys = loadEntities(filePath)
-
-  if (keys.find((key) => key.name === name)) {
-    throw new Error('Key already exists by that name')
+export async function save(args: KeyArgs, password: string, mnemonic: string): Promise<void> {
+  const keys = loadEntities(args.keyPath)
+  if (keys.find((key) => key.name === args.keyName)) {
+    throw new Error(`Key already exists with name "${args.keyName}"`)
   }
 
-  const mnemonicKey = new MnemonicKey({ mnemonic, coinType: Number(coinType) })
-
-  const ciphertext = encrypt(
-    JSON.stringify({
-      privateKey: mnemonicKey.privateKey.toString(`hex`),
-      terraAddress: mnemonicKey.accAddress,
-      terraValAddress: mnemonicKey.valAddress,
-    }),
-    password
-  )
+  const mnemonicKey = new MnemonicKey({ mnemonic, coinType: Number(args.coinType) })
+  const entry: PlainEntity = {
+    privateKey: mnemonicKey.privateKey.toString(`hex`),
+    address: mnemonicKey.accAddress(args.prefix),
+    valAddress: mnemonicKey.valAddress(args.prefix),
+  }
+  const ciphertext = encrypt(JSON.stringify(entry), password)
 
   keys.push({
-    name,
-    address: mnemonicKey.accAddress(prefix),
+    name: args.keyName,
+    address: mnemonicKey.accAddress(args.prefix),
     ciphertext,
   })
 
-  fs.writeFileSync(filePath, JSON.stringify(keys))
+  fs.writeFileSync(args.keyPath, JSON.stringify(keys))
 }
 
-export function load(filePath: string, name: string, password: string): PlainEntity {
-  const keys = loadEntities(filePath)
-  const key = keys.find((key) => key.name === name)
+export function load(args: any): PlainEntity {
+  const keys = loadEntities(args.keyPath)
+  const key = keys.find((key) => key.name === args.keyName)
 
+  console.log(key, keys)
   if (!key) {
     throw new Error('Cannot load key by that name')
   }
 
   try {
-    const plainText = decrypt(key.ciphertext, password)
+    const plainText = decrypt(key.ciphertext, args.password)
     return JSON.parse(plainText)
   } catch (err) {
     throw new Error('Incorrect password')

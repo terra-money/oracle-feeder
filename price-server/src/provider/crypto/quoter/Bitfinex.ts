@@ -1,9 +1,9 @@
-import fetch from 'lib/fetch'
-import { errorHandler } from 'lib/error'
-import * as logger from 'lib/logger'
-import { num } from 'lib/num'
-import { WebSocketQuoter, Trades } from 'provider/base'
-import { getBaseCurrency, getQuoteCurrency } from 'lib/currency'
+import fetch from './../../../lib/fetch'
+import { errorHandler } from './../../../lib/error'
+import * as logger from './../../../lib/logger'
+import { num } from './../../../lib/num'
+import { WebSocketQuoter, Trades } from './../../base'
+import { getBaseCurrency, getQuoteCurrency } from './../../../lib/currency'
 
 interface StreamData {
   event: string

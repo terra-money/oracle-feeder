@@ -1,8 +1,8 @@
-import { PriceBySymbol } from 'provider/base'
-import { fiatProvider, cryptoProvider } from 'provider'
-import { getBaseCurrency, getQuoteCurrency } from 'lib/currency'
+import { PriceBySymbol } from './base'
+import { fiatProvider, cryptoProvider } from '.'
+import { getBaseCurrency, getQuoteCurrency } from './../lib/currency'
 import * as _ from 'lodash'
-import { num } from 'lib/num'
+import { num } from './../lib/num'
 
 export default class PricesProvider {
   // TODO: maybe ?? for a future version of the method

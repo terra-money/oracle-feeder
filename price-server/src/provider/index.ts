@@ -1,6 +1,6 @@
 import * as config from 'config'
 import * as bluebird from 'bluebird'
-import { errorHandler } from 'lib/error'
+import { errorHandler } from './../lib/error'
 import { Provider } from './base'
 import { report } from './reporter'
 import FiatProvider from './fiat/FiatProvider'
