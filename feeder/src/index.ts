@@ -75,7 +75,7 @@ function registerCommands(parser: ArgumentParser): void {
   keyCommand.addArgument([`-t`, `--coin-type`], {
     help: `coin type used to derive the public address (https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki#path-levels)`,
     dest: `coinType`,
-    defaultValue: `118`,
+    defaultValue: `330`,
   })
 
   keyCommand.addArgument([`-k`, `--key-path`], {
@@ -95,9 +95,7 @@ async function main(): Promise<void> {
   registerCommands(parser)
   const args = parser.parseArgs()
 
-  args.prefix = args.prefix || process.env.ORACLE_FEEDER_ADDR_PREFIX
-
-  args.prefix = args.prefix || process.env.ADDR_PREFIX
+  args.prefix = args.prefix || process.env.ORACLE_FEEDER_ADDR_PREFIX || process.env.ADDR_PREFIX
 
   if (args.subparser_name === `vote`) {
     args.lcdUrl =
