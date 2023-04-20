@@ -56,7 +56,7 @@ You can start feeder with arguments or env.
 * Arguments
    ``` shell
    $ npm start vote -- \
-      --source http://localhost:8532/latest \
+      -d http://localhost:8532/latest \
       --lcd-url https://columbus-lcd.terra.dev \
       --chain-id colmbus-5 \
       --validators anrvaloper1xx \
@@ -83,3 +83,9 @@ You can start feeder with arguments or env.
 | `key-path`            | `ORACLE_FEEDER_KEY_PATH`         | signing key store path (default voter.json)               | `voter.json`                   |
 | Unsupported           | `ORACLE_FEEDER_ADDR_PREFIX`      |                                                           | ``                             |
 | Unsupported           | `ORACLE_FEEDER_IV_SALT`          | salt used in IV vector                                    | `myHashedIV`                   |
+
+If you are on Windows, use instead:
+
+```shell
+npm run wstart vote
+```
