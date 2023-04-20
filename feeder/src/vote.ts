@@ -283,7 +283,7 @@ interface VoteArgs {
   lcdUrl: string[]
   prefix: string
   chainID: string
-  validator: string[]
+  validators: string[]
   dataSourceUrl: string[]
   password: string
   keyPath: string
@@ -304,7 +304,7 @@ function buildLCDClientConfig(args: VoteArgs, lcdIndex: number): Record<string, 
 
 export async function vote(args: VoteArgs): Promise<void> {
   const rawKey: RawKey = await initKey(args.keyPath, args.keyName, args.password)
-  const valAddrs: string[] = args.validator || [rawKey.valAddress]
+  const valAddrs: string[] = args.validators || [rawKey.valAddress]
   const voterAddr = rawKey.accAddress
 
   const lcdRotate = {
