@@ -83,9 +83,3 @@ You can start feeder with arguments or env.
 | `key-path`            | `ORACLE_FEEDER_KEY_PATH`         | signing key store path (default voter.json)               | `voter.json`                   |
 | Unsupported           | `ORACLE_FEEDER_ADDR_PREFIX`      |                                                           | ``                             |
 | Unsupported           | `ORACLE_FEEDER_IV_SALT`          | salt used in IV vector                                    | `myHashedIV`                   |
-
-If you are on Windows, use instead:
-
-```shell
-npm run wstart vote
-```

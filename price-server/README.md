@@ -27,12 +27,6 @@ nano ./config/default.js
 npm run start
 ```
 
-If you are running this on windows, use this instead
-
-```sh
-npm run wstart
-```
-
 ## Configuration
 
 You can find the sample configuration at: `config/default-sample.js`. Oracle Price Server expects your configuration file at `config/default.js`.
