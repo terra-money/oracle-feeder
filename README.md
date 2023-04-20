@@ -64,11 +64,11 @@ npm start add-key
 
 # start voting
 $ npm start vote -- \
-   --source http://localhost:8532/latest \
-   --lcd-url https://columbus-lcd.terra.dev \
+   -d http://localhost:8532/latest \
+   --lcd-url https://terra-classic-lcd.publicnode.com \
    --chain-id columbus-5 \
-   --validators anrvaloper1xx \
-   --validators anrvaloper1yy \
+   --validators terravaloper1xx \
+   --validators terravaloper1yy \
    --password "<password>"
 ```
 
