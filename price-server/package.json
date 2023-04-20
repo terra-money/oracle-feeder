@@ -4,8 +4,7 @@
   "main": "src/main.ts",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "export NODE_OPTIONS=--openssl-legacy-provider && node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
-    "wstart": "set NODE_OPTIONS=--openssl-legacy-provider && node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts"
+    "start": "export NODE_OPTIONS=--openssl-legacy-provider && node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.0.2",
