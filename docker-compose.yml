@@ -15,7 +15,7 @@ services:
     environment:
       - ORACLE_FEEDER_DATA_SOURCE_URL=http://oracle-price-server:8532/latest
       - ORACLE_FEEDER_PASSWORD=password
-      - ORACLE_FEEDER_MNENOMIC="mnemonic"
+      - ORACLE_FEEDER_MNENOMIC=mnemonic
       - ORACLE_FEEDER_VALIDATORS=terravaloper1xxx
     restart: always
     networks:
