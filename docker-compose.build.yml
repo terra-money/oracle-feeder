@@ -1,18 +1,19 @@
-
 version: '3.8'
 
 services:
    oracle-price-server:
-     image: terraclassic.oracle-price-server
+     image: public.ecr.aws/classic-terra/oracle-price-server
+     platform: linux/amd64
      build: 
       context: price-server
       dockerfile: Dockerfile
       labels:
-        - "terraclassic.oracle-price-server.description=Contains everything needed to run the Oracle price server"
+        - "Contains everything needed to run the Oracle price server"
    oracle-feeder:
-     image: terraclassic.oracle-feeder
+     image: public.ecr.aws/classic-terra/oracle-feeder
+     platform: linux/amd64
      build: 
        context: feeder
        dockerfile: Dockerfile
        labels:
-        - "terraclassic.oracle-feeder.description=Contains everything needed to run the Oracle 'feeder' (voting) dapp"
+        - "Contains everything needed to run the Oracle 'feeder' (voting) dapp"

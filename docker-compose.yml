@@ -1,35 +1,25 @@
 version: '3.8'
 
 services:
-   oracle-price-server:
-     #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
-     image: terraclassic.oracle-price-server
-     #Enable this image if you want to target columbus-5
-     #image: terrarebels/terraclassic.oracle-price-server:latest-columbus-5
-     #Enable this image if you want to target rebel-1
-     #image: terrarebels/terraclassic.oracle-price-server:latest-rebel-1
-     restart: always
-     ports:
-       - "8532:8532"
-     networks:
-       - terra-classic
-   oracle-feeder:
-     #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
-     image: terraclassic.oracle-feeder
-     #Enable this image if you want to target columbus-5
-     #image: terrarebels/terraclassic.oracle-feeder:latest-columbus-5
-     #Enable this image if you want to target rebel-1
-     #image: terrarebels/terraclassic.oracle-feeder:latest-rebel-1
-     environment:
-       - "CHAINID=rebel-1"
-       - "ORACLE_FEEDER_LCD_URIS=https://lcd.terra.dev"
-       - "ORACLE_FEEDER_PRICE_SERVER_URI=http://oracle-price-server:8532/latest"
-       - "ORACLE_FEEDER_VALIDATOR_ADDRESSES=terravaloper1xx"
-       - "ORACLE_FEEDER_PASSPHRASE=12345678"
-       - "ORACLE_FEEDER_MNEMONIC=torch swamp cancel lift never october child harsh rib aspect luxury word peanut length bamboo hawk material vehicle glue above west random sketch author"
-     restart: always
-     networks:
-       - terra-classic
+  oracle-price-server:
+    #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
+    image: public.ecr.aws/classic-terra/oracle-price-server
+    restart: always
+    ports:
+      - "8532:8532"
+    networks:
+      - terra-classic
+  oracle-feeder:
+    #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
+    image: public.ecr.aws/classic-terra/oracle-feeder
+    environment:
+      - ORACLE_FEEDER_DATA_SOURCE_URL=http://oracle-price-server:8532/latest
+      - ORACLE_FEEDER_PASSWORD=password
+      - ORACLE_FEEDER_MNENOMIC=mnemonic
+      - ORACLE_FEEDER_VALIDATORS=terravaloper1xxx
+    restart: always
+    networks:
+      - terra-classic
 
 networks:
   terra-classic:

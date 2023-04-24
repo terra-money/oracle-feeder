@@ -26,7 +26,27 @@ This solution has 2 components:
 4. Instance for running price server bounded to the internet.
 5. Instance for running feeder in the private network, which can be used with the validator node. The important part is that it should stay in the private network.
 
-## Instructions
+## Using `docker-compose` (Recommended)
+
+1. Install Docker
+
+	- [Docker Install documentation](https://docs.docker.com/install/)
+	- [Docker-Compose Install documentation](https://docs.docker.com/compose/install/)
+
+2. `curl -o docker-compose.yml https://raw.githubusercontent.com/classic-terra/oracle-feeder/main/docker-compose.yml`
+
+3. Review the docker-compose.yml service oracle-feeder and change ENV accordingly
+* ORACLE_FEEDER_PASSWORD=password (Optional) (Oracle feeder keyring password)
+* ORACLE_FEEDER_MNENOMIC="mnemonic" (Mandatory) (Oracle feeder mnemonic, this address will be responsible for updating price)
+* ORACLE_FEEDER_VALIDATORS=terravaloper1xxx (Mandatory) (Oracle feeder validator that feeder address is bount to) [How to bound?](feeder/README.md#make-a-new-key-for-oracle-votes)
+
+4. Bring up your stack by running
+
+	```bash
+	docker-compose up -d
+	```
+
+## Manual deployment instructions
 
 - Install [Node.js version 18 or greater](https://nodejs.org/)
 
@@ -71,23 +91,6 @@ $ npm start vote -- \
    --validators terravaloper1yy \
    --password "<password>"
 ```
-
-## Using `docker-compose` (Recommended)
-
-1. Install Docker
-
-	- [Docker Install documentation](https://docs.docker.com/install/)
-	- [Docker-Compose Install documentation](https://docs.docker.com/compose/install/)
-
-2. Create a new folder on your local machine and copy docker-compose\docker-compose.yml
-
-3. Review the docker-compose.yml contents
-
-4. Bring up your stack by running
-
-	```bash
-	docker-compose up -d
-	```
 
 ### Cheat Sheet:
 
