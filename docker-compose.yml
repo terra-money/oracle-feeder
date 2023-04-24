@@ -1,27 +1,25 @@
 version: '3.8'
 
 services:
-   oracle-price-server:
-     #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
-     image: public.ecr.aws/classic-terra/oracle-price-server
-     restart: always
-     ports:
-       - "8532:8532"
-     networks:
-       - terra-classic
-   oracle-feeder:
-     #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
-     image: public.ecr.aws/classic-terra/oracle-feeder
-     environment:
-       - "ORACLE_FEEDER_CHAIN_ID=columbus-5"
-       - "ORACLE_FEEDER_LCD_ADDRESS=https://terra-classic-lcd.publicnode.com"
-       - "ORACLE_FEEDER_DATA_SOURCE_URL=http://localhost:8532/latest"
-       - "ORACLE_FEEDER_VALIDATORS=terravaloper1xx"
-       - "ORACLE_FEEDER_PASSWORD=password"
-       - "ORACLE_FEEDER_MNENOMIC=mnemonic"
-     restart: always
-     networks:
-       - terra-classic
+  oracle-price-server:
+    #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
+    image: public.ecr.aws/classic-terra/oracle-price-server
+    restart: always
+    ports:
+      - "8532:8532"
+    networks:
+      - terra-classic
+  oracle-feeder:
+    #Enable this image if you want to use the docker-compose CLI to build from the local typescript source
+    image: public.ecr.aws/classic-terra/oracle-feeder
+    environment:
+      - ORACLE_FEEDER_DATA_SOURCE_URL=http://oracle-price-server:8532/latest
+      - ORACLE_FEEDER_PASSWORD=password
+      - ORACLE_FEEDER_MNENOMIC="mnemonic"
+      - ORACLE_FEEDER_VALIDATORS=terravaloper1xxx
+    restart: always
+    networks:
+      - terra-classic
 
 networks:
   terra-classic:
