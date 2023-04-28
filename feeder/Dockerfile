@@ -1,5 +1,7 @@
 FROM node:18-alpine
 
+RUN apk add --no-cache curl jq
+
 ENV ORACLE_FEEDER_DATA_SOURCE_URL=http://localhost:8532/latest
 ENV	ORACLE_FEEDER_LCD_ADDRESS=https://terra-classic-lcd.publicnode.com,https://lcd.terrarebels.net
 ENV ORACLE_FEEDER_CHAIN_ID=columbus-5
