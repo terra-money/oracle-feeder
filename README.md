@@ -26,7 +26,7 @@ This solution has 2 components:
 4. Instance for running price server bounded to the internet.
 5. Instance for running feeder in the private network, which can be used with the validator node. The important part is that it should stay in the private network.
 
-## Using `docker-compose` (Recommended)
+## Using `docker-compose` (Recommended) (Experimental)
 
 1. Install Docker
 
@@ -38,7 +38,7 @@ This solution has 2 components:
 3. Review the docker-compose.yml service oracle-feeder and change ENV accordingly
 * ORACLE_FEEDER_PASSWORD=password (Optional) (Oracle feeder keyring password)
 * ORACLE_FEEDER_MNENOMIC="mnemonic" (Mandatory) (Oracle feeder mnemonic, this address will be responsible for updating price)
-* ORACLE_FEEDER_VALIDATORS=terravaloper1xxx (Mandatory) (Oracle feeder validator that feeder address is bount to) [How to bound?](feeder/README.md#make-a-new-key-for-oracle-votes)
+* ORACLE_FEEDER_VALIDATORS=terravaloper1xxx (Mandatory) (Oracle feeder validator that feeder address is bount to) [How to bound?](feeder/README.md#make-a-new-key-for-oracle-votes) (**REMEMBER TO BOUND YOUR VOTER TO VALIDATOR BEFORE RUNNING**)
 
 4. Bring up your stack by running
 
