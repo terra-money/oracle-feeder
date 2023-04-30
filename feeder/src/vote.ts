@@ -248,17 +248,12 @@ async function validateTx(
     // wait for indexing (not sure; but just for safety)
     await Bluebird.delay(500)
 
-    // FIX-ME: replace this rest request with a station.js request. At the moment
-    // station.js does not accept custom models which means that it will fail
-    // parsing the /oracle.oracle.MsgAggregateExchangeRatePrevote and as a
-    // consequence will not return the height which is the parameter we need
-    // to operate on.
-    await ax
-      .get(`${args.lcdUrl}/cosmos/tx/v1beta1/txs/${txhash}`)
+    client.tx
+      .txInfo(txhash)
       .then((res) => {
-        const { height, code, raw_log } = res.data.tx_response
+        const { height, code, raw_log } = res
 
-        if (!res.data.code) {
+        if (!res.code) {
           inclusionHeight = height
         } else {
           throw new Error(`[VOTE]: transaction failed tx: code: ${code}, raw_log: ${raw_log}`)
