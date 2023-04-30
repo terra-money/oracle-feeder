@@ -5,8 +5,9 @@ import * as bluebird from 'bluebird'
 import * as config from 'config'
 import * as logger from 'lib/logger'
 import PricesProvider from './provider/PricesProvider'
+import { convertFiatToLunc } from 'provider/luncConverter'
 import { countAllRequests } from 'lib/metrics'
-import { getBaseCurrency } from 'lib/currency'
+import { getBaseCurrency, getQuoteCurrency } from 'lib/currency'
 
 bluebird.config({ longStackTraces: true })
 
@@ -21,16 +22,16 @@ export async function createServer(): Promise<http.Server> {
 
   app.get('/latest', (_, res) => {
     const cryptoPrices = PricesProvider.getCryptoPrices()
-    const fiatPrices = PricesProvider.getFiatPrices()
+    const luncFiatPrices = convertFiatToLunc(cryptoPrices, PricesProvider.getFiatPrices())
 
     const prices = [
       ...Object.keys(cryptoPrices).map((symbol) => ({
         denom: getBaseCurrency(symbol),
-        price: cryptoPrices[symbol].toFixed(8),
+        price: cryptoPrices[symbol],
       })),
-      ...Object.keys(fiatPrices).map((symbol) => ({
-        denom: getBaseCurrency(symbol),
-        price: fiatPrices[symbol].toFixed(8),
+      ...Object.keys(luncFiatPrices).map((symbol) => ({
+        denom: getQuoteCurrency(symbol),
+        price: luncFiatPrices[symbol],
       })),
     ]
 
