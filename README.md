@@ -39,6 +39,10 @@ This solution has 2 components:
 * ORACLE_FEEDER_PASSWORD=password (Optional) (Oracle feeder keyring password)
 * ORACLE_FEEDER_MNENOMIC="mnemonic" (Mandatory) (Oracle feeder mnemonic, this address will be responsible for updating price)
 * ORACLE_FEEDER_VALIDATORS=terravaloper1xxx (Mandatory) (Oracle feeder validator that feeder address is bount to) [How to bound?](feeder/README.md#make-a-new-key-for-oracle-votes) (**REMEMBER TO BOUND YOUR VOTER TO VALIDATOR BEFORE RUNNING**)
+* ORACLE_FEEDER_LCD_ADDRESS=https://terra-classic-lcd.publicnode.com,https://lcd.terrarebels.net (Optional)
+* ORACLE_FEEDER_CHAIN_ID=columbus-5 (Optional)
+* ORACLE_FEEDER_ADDR_PREFIX=terra (Optional)
+
 
 4. Bring up your stack by running
 
