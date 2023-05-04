@@ -52,16 +52,25 @@ This solution has 2 components:
 
 ## Manual deployment instructions
 
-- Install [Node.js version 18 or greater](https://nodejs.org/)
-
-1. Clone this repository
+1. Install nodejs v18.x [Node.js version 18 or greater](https://nodejs.org/)
 
 ```sh
-git clone https://github.com/terra-money/oracle-feeder
+curl -sL https://deb.nodesource.com/setup_18.x -o /tmp/nodesource_setup.sh
+chmod +x /tmp/nodesource_setup.sh
+sudo /tmp/nodesource_setup.sh
+sudo apt-get install nodejs -y
+node --version
+> v18.15.0
+```
+
+2. Clone this repository
+
+```sh
+git clone https://github.com/classic-terra/oracle-feeder
 cd oracle-feeder
 ```
 
-2. Configure and launch `price-server`, following instructions [here](price-server/).
+3. Configure and launch `price-server`, following instructions [here](price-server/).
 
 ```sh
 cd price-server
@@ -77,7 +86,7 @@ vim ./config/default.js
 npm run start
 ```
 
-3. Configure and launch `feeder`, following instructions [here](feeder/).
+4. Configure and launch `feeder`, following instructions [here](feeder/).
 
 ```sh
 cd feeder
