@@ -17,7 +17,7 @@ export class Fixer extends Quoter {
       access_key: this.options.apiKey,
       // base: this.baseCurrency, // need 'PROFESSIONAL PLUS' subscription, default: EUR
       symbols:
-        this.symbols.map((symbol) => (symbol === 'USD/SDR' ? 'XDR' : symbol.replace('USD/', ''))).join(',') + ',USD',
+        this.symbols.map((symbol) => (symbol === 'SDR/USD' ? 'XDR' : symbol.replace('/USD', ''))).join(',') + ',USD',
     }
 
     const response: Response = await fetch(`https://data.fixer.io/api/latest?${toQueryString(params)}`, {
@@ -42,7 +42,10 @@ export class Fixer extends Quoter {
 
     // update last trades
     for (const quote of Object.keys(response.rates)) {
-      this.setPrice(quote === 'XDR' ? 'USD/SDR' : `USD/${quote}`, num(response.rates[quote]))
+      const convertedSymbol = quote + '/USD'
+      const convertedPrice = num(1).dividedBy(num(response.rates[quote]))
+
+      this.setPrice(convertedSymbol === 'XDR/USD' ? 'SDR/USD' : convertedSymbol, convertedPrice)
     }
   }
 

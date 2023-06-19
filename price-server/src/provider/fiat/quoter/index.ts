@@ -3,5 +3,5 @@ export * from './AlphaVantage'
 export * from './Fixer'
 export * from './Fer'
 export * from './Frankfurter'
-
+export * from './Fastforex'
 export * from './ExchangeRate'

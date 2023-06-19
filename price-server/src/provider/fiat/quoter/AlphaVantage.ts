@@ -32,7 +32,8 @@ export class AlphaVantage extends Quoter {
       throw new Error('Invalid response from AlphaVantage')
     }
 
-    this.setPrice(symbol, num(response['Realtime Currency Exchange Rate']['5. Exchange Rate']))
+    const convertedPrice = num(1).dividedBy(num(response['Realtime Currency Exchange Rate']['5. Exchange Rate']))
+    this.setPrice(symbol, convertedPrice)
   }
 
   protected async update(): Promise<boolean> {
