@@ -629,7 +629,7 @@ module.exports = {
       symbols: fiatSymbols,
       interval: 60 * 1000,
       timeout: 5000,
-      apikey: '', // necessary
+      apiKey: '', // necessary
     },
     // https://currencylayer.com/product
     // recommend: Enterprise (60second Updates): $59.99/month
