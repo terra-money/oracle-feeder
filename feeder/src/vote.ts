@@ -147,7 +147,6 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
     }
   })
 
-  console.log(newPrices)
   return newPrices
 }
 
