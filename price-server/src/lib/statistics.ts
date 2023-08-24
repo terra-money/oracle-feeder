@@ -56,3 +56,24 @@ export function tvwap(
 
   return vwap(tvwapTrades)
 }
+
+export function hasOutliers(nums: BigNumber[], threshold = 0.1): boolean {
+  if (nums.length < 2) {
+    return false
+  }
+
+  const values = nums.slice().sort((a, b) => a.minus(b).toNumber())
+
+  for (let i = 0; i < values.length; i += 1) {
+    const dist = num(1.0)
+      .minus(values[i].dividedBy(values[i + 1]))
+      .abs()
+
+    // 3% threshold
+    if (dist.isGreaterThanOrEqualTo(threshold)) {
+      return true
+    }
+  }
+
+  return false
+}

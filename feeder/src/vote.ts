@@ -17,6 +17,7 @@ import {
 } from '@terra-money/terra.js'
 import * as packageInfo from '../package.json'
 import * as logger from './logger'
+import { BigNumber } from 'bignumber.js'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -107,13 +108,24 @@ async function getPrices(sources: string[]): Promise<Price[]> {
  * 2. Fill abstain prices for prices that cannot be found in price source but in oracle whitelist
  */
 function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
+  const idx = prices.findIndex((p) => p.denom === 'LUNC')
+
+  if (idx === -1) {
+    throw new Error('cannot find LUNC price')
+  }
+
+  const luncusd = new BigNumber(prices[idx].price)
+
   const newPrices = prices
     .map((price) => {
       if (oracleWhitelist.indexOf(`u${price.denom.toLowerCase()}`) === -1) {
         return
       }
 
-      return price
+      return {
+        denom: price.denom,
+        price: luncusd.dividedBy(price.price).toString(),
+      }
     })
     .filter(Boolean) as Price[]
 
@@ -121,13 +133,21 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
     const found = prices.filter((price) => denom === `u${price.denom.toLowerCase()}`).length > 0
 
     if (!found) {
-      newPrices.push({
-        denom: denom.slice(1).toUpperCase(),
-        price: '0.000000',
-      })
+      if (denom === 'uusd') {
+        newPrices.push({
+          denom: 'USD',
+          price: luncusd.toString(),
+        })
+      } else {
+        newPrices.push({
+          denom: denom.slice(1).toUpperCase(),
+          price: '0.000000',
+        })
+      }
     }
   })
 
+  console.log(newPrices)
   return newPrices
 }
 

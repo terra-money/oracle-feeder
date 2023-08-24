@@ -1,6 +1,6 @@
 {
-  "name": "@terra-money/oracle-feeder",
-  "version": "3.0.1",
+  "name": "@classic-terra/oracle-feeder",
+  "version": "3.1.0",
   "main": "src/index.ts",
   "license": "Apache-2.0",
   "scripts": {
@@ -10,6 +10,7 @@
     "@terra-money/terra.js": "^3.1.7",
     "argparse": "^1.0.10",
     "axios": "^0.21.3",
+    "bignumber.js": "^9.0.1",
     "bluebird": "^3.7.2",
     "crypto-js": "^4.1.1",
     "dotenv": "^16.0.3",
