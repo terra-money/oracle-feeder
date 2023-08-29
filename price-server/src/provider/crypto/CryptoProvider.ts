@@ -22,7 +22,7 @@ class CryptoProvider extends Provider {
       name === 'kraken' && this.quoters.push(new Kraken(option))
       name === 'kucoin' && this.quoters.push(new Kucoin(option))
       name === 'coinGecko' && this.quoters.push(new CoinGecko(option))
-      name === 'osmosis' && this.quoters.push(new Osmosis(option))
+      // SKIP BROKEN QUOTER name === 'osmosis' && this.quoters.push(new Osmosis(option))
     }
   }
 }
