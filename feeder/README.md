@@ -57,7 +57,7 @@ You can start feeder with arguments or env.
    ``` shell
    $ npm start vote -- \
       -d http://localhost:8532/latest \
-      --lcd-url https://columbus-lcd.terra.dev \
+      --lcd-url https://lcd.terraclassic.community \
       --chain-id colmbus-5 \
       --validators anrvaloper1xx \
       --validators anrvaloper1yy \
@@ -75,7 +75,7 @@ You can start feeder with arguments or env.
 | --------------------- | -------------------------------- | --------------------------------------------------------- | ------------------------------ |
 | `password`            | `ORACLE_FEEDER_PASSWORD`         | Password for mnemonic (assigned in step #2)               | `12345678`                     |
 | `data-source-url`     | `ORACLE_FEEDER_DATA_SOURCE_URL`  | Price server URL.                                         | http://localhost:8532/latest   |
-| `lcd-url`             | `ORACLE_FEEDER_LCD_ADDRESS`      | LCD server URL (can be multiple)                          | https://columbus-lcd.terra.dev |
+| `lcd-url`             | `ORACLE_FEEDER_LCD_ADDRESS`      | LCD server URL (can be multiple)                          | https://lcd.terraclassic.community |
 | `chain-id`            | `ORACLE_FEEDER_CHAIN_ID`         | Chain ID.                                                 | `colmbus-5         `           |
 | `validators`          | `ORACLE_FEEDER_VALIDATORS`       | Validator to submit prices for (can be multiple)          | `anrvaloper1xx...`             |
 | `key-name`            | `ORACLE_FEEDER_KEY_NAME`         | name to be given to the key that will be encrypted in file| `voter`                        |
