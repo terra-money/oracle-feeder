@@ -32,7 +32,7 @@ function registerCommands(parser: ArgumentParser): void {
     required: false,
   })
 
-  voteCommand.addArgument([`--validators`], {
+  voteCommand.addArgument([`-v`, `--validators`], {
     action: `append`,
     help: `validators address (e.g. terravaloper1...), can have multiple`,
     dest: `validators`,
@@ -96,9 +96,8 @@ async function main(): Promise<void> {
   registerCommands(parser)
   const args = parser.parseArgs()
 
-  args.prefix = args.prefix || process.env.ORACLE_FEEDER_ADDR_PREFIX || process.env.ADDR_PREFIX
-
   if (args.subparser_name === `vote`) {
+    args.prefix = args.prefix || process.env.ORACLE_FEEDER_ADDR_PREFIX
     args.lcdUrl =
       args.lcdUrl || (process.env.ORACLE_FEEDER_LCD_ADDRESS && process.env.ORACLE_FEEDER_LCD_ADDRESS.split(',')) || []
 
@@ -126,7 +125,7 @@ async function main(): Promise<void> {
 
     await vote(args)
   } else if (args.subparser_name === `add-key`) {
-    await addKey(args.keyPath, args.coinType, args.keyName, args.prefix)
+    await addKey(args.keyPath, args.coinType, args.keyName)
   }
 }
 

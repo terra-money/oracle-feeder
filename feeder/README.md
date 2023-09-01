@@ -59,9 +59,9 @@ You can start feeder with arguments or env.
       -d http://localhost:8532/latest \
       --lcd-url https://lcd.terraclassic.community \
       --chain-id colmbus-5 \
-      --validators anrvaloper1xx \
-      --validators anrvaloper1yy \
-      --password "<password>"
+      --validators terravaloper1xx \
+      --validators terravaloper1yy \
+      --password <password>
    ```
 
 * Env
@@ -77,9 +77,9 @@ You can start feeder with arguments or env.
 | `data-source-url`     | `ORACLE_FEEDER_DATA_SOURCE_URL`  | Price server URL.                                         | http://localhost:8532/latest   |
 | `lcd-url`             | `ORACLE_FEEDER_LCD_ADDRESS`      | LCD server URL (can be multiple)                          | https://lcd.terraclassic.community |
 | `chain-id`            | `ORACLE_FEEDER_CHAIN_ID`         | Chain ID.                                                 | `colmbus-5         `           |
-| `validators`          | `ORACLE_FEEDER_VALIDATORS`       | Validator to submit prices for (can be multiple)          | `anrvaloper1xx...`             |
+| `validators`          | `ORACLE_FEEDER_VALIDATORS`       | Validator to submit prices for (can be multiple)          | `terravaloper1xx...`           |
 | `key-name`            | `ORACLE_FEEDER_KEY_NAME`         | name to be given to the key that will be encrypted in file| `voter`                        |
-| `coin-type`           | `ORACLE_FEEDER_COIN_TYPE`        | coin type used to derive the public address (default 118) | `118`                          |
+| `coin-type`           | `ORACLE_FEEDER_COIN_TYPE`        | coin type used to derive the public address (default 330) | `330`                          |
 | `key-path`            | `ORACLE_FEEDER_KEY_PATH`         | signing key store path (default voter.json)               | `voter.json`                   |
-| Unsupported           | `ORACLE_FEEDER_ADDR_PREFIX`      |                                                           | ``                             |
+| Unsupported           | `ORACLE_FEEDER_ADDR_PREFIX`      |                                                           | `terra`                        |
 | Unsupported           | `ORACLE_FEEDER_IV_SALT`          | salt used in IV vector                                    | `myHashedIV`                   |

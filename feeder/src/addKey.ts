@@ -1,7 +1,7 @@
 import * as keystore from './keystore'
 import * as promptly from 'promptly'
 
-export async function addKey(filePath: string, coinType: string, keyName: string, prefix: string): Promise<void> {
+export async function addKey(filePath: string, coinType: string, keyName: string): Promise<void> {
   let password = process.env.ORACLE_FEEDER_PASSWORD || ''
   let mnemonic = process.env.ORACLE_FEEDER_MNENOMIC || ''
 
@@ -34,10 +34,6 @@ export async function addKey(filePath: string, coinType: string, keyName: string
     return
   }
 
-  if (!prefix) {
-    prefix = await promptly.prompt(`\nEnter the address prefix: `)
-  }
-
-  await keystore.save(filePath, keyName, password, mnemonic, coinType, prefix)
+  await keystore.save(filePath, keyName, password, mnemonic, coinType)
   console.info(`saved!`)
 }

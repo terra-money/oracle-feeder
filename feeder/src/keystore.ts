@@ -13,9 +13,6 @@ interface Entity {
 
 interface PlainEntity {
   privateKey: string
-  publicKey: string
-  terraAddress: string
-  terraValAddress: string
 }
 
 const ivSalt = process.env.ORACLE_FEEDER_IV_SALT || 'myHashedIV'
@@ -60,8 +57,7 @@ export async function save(
   name: string,
   password: string,
   mnemonic: string,
-  coinType: string,
-  prefix: string
+  coinType: string
 ): Promise<void> {
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, '')
@@ -78,8 +74,6 @@ export async function save(
   const ciphertext = encrypt(
     JSON.stringify({
       privateKey: mnemonicKey.privateKey.toString(`hex`),
-      terraAddress: mnemonicKey.accAddress,
-      terraValAddress: mnemonicKey.valAddress,
     }),
     password
   )

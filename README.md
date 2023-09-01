@@ -36,13 +36,12 @@ This solution has 2 components:
 2. `curl -o docker-compose.yml https://raw.githubusercontent.com/classic-terra/oracle-feeder/main/docker-compose.yml`
 
 3. Review the docker-compose.yml service oracle-feeder and change ENV accordingly
-* ORACLE_FEEDER_PASSWORD=password (Optional) (Oracle feeder keyring password)
-* ORACLE_FEEDER_MNENOMIC="mnemonic" (Mandatory) (Oracle feeder mnemonic, this address will be responsible for updating price)
-* ORACLE_FEEDER_VALIDATORS=terravaloper1xxx (Mandatory) (Oracle feeder validator that feeder address is bount to) [How to bound?](feeder/README.md#make-a-new-key-for-oracle-votes) (**REMEMBER TO BOUND YOUR VOTER TO VALIDATOR BEFORE RUNNING**)
-* ORACLE_FEEDER_LCD_ADDRESS=https://terra-classic-lcd.publicnode.com,https://lcd.terraclassic.community (Optional)
-* ORACLE_FEEDER_CHAIN_ID=columbus-5 (Optional)
-* ORACLE_FEEDER_ADDR_PREFIX=terra (Optional)
 
+* ORACLE_FEEDER_PASSWORD=password (required) Oracle feeder keyring password
+* ORACLE_FEEDER_MNENOMIC=word1 word2... (required) (Oracle feeder mnemonic, this address will be responsible for updating price)
+* ORACLE_FEEDER_VALIDATORS=terravaloper1xxx (required) (Oracle feeder validator that feeder address is bount to) [How to bound?](feeder/README.md#make-a-new-key-for-oracle-votes) (**REMEMBER TO BOUND YOUR VOTER TO VALIDATOR BEFORE RUNNING**)
+* ORACLE_FEEDER_LCD_ADDRESS=https://terra-classic-lcd.publicnode.com,https://lcd.terraclassic.community (optional)
+* ORACLE_FEEDER_CHAIN_ID=columbus-5 (optional)
 
 4. Bring up your stack by running
 
@@ -52,16 +51,7 @@ This solution has 2 components:
 
 ## Manual deployment instructions
 
-1. Install nodejs v18.x [Node.js version 18 or greater](https://nodejs.org/)
-
-```sh
-curl -sL https://deb.nodesource.com/setup_18.x -o /tmp/nodesource_setup.sh
-chmod +x /tmp/nodesource_setup.sh
-sudo /tmp/nodesource_setup.sh
-sudo apt-get install nodejs -y
-node --version
-> v18.15.0
-```
+1. Install Node.js (https://nodejs.org/)
 
 2. Clone this repository
 
@@ -95,14 +85,14 @@ npm install
 # configure to use feeder account
 npm start add-key
 
-# start voting
+# start voting (note: multiple lcd-url and validators can be specified)
 $ npm start vote -- \
-   -d http://localhost:8532/latest \
+   --data-source-url http://localhost:8532/latest \
    --lcd-url https://terra-classic-lcd.publicnode.com \
+   --lcd-url https://lcd.terraclassic.community \
    --chain-id columbus-5 \
-   --validators terravaloper1xx \
-   --validators terravaloper1yy \
-   --password "<password>"
+   --validators <terravaloper address> \
+   --password <password>
 ```
 
 ### Cheat Sheet:
