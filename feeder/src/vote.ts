@@ -209,7 +209,7 @@ export async function processVote(
   })
 
   const res = await client.tx.broadcastBlock(tx).catch((err) => {
-    logger.error(`broadcast error: ${err.message} ${tx.toData(client.isClassic)}`)
+    logger.error(`broadcast error: ${err.message} ${tx.toData()}`)
     throw err
   })
 
