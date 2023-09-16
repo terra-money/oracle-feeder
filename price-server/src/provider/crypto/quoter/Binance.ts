@@ -10,7 +10,7 @@ type Response = Array<{ symbol: string; price: string }> | { msg: string; code: 
 export class Binance extends Quoter {
   private async updatePrices(): Promise<void> {
     const symbols = this.symbols.map((symbol) => '"' + symbol.replace('/', '') + '"').join(',')
-    const response: Response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=[${symbols}]`, {
+    const response: Response = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbols=[${symbols}]`, {
       timeout: this.options.timeout,
     }).then((res) => res.json())
 
