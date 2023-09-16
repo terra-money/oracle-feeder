@@ -7,7 +7,7 @@ import { createServer } from './server'
 import { setupMetricsServer } from 'lib/metrics'
 
 bluebird.config({ longStackTraces: true })
-global.Promise = bluebird
+global.Promise = require('bluebird')
 
 async function main(): Promise<void> {
   logger.info('price server start')
