@@ -11,9 +11,11 @@ export function init(opts: Options = {}): void {
   process.on('unhandledRejection', (error) => {
     error && logger.error(error as any)
 
-    sentry.withScope(() => {
-      sentry.captureException(error)
-    })
+    if (opts?.sentry) {
+      sentry.withScope(() => {
+        sentry.captureException(error)
+      })
+    }
   })
 }
 
