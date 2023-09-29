@@ -1,6 +1,6 @@
 {
   "name": "@classic-terra/price-server",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "main": "src/main.ts",
   "license": "Apache-2.0",
   "scripts": {
@@ -20,6 +20,7 @@
     "form-data": "^4.0.0",
     "lodash": "^4.17.20",
     "node-fetch": "^2.6.7",
+    "node-html-parser": "^6.1.10",
     "pako": "^2.0.3",
     "polka": "^0.5.2",
     "ts-node": "^10.7.0",

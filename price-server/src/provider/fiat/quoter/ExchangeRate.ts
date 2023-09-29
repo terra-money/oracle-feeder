@@ -29,6 +29,7 @@ export class ExchangeRate extends Quoter {
     const params = {
       base: 'USD',
       symbols: this.symbols.map((symbol) => (symbol === 'SDR/USD' ? 'XDR' : symbol.replace('/USD', ''))).join(','),
+      access_key: this.options.apiKey,
     }
 
     const response: Response = await nodeFetch(`https://api.exchangerate.host/latest?${toQueryString(params)}`, {

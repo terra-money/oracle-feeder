@@ -1,6 +1,6 @@
 import * as config from 'config'
 import { Provider, ProviderOptions } from 'provider/base'
-import { CurrencyLayer, AlphaVantage, Fixer, ExchangeRate, Fer, Frankfurter, Fastforex } from './quoter'
+import { CurrencyLayer, AlphaVantage, Fixer, ExchangeRate, Fer, Frankfurter, Fastforex, IMF } from './quoter'
 
 class FiatProvider extends Provider {
   constructor(options: ProviderOptions) {
@@ -24,6 +24,7 @@ class FiatProvider extends Provider {
       name === 'frankfurter' && this.quoters.push(new Frankfurter(option))
       name === 'exchangerate' && this.quoters.push(new ExchangeRate(option))
       name === 'fastforex' && this.quoters.push(new Fastforex(option))
+      name === 'imf' && this.quoters.push(new IMF(option))
     }
 
     await super.initialize()
